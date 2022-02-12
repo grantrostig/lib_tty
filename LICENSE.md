@@ -1,22 +1,4 @@
-Copyright (c) 2017 Grant Rostig. All rights reserved. Use by written permission only, evidenced with blue ink on paper or a verifyable (pgp) email interaction with Grant Rostig.
-Permission is granted to use these files during and in support of CppMSG meetup group events and projects.
-
-+++ used gnuplot:
-/* A C++ interface to gnuplot.
- * Web page: http://www.stahlke.org/dan/gnuplot-iostream
- * Documentation: https://github.com/dstahlke/gnuplot-iostream/wiki
- *
- * The whole library consists of this monolithic header file, for ease of installation (the
- * Makefile and *.cc files are only for examples and tests).
- *
- * TODO:
- * 	What version of boost is currently required?
- * 	Callbacks via gnuplot's 'bind' function.  This would allow triggering user functions when
- * 	keys are pressed in the gnuplot window.  However, it would require a PTY reader thread.
- * 	Maybe temporary files read in a thread can replace PTY stuff.
- */
-
-+++ used various boost libaries:
+Copyright (c) 2017 Grant Rostig. All rights reserved. 
 Boost Software License - Version 1.0 - August 17th, 2003
 
 Permission is hereby granted, free of charge, to any person or organization
