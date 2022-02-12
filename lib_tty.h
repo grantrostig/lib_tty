@@ -3,14 +3,7 @@
 #define LIB_TTY_H
 /*
  * Copyright 2019 Grant Rostig all rights reserved,
- * no rights granted to anyone at this time,
- * no license granted to anyone at this time,
- * except to use during CppMSG meetings during 2022.
- *
- * Test this libray with the following projects:
- * user_input_keyboard_keys_raw
- * posix_signal_timer_settime_periodic
- * menu_system
+ * BOOST
  */
 #include <algorithm>
 #include <array>
