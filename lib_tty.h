@@ -31,17 +31,17 @@
 #undef LT_DEBUG
 using namespace std::chrono_literals; // for wait().
 using std::endl, std::cin, std::cout, std::cerr, std::string;
-constexpr cc_t VTIME_ESC = 1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
-constexpr ssize_t C_EOF = EOF; // value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
-constexpr ssize_t C_FERR = EOF;
-constexpr ssize_t POSIX_EOF = 0;
-constexpr ssize_t POSIX_ERROR = -1;
-// using Lt_errno = typeof (errno);
-using Lt_errno = int;
-constexpr Lt_errno E_NO_MATCH = 1;      // todo: new convention for my errno like codes
-constexpr Lt_errno E_PARTIAL_MATCH = 2; // todo: new convention for my errno like codes
-constexpr ssize_t NO_MORE_CHARS = 0;    // Identifier to add to CSI_ESC to denote it is not part of a multibyte sequence.
-constexpr ssize_t TIMED_NULL_GET = 0;   // Flag to show no automatic additional chars appear from the keyboard, used for CSI_ESC.
+
+constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
+constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
+constexpr   ssize_t     C_FERR =            EOF;
+constexpr   ssize_t     POSIX_EOF =         0;
+constexpr   ssize_t     POSIX_ERROR =       -1;
+using       Lt_errno =  int;                    // using Lt_errno = typeof (errno);
+constexpr   Lt_errno    E_NO_MATCH =        1;  // todo: new convention for my errno like codes
+constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  // todo: new convention for my errno like codes
+constexpr   ssize_t     NO_MORE_CHARS =     0;  // Identifier to add to CSI_ESC to denote it is not part of a multibyte sequence.
+constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automatic additional chars appear from the keyboard, used for CSI_ESC.
 /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
  * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#trap
  * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/kill.html
@@ -84,17 +84,23 @@ constexpr ssize_t TIMED_NULL_GET = 0;   // Flag to show no automatic additional 
 //    cerr<< "ttyname: "<< my_tty_name << endl;
  */
 
-using Termios = termios;     // terminal & IO & speed structure, used for setting them. // C++ class name capitalization convention of the POSIX C type;
-using Siginfo_t = siginfo_t; // The siginfo_t structure is passed as the second parameter to a user signal handler function, if the SA_SIGINFO flag was specified when the handler
-                             // was installed with sigaction().  // C++ class name capitalization convention of the POSIX C type;
-using Sigaction_handler_fn_t =
-    void(int, Siginfo_t *,
-         /* ucontext_t* */ void *); // todo: TODO why does POSIX have the wrong sighandler_t.  Ie. 1 input parameter versus 3? // maybe use std::function
+using Termios =     termios;    // terminal & IO & speed structure, used for setting them. // C++ class name capitalization convention of the POSIX C type;
+using Siginfo_t =   siginfo_t;  // The siginfo_t structure is passed as the second parameter to a user signal handler function, if the SA_SIGINFO flag was specified when the handler
+                                // was installed with sigaction().  // C++ class name capitalization convention of the POSIX C type;
+using Sigaction_handler_fn_t =  void(
+        int,
+        Siginfo_t *,
+        void *                      // ucontext_t*
+    );                              // todo: TODO why does POSIX have the wrong sighandler_t.  Ie. 1 input parameter versus 3? // maybe use std::function
                                     // todo: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
                                     // std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
-using Sigaction_return = std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
-// using Sigaction_return_3_old 		= std::tuple< struct sigaction, struct sigaction, struct sigaction>;// todo: complete this: replace std::tuple/std::pair with
-// struct!
+
+//using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
+struct Sigaction_return {
+  int /*signal_for_user*/,
+  struct sigaction
+};
+
 struct Sigaction_termination_return {
   struct sigaction &action_prior1;
   struct sigaction &action_prior2;
