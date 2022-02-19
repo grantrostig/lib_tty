@@ -210,12 +210,14 @@ enable_inactivity_handler(const int seconds) {
     static sigevent inactivity_event  {};
     inactivity_event.sigev_notify	= SIGEV_SIGNAL;  // Notify via signal.
     inactivity_event.sigev_signo  	= SIGRTMIN;	   // Return number of available real-time signal with highest priority.
-    auto [sig_user, action_prior] 	= set_sigaction_for_inactivity( handler_inactivity );
+    // grostig todo bug? auto [sig_user, action_prior] 	= set_sigaction_for_inactivity( handler_inactivity );
+    Sigaction_return result = set_sigaction_for_inactivity( handler_inactivity );
 
     static timer_t inactivity_timer   {};
     if ( timer_create( CLOCK_REALTIME, &inactivity_event, /*out*/ &inactivity_timer) == POSIX_ERROR) { perror("lib_tty:"); exit(1); }  // todo:  TODO address of a pointer? seriously ptr to ptr?
     set_a_run_inactivity_timer( inactivity_timer, seconds );
-    return { inactivity_timer, sig_user, action_prior };
+    // grostig todo bug? return { inactivity_timer, sig_user, action_prior };
+    return { inactivity_timer, result.signal_for_user, result.action_prior };
 }
 
 /* delete the timer */

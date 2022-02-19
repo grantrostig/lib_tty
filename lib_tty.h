@@ -97,8 +97,8 @@ using Sigaction_handler_fn_t =  void(
 
 //using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
 struct Sigaction_return {
-  int /*signal_for_user*/,
-  struct sigaction
+    int       signal_for_user;
+    struct    sigaction   action_prior;
 };
 
 struct Sigaction_termination_return {
