@@ -95,7 +95,7 @@ using Sigaction_handler_fn_t =  void(
                                     // todo: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
                                     // std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
 
-//using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
+// grostig todo bug? using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
 struct Sigaction_return {
     int       signal_for_user;
     struct    sigaction   action_prior;
