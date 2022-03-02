@@ -1,6 +1,6 @@
-#define _POSIX_C_SOURCE 200809L
 #ifndef LIB_TTY_H
 #define LIB_TTY_H
+#define _POSIX_C_SOURCE 200809L
 /*
  * Copyright 2019 Grant Rostig all rights reserved,
  * BOOST
@@ -109,9 +109,12 @@ struct Sigaction_termination_return {
   struct sigaction &action_prior5;
 };
 
+/** print signal information to cerr */
 void print_signal(int const signal);
-void handler_termination(int const sig, Siginfo_t *, void *); // The function invoked when handling a termination signal.  // todo: NO: void handler_termination( My_sighandler_t );
-                                                              // // todo: NO: My_sighandler_t handler_termination;
+
+/** The signal handler function to be called when job_control type signals are received such as when handling a termination signal. */
+void handler_termination(int const sig, Siginfo_t *, void *);  // todo: NO: void handler_termination( My_sighandler_t );
+                                                               // todo: NO: My_sighandler_t handler_termination;
 void handler_inactivity(int const sig, Siginfo_t *, void *);  // The function invoked when handling an inactivity signal.
 
 Sigaction_termination_return set_sigaction_for_termination(Sigaction_handler_fn_t handler_in); // todo: ideas: use c++20 span.

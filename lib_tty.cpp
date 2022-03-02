@@ -84,7 +84,6 @@ void print_signal(const int signal) {
     // SIG_HOLD ((__sighandler_t) 2)	/* Add signal to hold mask.  */
 }
 
-/* signal handler function to be called when job_control type signals are received */
 void handler_termination(const int sig, Siginfo_t *, void *) {
     cerr << "lib_tty:termination_handler() started. This signal got us here:" << endl; // not safe! testing only.
     print_signal( sig );
