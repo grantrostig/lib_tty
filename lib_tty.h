@@ -23,17 +23,17 @@
 #include <cstdio>
 #include <cstdlib>
 // POSIX
-#include <signal.h>
+#include <csignal>
 #include <termios.h>
-#include <time.h>
-#include <unistd.h>
+#include <ctime>
+// #include <unistd.h>
 #define LT_NDEBUG
 #undef LT_DEBUG
 using namespace std::chrono_literals; // for wait().
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 
-constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
-constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
+inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
+inline constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
 constexpr   ssize_t     C_FERR =            EOF;
 constexpr   ssize_t     POSIX_EOF =         0;
 constexpr   ssize_t     POSIX_ERROR =       -1;

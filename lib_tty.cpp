@@ -113,7 +113,10 @@ set_sigaction_for_termination(Sigaction_handler_fn_t handler_in) {  // todo: TOD
 
     static struct sigaction action_prior_SIGINT 	{};
     if (sigaction( SIGINT , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) { perror("lib_tty:"); exit(1); }  // just doing a get()
-    if (action_prior_SIGINT.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
+    //if (action_prior_SIGINT.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
+    //if ( (void *) action_prior_SIGINT.sa_sigaction != (void *) SIG_IGN) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
+    if ( reinterpret_cast<void *>(action_prior_SIGINT.sa_handler) != reinterpret_cast<void *>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
+    //if (action_prior_SIGINT.sa_sigaction != reinterpret_cast<void(*)(int)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
         cerr << "set_sigaction_for_termination(): SIGINT going to be set." << endl;
         if (sigaction(SIGINT, &action, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
     }
@@ -603,11 +606,18 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     if (static bool once {false}; !once) {
         once = true;
         if ( hot_keys.empty() )
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-value"
             assert( ("consider_hot_key() lib_tty logic error: we don't allow empty hotkeys",false) );
+        #pragma GCC diagnostic pop
         std::sort( hot_keys.begin(), hot_keys.end() );
         if ( auto dup = std::adjacent_find( hot_keys.begin(), hot_keys.end(), is_hk_chars_equal ); dup != hot_keys.end() ) {
             cerr << "consider_hot_key() duplicate hot_key:" << dup->my_name << endl;
-            assert( ("lib_tty logic error: we don't allow duplicate hotkey character sequences",false) );
+            assert( (
+                            "lib_tty logic error: we don't allow duplicate hotkey character sequences",
+                        //[[maybe_unused]]
+                        false)
+                  );
         }
 #ifdef LT_DEBUG
         for (auto & i : hot_keys) {
