@@ -19,13 +19,13 @@
 #include <vector>
 // C lang API via C++ provided compatible functions.
 #include <cassert>
+#include <csignal>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
-// POSIX
-#include <csignal>
-#include <termios.h>
 #include <ctime>
+// POSIX
+#include <termios.h>
 // #include <unistd.h>
 #define LT_NDEBUG
 #undef LT_DEBUG
@@ -34,15 +34,15 @@ using namespace std::chrono_literals; // for wait().
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 
 inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
-inline constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
-constexpr   ssize_t     C_FERR =            EOF;
-constexpr   ssize_t     POSIX_EOF =         0;
-constexpr   ssize_t     POSIX_ERROR =       -1;
+//inline constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
+//inline constexpr   ssize_t     C_FERR =            EOF;
+inline constexpr   ssize_t     POSIX_EOF =         0;
+inline constexpr   ssize_t     POSIX_ERROR =       -1;
 using       Lt_errno =  int;                    // using Lt_errno = typeof (errno);
-constexpr   Lt_errno    E_NO_MATCH =        1;  // todo: new convention for my errno like codes
-constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  // todo: new convention for my errno like codes
-constexpr   ssize_t     NO_MORE_CHARS =     0;  // Identifier to add to CSI_ESC to denote it is not part of a multibyte sequence.
-constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automatic additional chars appear from the keyboard, used for CSI_ESC.
+inline constexpr   Lt_errno    E_NO_MATCH =        1;  // todo: new convention for my errno like codes
+inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  // todo: new convention for my errno like codes
+inline constexpr   ssize_t     NO_MORE_CHARS =     0;  // Identifier to add to CSI_ESC to denote it is not part of a multibyte sequence.
+inline constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automatic additional chars appear from the keyboard, used for CSI_ESC.
 /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
  * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#trap
  * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/kill.html

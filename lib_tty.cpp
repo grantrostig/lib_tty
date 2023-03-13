@@ -5,6 +5,7 @@
 //#include <variant>
 #include <algorithm>
 #include <iostream>
+#include <type_traits>
 #include <concepts>
 
 using namespace Lib_tty;
@@ -13,10 +14,9 @@ using namespace Lib_tty;
 
 template <typename T>
 concept can_insert = requires ( std::ostream & out, T my_t ) {
-    { out << my_t; } -> std::is_convertable <std::ostream & >;
-    // or just ?? { out << my_t; };
-
-    does my_t have std::ostream_iterator<T>
+    //{ out << my_t; } -> is_convertable <std::ostream & >;
+    { out << my_t };
+    // does my_t have std::ostream_iterator<T>
 };
 
 //template<can_insert T>            // utility f() to print vectors
