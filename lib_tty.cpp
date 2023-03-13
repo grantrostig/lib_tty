@@ -8,9 +8,9 @@
 #include <type_traits>
 #include <concepts>
 
-using namespace Lib_tty;
-
-// Lib_tty::C_EOF
+//using namespace Lib_tty;
+// or do this>> Lib_tty::C_EOF
+namespace Lib_tty {
 
 template <typename T>
 concept can_insert = requires ( std::ostream & out, T my_t ) {
@@ -23,12 +23,11 @@ concept can_insert = requires ( std::ostream & out, T my_t ) {
 //std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) 
 
 //template<typename T>            // utility f() to print vectors
-//std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) 
-//    requires can_insert<T>
+//std::ostream &operator<<(std::ostream &out, const std::forward_iterator<T> &v)   // needs iterator concept
 
 template<typename T>            // utility f() to print vectors
-//std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) 
-std::ostream &operator<<(std::ostream &out, const std::forward_iterator<T> &v)   // needs iterator concept
+std::ostream& operator<<(std::ostream &out, const std::vector<T> &v)
+    requires can_insert<T>
 {
     if (!v.empty()) {
         out << '<';
@@ -55,7 +54,7 @@ bool Hot_key::operator< ( Hot_key const  & in ) const {  // found in lib_tty.h
     return ( characters < in.characters );
 }
 
-void print_signal(const int signal) {
+void print_signal(int const signal) {
     cerr << "lib_tty:print_signal(): signal is:" << signal << endl;
     switch (signal) {
     /* ISO C99 signals.  */
@@ -106,14 +105,14 @@ void print_signal(const int signal) {
     // SIG_HOLD ((__sighandler_t) 2)	/* Add signal to hold mask.  */
 }
 
-void handler_termination(const int sig, Siginfo_t *, void *) {
+void handler_termination(int const sig, Siginfo_t *, void *) {
     cerr << "lib_tty:termination_handler() started. This signal got us here:" << endl; // not safe! testing only.
     print_signal( sig );
     set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
 }
 
 /* signal handler function to be called when a timeout alarm goes off via a user defined signal is received */
-void handler_inactivity(const int sig, Siginfo_t *, void *) {  // todo: TODO why can't I add const here without compiler error?
+void handler_inactivity(int const sig, Siginfo_t *, void *) {  // todo: TODO why can't I add const here without compiler error?
     cerr << "lib_tty:inactivity_handler() started. This signal got us here:" << endl; // not safe! testing only.
     print_signal( sig );
     set_sigaction_for_inactivity( handler_inactivity );  //  re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
@@ -135,10 +134,12 @@ set_sigaction_for_termination(Sigaction_handler_fn_t handler_in) {  // todo: TOD
 
     static struct sigaction action_prior_SIGINT 	{};
     if (sigaction( SIGINT , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) { perror("lib_tty:"); exit(1); }  // just doing a get()
+
     //if (action_prior_SIGINT.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
     //if ( (void *) action_prior_SIGINT.sa_sigaction != (void *) SIG_IGN) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
-    if ( reinterpret_cast<void *>(action_prior_SIGINT.sa_handler) != reinterpret_cast<void *>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
     //if (action_prior_SIGINT.sa_sigaction != reinterpret_cast<void(*)(int)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
+
+    if ( reinterpret_cast<void *>(action_prior_SIGINT.sa_handler) != reinterpret_cast<void *>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
         cerr << "set_sigaction_for_termination(): SIGINT going to be set." << endl;
         if (sigaction(SIGINT, &action, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
     }
@@ -630,16 +631,12 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         if ( hot_keys.empty() )
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wunused-value"
-            assert( ("consider_hot_key() lib_tty logic error: we don't allow empty hotkeys",false) );
+        assert( ("consider_hot_key() lib_tty logic error: we don't allow empty hotkeys",false) );
         #pragma GCC diagnostic pop
         std::sort( hot_keys.begin(), hot_keys.end() );
         if ( auto dup = std::adjacent_find( hot_keys.begin(), hot_keys.end(), is_hk_chars_equal ); dup != hot_keys.end() ) {
             cerr << "consider_hot_key() duplicate hot_key:" << dup->my_name << endl;
-            assert( (
-                            "lib_tty logic error: we don't allow duplicate hotkey character sequences",
-                        //[[maybe_unused]]
-                        false)
-                  );
+            assert( (false) && "lib_tty logic error: we don't allow duplicate hotkey character sequences" );
         }
 #ifdef LT_DEBUG
         for (auto & i : hot_keys) {
@@ -680,14 +677,15 @@ bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_ch
                                   :   isprint(i);
 }
 
-Kb_key_a_fstat get_kb_key(bool const is_strip_control_chars) {
+//Kb_key_a_fstat get_kb_key( [[maybe_unused]] bool const is_strip_control_chars) {
+Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars [[maybe_unused]] ) {
     Hot_key_chars hkc {};
     for ( Simple_key_char first_skc {};
           first_skc = 0, cin.get( first_skc ), hkc.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true;
         ) {
         File_status file_status { File_status::other };
         if ( cin.eof() || first_skc == 0) {
-            assert( ("we probably don't handle eof well.", cin.eof() || first_skc == 0)); // todo: more eof handling needed
+            assert( (cin.eof() || first_skc == 0) && "we probably don't handle eof well."); // todo: more eof handling needed
             file_status = File_status::eof_file_descriptor;
             return { hkc, file_status};
         };
@@ -696,7 +694,7 @@ Kb_key_a_fstat get_kb_key(bool const is_strip_control_chars) {
             Simple_key_char timed_test_char {} ;
             cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
             /* if ( cin.eof() ) {  // todo: this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
-                assert( ("post timer, we probably don't handle eof well.", cin.eof())); // todo: more eof handling needed
+                assert( (cin.eof()) && "post timer, we probably don't handle eof well."); // todo: more eof handling needed
                 file_status = File_status::eof_file_descriptor;
                 termio_restore( terminal_status_orig );
                 return { hkc, file_status};
@@ -712,7 +710,7 @@ Kb_key_a_fstat get_kb_key(bool const is_strip_control_chars) {
         if ( std::holds_alternative<Hot_key>(k) )
             return { std::get<Hot_key>(k),         File_status::other };
         else {
-            assert ( std::holds_alternative<Lt_errno>(k) );
+            assert ( std::holds_alternative<Lt_errno>(k) && "We have an Lt_errno." );
             switch ( std::get<Lt_errno>(k) ) {
             case E_PARTIAL_MATCH:
                 continue;
@@ -765,7 +763,7 @@ bool is_ignore_key_file_status ( File_status const file_status ) { // **** CASE 
         break;
     case File_status::eof_file_descriptor :
         cerr << "\ais_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?"<<endl; //
-        assert(("is_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?",false));  // todo: is this correct, or should we not ignore it?
+        assert((false) && "is_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?");  // todo: is this correct, or should we not ignore it?
         break;
     }
     return true;  // we add back the input character that we have decided to ignore.
@@ -835,7 +833,7 @@ bool is_ignore_key_skchar( Simple_key_char const skc,
 Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
                               bool const is_require_field_completion_key, bool const echo_skc_to_tty,
                               bool const is_strip_control_chars, bool const is_password ) {
-    assert( length_in_simple_key_chars > 0 );   // todo: can debug n>1 case later.
+    assert( (length_in_simple_key_chars > 0 ) && "too small get lenght." );   // todo: can debug n>1 case later.
     Kb_regular_value 	value_rv 				{}; //  *** need to load the 3 "_rv" vars below
     Hot_key		 		hot_key_rv				{};
     File_status  		file_status_rv			{File_status::other};
@@ -867,7 +865,7 @@ Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
                 //                }
                 is_ignore_key_hk     = is_ignore_hotkey_function_cat( hot_key_function_cat );
             }
-            else  assert(("ERROR:Not sure why we got here, we require that either a Simple_key_char or a Hot_key entered." , false)); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
+            else  assert((false) && "ERROR:Not sure why we got here, we require that either a Simple_key_char or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
         }
         if ( !is_ignore_key_fd || !is_ignore_key_skc || !is_ignore_key_hk )
             --additional_skc;
@@ -888,4 +886,6 @@ Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
     }
     termio_restore( terminal_status_orig );
     return { value_rv, hot_key_rv, file_status_rv };  // NOTE: we designed to copy OUT these variables.
+}
+
 }
