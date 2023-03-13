@@ -29,10 +29,11 @@
 #include <unistd.h>
 #define LT_NDEBUG
 #undef LT_DEBUG
+namespace Lib_tty {
 using namespace std::chrono_literals; // for wait().
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 
-constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
+inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
 constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
 constexpr   ssize_t     C_FERR =            EOF;
 constexpr   ssize_t     POSIX_EOF =         0;
@@ -280,5 +281,8 @@ void nav_intra_field(Hot_key const &hk, Kb_regular_value &value, unsigned int &v
  */
 Kb_value_plus get_kb_keys_raw(size_t length_in_simple_key_chars, bool const is_require_field_completion = true, bool const echo_skc_to_tty = true,
                               bool const is_strip_control_chars = true, bool const is_password = false);
+
+
+}
 
 #endif // LIB_TTY_H

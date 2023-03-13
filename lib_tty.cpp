@@ -5,9 +5,31 @@
 //#include <variant>
 #include <algorithm>
 #include <iostream>
+#include <concepts>
+
+using namespace Lib_tty;
+
+// Lib_tty::C_EOF
+
+template <typename T>
+concept can_insert = requires ( std::ostream & out, T my_t ) {
+    { out << my_t; } -> std::is_convertable <std::ostream & >;
+    // or just ?? { out << my_t; };
+
+    does my_t have std::ostream_iterator<T>
+};
+
+//template<can_insert T>            // utility f() to print vectors
+//std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) 
+
+//template<typename T>            // utility f() to print vectors
+//std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) 
+//    requires can_insert<T>
 
 template<typename T>            // utility f() to print vectors
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
+//std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) 
+std::ostream &operator<<(std::ostream &out, const std::forward_iterator<T> &v)   // needs iterator concept
+{
     if (!v.empty()) {
         out << '<';
         std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, "&"));
@@ -17,9 +39,9 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
     return out;
 }
 
-void print_vec( const std::vector<char> & v) {
+void print_vec( const std::vector<char> & v) {  // for debugging.
     cerr << "::";
-    for (auto /* const */ & i: v) {
+    for (auto const i: v) {
         cerr << std::setw(3) << (int)i << "&";
     }
     cerr << "\b::";
