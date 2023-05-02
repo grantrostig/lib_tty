@@ -678,7 +678,8 @@ bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_ch
 }
 
 //Kb_key_a_fstat get_kb_key( [[maybe_unused]] bool const is_strip_control_chars) {
-Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars [[maybe_unused]] ) {
+//Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars [[maybe_unused]] ) {
+Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter or get rid of it????
     Hot_key_chars hkc {};
     for ( Simple_key_char first_skc {};
           first_skc = 0, cin.get( first_skc ), hkc.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true;
@@ -747,7 +748,7 @@ void nav_intra_field(Hot_key const & hk, Kb_regular_value & value, unsigned int 
     return;
 }
 
-bool is_ignore_key_file_status ( File_status const file_status ) { // **** CASE on File Status
+bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE on File Status
     switch (file_status) {
     case File_status::other :
         cerr << "is_ignore_key_file_status: other."<<endl; //
