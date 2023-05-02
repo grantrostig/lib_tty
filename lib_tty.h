@@ -102,12 +102,12 @@ using Sigaction_handler_fn_t =  void(
 
 // grostig todo bug? using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
 struct Sigaction_return {
-    int       signal_for_user;
-    struct    sigaction   action_prior;
+    int       signal_for_user;  // todo??: why not init this int?
+    struct    sigaction        action_prior;  // TODO?? what is this special use of struct?  what about an init of this?
 };
 
 struct Sigaction_termination_return {
-  struct sigaction &action_prior1;
+  struct sigaction &action_prior1; /* Structure describing the action to be taken when a signal arrives.  */
   struct sigaction &action_prior2;
   struct sigaction &action_prior3;
   struct sigaction &action_prior4;
@@ -123,9 +123,7 @@ void handler_termination(int const sig, Siginfo_t *, void *);  // todo: NO: void
 void handler_inactivity(int const sig, Siginfo_t *, void *);  // The function invoked when handling an inactivity signal.
 
 Sigaction_termination_return set_sigaction_for_termination(Sigaction_handler_fn_t handler_in); // todo: ideas: use c++20 span.
-// void 				sigaction_restore_for_termination(  struct sigaction const action_old1, struct sigaction const action_old2, struct sigaction const
-// action_old3
-// );
+// void	sigaction_restore_for_termination(  struct sigaction const action_old1, struct sigaction const action_old2, struct sigaction const action_old3 );
 void sigaction_restore_for_termination(Sigaction_termination_return const &);
 
 Sigaction_return set_sigaction_for_inactivity(Sigaction_handler_fn_t handler_in);
@@ -137,12 +135,12 @@ void disable_inactivity_handler(timer_t const inactivity_timer_ptr, int const si
 void print_iostate(std::istream const &stream);
 bool check_equality(Termios const &, Termios const &);
 
-// void termio_get_old ( Termios & /*OUT*/ status_orig_p);
+                                // void termio_get_old ( Termios & /*OUT*/ status_orig_p);
 Termios &termio_get();
 Termios &termio_set_raw();
 Termios &termio_set_timer(cc_t const time);
 void termio_restore(Termios const &terminal_status);
-// void termio_unset_timer( Termios const & terminal_status_orig_p );
+                                // void termio_unset_timer( Termios const & terminal_status_orig_p );
 
 /* The idea is that eof is logical eof like the user typing in a CTL-D, where eof_file_descriptor is when a read fails with that error,
  * but I'm unclear about the exact distinction between those especially with regard to COOKED versus RAW on a tty.
