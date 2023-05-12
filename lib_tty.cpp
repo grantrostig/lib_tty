@@ -10,6 +10,8 @@
 
 //using namespace Lib_tty;
 // or do this>> Lib_tty::C_EOF
+using std::endl, std::cin, std::cout, std::cerr, std::string;
+
 namespace Lib_tty {
 
 template <typename T>

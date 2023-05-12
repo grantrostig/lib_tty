@@ -34,8 +34,8 @@
 //#undef LT_DEBUG   // todo: what was that? my error??
 
 namespace Lib_tty {
+using std::string;
 using namespace std::chrono_literals; // for wait().
-using std::endl, std::cin, std::cout, std::cerr, std::string;
 
 inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
 //inline constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
