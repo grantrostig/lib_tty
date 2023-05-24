@@ -374,18 +374,19 @@ Termios & termio_set_timer(const cc_t time) {  // uses POSIX
     return terminal_status_orig;
 }
 
-/* obsolete because replaced by termio_restore()
-//void termio_unset_timer(const Termios &terminal_status_orig_p) { // uses POSIX
-//    if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, / IN / &terminal_status_orig_p); result == POSIX_ERROR) {
-//        int errno_save = errno;
-//        cerr << "Error termio_unset_timer():"<<errno_save<<", standard in is not a tty keyboard."<<endl;
-//        errno = errno_save;
-//        perror("termio_unset_timer()");
-//        exit(1);
-//    }
-//    cin.sync_with_stdio(true);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
-//    return;
-//} */
+/* obsolete
+void termio_unset_timer(const Termios &terminal_status_orig_p) { // uses POSIX
+    if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, / IN / &terminal_status_orig_p); result == POSIX_ERROR) {
+        int errno_save = errno;
+        cerr << "Error termio_unset_timer():"<<errno_save<<", standard in is not a tty keyboard."<<endl;
+        errno = errno_save;
+        perror("termio_unset_timer()");
+        exit(1);
+    }
+    cin.sync_with_stdio(true);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
+    return;
+}
+*/
 
 /* give it the string "EOF" and you get back 4 or ^D */
 char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::string name) {
