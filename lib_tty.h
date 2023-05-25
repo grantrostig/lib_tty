@@ -130,8 +130,11 @@ Sigaction_termination_return
 set_sigaction_for_termination(Sigaction_handler_fn_t handler_in); // todo: ideas: use c++20 span.
 void sigaction_restore_for_termination(Sigaction_termination_return const &);
 
+/** Only called once internally todo? */
 Sigaction_return
 set_sigaction_for_inactivity(Sigaction_handler_fn_t handler_in);
+
+/* Called once internally and also every time the timer interval needs to be reset to wait for the full time. In other words after we get a character, we start waiting all over again. */
 void set_a_run_inactivity_timer(timer_t const &inactivity_timer_ptr, int const seconds);
 
 std::tuple<timer_t &, int, struct sigaction>
@@ -139,6 +142,7 @@ enable_inactivity_handler(int const seconds);
 void disable_inactivity_handler(timer_t const inactivity_timer_ptr, int const sig_user, struct sigaction const old_action);
 
 void print_iostate(std::istream const &stream);
+
 bool check_equality(Termios const &, Termios const &);
 
 Termios &termio_get();
@@ -267,12 +271,16 @@ using Hotkey_o_errno = std::variant<Hot_key, Lt_errno>; /// _o_ == "exclusive or
 
 using Hot_key_o_fstat = std::variant<Hot_key, File_status>; /// _o_ == "exclusive or"
 
-// a "Kb_key" is one char or one Hot_key, ie. the result of hitting any key whether it is special or not. todo: does this include an EOF character?
+/** a "Kb_key" is one char or one Hot_key, ie. the result of hitting any key whether it is special or not. todo: does this include an EOF character? */
 using Kb_key_optvariant = std::variant<std::monostate, Simple_key_char, Hot_key_chars, Hot_key, File_status>;              // todo: maybe File_status is not needed in RAW case.
+
+/** a pair tells us if we got a Kb_key and?, or? is we got EOF. todo?: */
 using Kb_key_a_fstat = std::pair<Kb_key_optvariant, File_status>; // _a_ == "and"  todo: we have a problem with File_status, don't need it twice!  This one is not used.
                                                                   // todo: complete this: replace std::tuple/std::pair with struct!
+
+/** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. todo?: */
 using Kb_value_plus = std::tuple<Kb_regular_value, Hot_key, File_status>;
-// using Kb_value_o_hkey    = std::variant< Kb_regular_value, Hot_key >;
+// todo?: is this old, or a new idea? using Kb_value_o_hkey    = std::variant< Kb_regular_value, Hot_key >;
 
 std::optional<Hot_key>
 find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
@@ -280,7 +288,10 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
 Kb_key_a_fstat
 get_kb_key(bool const is_strip_control_chars = true);
 
-void nav_intra_field(Hot_key const &hk, Kb_regular_value &value, unsigned int &value_index, bool const is_echo_chars = true);
+/** todo?: Likely should be in calling program using this library? since never used in Lib_tty. */
+
+/** not used??  was this an un-fully implemented enhancement? */
+// void nav_intra_field(Hot_key const &hk, Kb_regular_value &value, unsigned int /*OUT*/ &value_index, bool const is_echo_chars = true);
 
 /** Seeks to get n simple_key_chars from keyboard in raw stty mode.
  *

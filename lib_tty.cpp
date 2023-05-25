@@ -8,27 +8,22 @@
 #include <type_traits>
 #include <concepts>
 
-//using namespace Lib_tty;
-// or do this>> Lib_tty::C_EOF
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 
+// todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
+/** Lib_tty by GrantRostig.com */
 namespace Lib_tty {
 
+/* *** todo??: C++20? illustration of how to print vectors and some other containers with various types of members/structs. */
 template <typename T>
-concept can_insert = requires ( std::ostream & out, T my_t ) {
-    //{ out << my_t; } -> is_convertable <std::ostream & >;
-    { out << my_t };
-    // does my_t have std::ostream_iterator<T>
+concept can_insert = requires( std::ostream & out, T my_t ) {
+    // todo??: is this the same, or just more clear to me? $ { out << my_t; } -> is_convertable <std::ostream & >;
+    { out << my_t }; // todo??: does my_t have std::ostream_iterator<T>?  how related, or needed, or my misunderstanding
 };
 
-//template<can_insert T>            // utility f() to print vectors
-//std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) 
-
-//template<typename T>            // utility f() to print vectors
-//std::ostream &operator<<(std::ostream &out, const std::forward_iterator<T> &v)   // needs iterator concept
-
 template<typename T>            // utility f() to print vectors
-std::ostream& operator<<(std::ostream &out, const std::vector<T> &v)
+std::ostream&
+operator<<( std::ostream & out, const std::vector<T> & v)
     requires can_insert<T>
 {
     if (!v.empty()) {
@@ -39,7 +34,12 @@ std::ostream& operator<<(std::ostream &out, const std::vector<T> &v)
     }
     return out;
 }
+// todo??: what is this junk, or something very specific?
+//template<typename T>            // utility f() to print vectors
+//std::ostream &operator<<(std::ostream &out, const std::forward_iterator<T> &v)   // needs iterator concept
+/* *** end of C++20 illustration */
 
+/** Obsolete if above works? */
 void print_vec( const std::vector<char> & v) {  // for debugging.
     cerr << "::";
     for (auto const i: v) {
@@ -176,19 +176,7 @@ set_sigaction_for_termination(Sigaction_handler_fn_t handler_in) {  // todo: TOD
     return { action_prior_SIGINT, action_prior_SIGQUIT, action_prior_SIGTERM, action_prior_SIGTSTP, action_prior_SIGHUP };
 }
 
-//void sigaction_restore_for_termination(struct sigaction const & action_prior1, const struct sigaction & action_prior2, struct sigaction const & action_prior3) {
 void sigaction_restore_for_termination( Sigaction_termination_return const & actions_prior ) {
-    /*/ if (sigaction( SIGINT,  &action_prior1, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
-    // else cerr << "SIGINT set to original state." << endl;
-    // if (sigaction( SIGQUIT, &action_prior2, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
-    // else cerr << "SIGQUIT set to original state." << endl;
-    // if (sigaction( SIGTERM,  &action_prior3, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
-    // else cerr << "SIGTERM set to original state." << endl;
-    // if (sigaction( SIGTSTP,  &action_prior5, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
-    // else cerr << "SIGTSTP set to original state." << endl;
-    // if (sigaction( SIGHUP,  &action_prior6, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
-    // else cerr << "SIGHUP set to original state." << endl;
-    */
     if (sigaction( SIGINT,  &actions_prior.action_prior1, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
     else cerr << "SIGINT set to original state." << endl;
     if (sigaction( SIGQUIT, &actions_prior.action_prior2, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
@@ -202,9 +190,8 @@ void sigaction_restore_for_termination( Sigaction_termination_return const & act
     return;
 }
 
-/* Only called once internally */
 Sigaction_return
-set_sigaction_for_inactivity(Sigaction_handler_fn_t handler_in ) {
+set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
     struct sigaction action {};
     sigemptyset( &action.sa_mask );
     action.sa_flags 	|= ~SA_SIGINFO;  // Invoke signal-catching function with three arguments instead of one.
@@ -732,7 +719,9 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
     assert(false);
 }
 
-void nav_intra_field(Hot_key const & hk, Kb_regular_value & value, unsigned int /*OUT*/ & value_index,
+/** not used??  was this an un-fully implemented enhancement? */
+//void nav_intra_field(Hot_key const & hk, Kb_regular_value & value, unsigned int /* OUT */ & value_index,
+/*
                      const bool is_echo_chars) {
     if ( value.length() < value_index ) {
         cerr << "nav_intra_field(): can't intra-navigate an empty field.\n";
@@ -749,7 +738,7 @@ void nav_intra_field(Hot_key const & hk, Kb_regular_value & value, unsigned int 
         cerr << "\anav_intra_field(): Hot_key not supported.\n";
     }
     return;
-}
+} */
 
 bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE on File Status
     switch (file_status) {
