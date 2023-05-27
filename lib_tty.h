@@ -127,7 +127,7 @@ void handler_termination(int const sig, Siginfo_t *, void *);
 void handler_inactivity(int const sig, Siginfo_t *, void *);  // The function invoked when handling an inactivity signal.
 
 Sigaction_termination_return
-set_sigaction_for_termination(Sigaction_handler_fn_t handler_in); // todo: ideas: use c++20 span.
+set_sigaction_for_termination(Sigaction_handler_fn_t handler_in);
 void sigaction_restore_for_termination(Sigaction_termination_return const &);
 
 /** Only called once internally todo? */

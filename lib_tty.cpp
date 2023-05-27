@@ -620,7 +620,7 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         once = true;
         if ( hot_keys.empty() )
         #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-value"
+        #pragma GCC diagnostic ignored "-Wunused-value"  // todo?: is this the best way to do this, find other occurences in code to fix?
         assert( ("consider_hot_key() lib_tty logic error: we don't allow empty hotkeys",false) );
         #pragma GCC diagnostic pop
         std::sort( hot_keys.begin(), hot_keys.end() );
