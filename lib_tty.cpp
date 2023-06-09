@@ -11,7 +11,6 @@
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 
 // todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
-/** Lib_tty by GrantRostig.com */
 namespace Lib_tty {
 
 /* *** todo??: C++20? illustration of how to print vectors and some other containers with various types of members/structs. */

@@ -33,20 +33,23 @@
 //#define LT_NDEBUG   // todo: what was I thinking here? my error??
 //#undef LT_DEBUG   // todo: what was I thinking here? my error??
 
+/** Lib_tty by GrantRostig.com
+Used to read keyboard raw character even within a multibyte sequence such as with functions keys such as F1
+ */
 namespace Lib_tty {
 using std::string;
-using namespace std::chrono_literals; // for wait().
+using namespace std::chrono_literals; // for wait().  todo??: is there a better way? Marc may know.
 
 inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
 //inline constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
 //inline constexpr   ssize_t     C_FERR =            EOF;
 inline constexpr   ssize_t     POSIX_EOF =         0;
 inline constexpr   ssize_t     POSIX_ERROR =       -1;
-using       Lt_errno =  int;                    // using Lt_errno = typeof (errno);
+using              Lt_errno =  int;                    // using Lt_errno = typeof (errno);
 inline constexpr   Lt_errno    E_NO_MATCH =        1;  // todo: new convention for my errno like codes
 inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  // todo: new convention for my errno like codes
-inline constexpr   ssize_t     NO_MORE_CHARS =     0;  // Identifier to add to CSI_ESC to denote it is not part of a multibyte sequence.
-inline constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automatic additional chars appear from the keyboard, used for CSI_ESC.
+inline constexpr   ssize_t     NO_MORE_CHARS =     0;  // Identifier to concatinate to a CSI_ESC to denote that the CSI_ESC is alone and is not part/start of a multibyte sequence.
+inline constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automatic additional chars appear/are readable from the keyboard, used for CSI_ESC handling.
 
 /**  *** POSIX level declarations *** */
 
