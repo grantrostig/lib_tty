@@ -28,7 +28,7 @@
 #include <termios.h>
 // #include <unistd.h>  // I thought I needed it, but apparently not.
 
-#define NDEBUG   // todo: what was that? my error??
+//#define NDEBUG   // define if asserts are NOT to be checked.
 
 //#define LT_NDEBUG   // todo: what was I thinking here? my error??
 //#undef LT_DEBUG   // todo: what was I thinking here? my error??
