@@ -7,8 +7,14 @@
 #include <iostream>
 #include <type_traits>
 #include <concepts>
+//#include <stacktrace>
 
 using std::endl, std::cin, std::cout, std::cerr, std::string;
+
+//int nested_func(int c)
+//{
+    //std::cout << std::stacktrace::current() << 'hello\n';
+//}
 
 // todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
 namespace Lib_tty {
@@ -322,9 +328,7 @@ Termios & termio_set_raw() { // uses POSIX
         exit(1);
     }
     Termios terminal_status_actual { termio_get() };
-    if ( !check_equality( terminal_status_actual, terminal_status_new )) {
-        cerr << "lib_tty: termio_restore() termio not fully raw." << endl;
-        assert( false ); }
+    assert( check_equality( terminal_status_actual, terminal_status_new) && ") termio not fully raw.");
     return terminal_status_orig;
 }
 
@@ -354,9 +358,7 @@ Termios & termio_set_timer(const cc_t time) {  // uses POSIX
         exit(1);
     }
     Termios terminal_status_actual { termio_get() };
-    if ( !check_equality( terminal_status_actual, terminal_status_new )) {
-        cerr << "lib_tty: termio_restore() termio not fully raw." << endl;
-        assert( false ); }
+    assert ( !check_equality( terminal_status_actual, terminal_status_new ) && "lib_tty: termio_restore() termio not fully raw.");
     return terminal_status_orig;
 }
 
@@ -380,9 +382,11 @@ char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::stri
         if ( ch.posix_name == name )
             return ch.posix_char;
     }
-    cerr << "posix_to_char(): bad name: <"<<name<<">\n";
-    assert(false);
-    return {};  // error condition  todo: fix this up.
+    //cerr << "posix_to_char(): bad name: <"<<name<<">\n";
+    //assert ( false && "posix_to_char(): bad name: <"); <<name<<">\n";
+    std::string err_message {"bad_name >"+name+"<"}; //cerr <<  message; // todo??: is this really a bad idea?  How do I get rid of the clan never read error easily?
+    assert ( false && err_message.c_str());
+    // we never get here.
 }
 
 /* give it "CSI [ A" get back the string name of the hot_key, ie. "right arrow" */
@@ -617,15 +621,16 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     };
     if (static bool once {false}; !once) {
         once = true;
-        if ( hot_keys.empty() )
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-value"  // todo?: is this the best way to do this, find other occurences in code to fix?
-        assert( ("consider_hot_key() lib_tty logic error: we don't allow empty hotkeys",false) );
-        #pragma GCC diagnostic pop
+        if ( hot_keys.empty() ) {
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wunused-value"  // todo?: is this the best way to do this, find other occurences in code to fix?
+            assert( false && "consider_hot_key() lib_tty logic error: we don't allow empty hotkeys");
+            #pragma GCC diagnostic pop
+        }
         std::sort( hot_keys.begin(), hot_keys.end() );
         if ( auto dup = std::adjacent_find( hot_keys.begin(), hot_keys.end(), is_hk_chars_equal ); dup != hot_keys.end() ) {
             cerr << "consider_hot_key() duplicate hot_key:" << dup->my_name << endl;
-            assert( (false) && "lib_tty logic error: we don't allow duplicate hotkey character sequences" );
+            assert( false && "lib_tty logic error: we don't allow duplicate hotkey character sequences" );
         }
 #ifdef LT_DEBUG
         for (auto & i : hot_keys) {
@@ -657,10 +662,8 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 }
 
 bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_chars = false ) {
-    //assert( ("Only one may be true at a time.", !( is_strip_control_chars && is_password)) );
-
+    // assert( !( is_allow_control_chars && is_password) && "Only one may be true at a time.") ;  //todo: fix this
     int const i	{ static_cast<int>(kbc) };
-
     return is_allow_control_chars ? ( isprint(i) || iscntrl(i) ) && !( isspace(i) || i==17 || i==19 ) 	// allowing control chars in pw, except: spaces and XON & XOFF,
                                                                                                             // but note some may have been parsed out as hot_keys prior to this test.
                                   :   isprint(i);
@@ -714,7 +717,7 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
                 return { hkc, File_status::unexpected_data };
             }
         }
-    } // * end loop *
+      } // * end loop *
     assert(false);
 }
 
@@ -755,7 +758,7 @@ bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE o
         break;
     case File_status::eof_file_descriptor :
         cerr << "\ais_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?"<<endl; //
-        assert((false) && "is_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?");  // todo: is this correct, or should we not ignore it?
+        assert( false && "is_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?");  // todo: is this correct, or should we not ignore it?
         break;
     }
     return true;  // we add back the input character that we have decided to ignore.
@@ -767,10 +770,10 @@ bool is_ignore_hotkey_function_cat( HotKeyFunctionCat const hot_key_function_cat
         switch ( hot_key_function_cat ) {
         case HotKeyFunctionCat::other :
                                             cerr << "get_kb_keys_raw(): HotKeyFunctionCat::other .\n";
-            cout << "\aLast key press not handled here, so ignored."<<endl;
-            assert(false);  // todo: not sure about what cases are and how to handle
+            cout << "\aLast key press not handled here, so ignored.\n";
+            assert(false && "\aHotKeyFunctionCat::other not sure about what cases are and how to handle." );  // todo:
             return false;
-            //break;  // todo: so does this also do a break?
+            break;
         case HotKeyFunctionCat::nav_field_completion :
                                             cerr << "get_kb_keys_raw(): Navigation completion.\n";
             break;
@@ -819,13 +822,13 @@ bool is_ignore_key_skchar( Simple_key_char const skc,
         cout << "Last key press invalid/unusable here, so ignored."<<endl;
         return true;
     }
-    assert(false);
+    assert(false && "we never get here.");
 }
 
 Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
                               bool const is_require_field_completion_key, bool const echo_skc_to_tty,
                               bool const is_strip_control_chars, bool const is_password ) {
-    assert( (length_in_simple_key_chars > 0 ) && "too small get lenght." );   // todo: can debug n>1 case later.
+    assert( length_in_simple_key_chars > 0 && "too small get length." );   // todo: can debug n>1 case later.
     Kb_regular_value 	value_rv 				{}; //  *** need to load the 3 "_rv" vars below
     Hot_key		 		hot_key_rv				{};
     File_status  		file_status_rv			{File_status::other};
@@ -857,7 +860,7 @@ Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
                 //                }
                 is_ignore_key_hk     = is_ignore_hotkey_function_cat( hot_key_function_cat );
             }
-            else  assert((false) && "ERROR:Not sure why we got here, we require that either a Simple_key_char or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
+            else  assert( false && "ERROR:Not sure why we got here, we require that either a Simple_key_char or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
         }
         if ( !is_ignore_key_fd || !is_ignore_key_skc || !is_ignore_key_hk )
             --additional_skc;

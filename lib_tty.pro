@@ -5,7 +5,7 @@ CONFIG += staticlib
 
 # CONFIG += c++17
 QMAKE_CXXFLAGS += \
-        -std=c++2a
+        -std=c++2b
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
