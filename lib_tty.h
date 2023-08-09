@@ -1,10 +1,11 @@
-#ifndef LIB_TTY_H
-#define LIB_TTY_H
-#define _POSIX_C_SOURCE 200809L
 /*
  * Copyright 2019 Grant Rostig all rights reserved,
  * BOOST license
  */
+#ifndef LIB_TTY_H
+#define LIB_TTY_H
+#define _POSIX_C_SOURCE 200809L
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -30,19 +31,22 @@
 
 //#define NDEBUG   // define if asserts are NOT to be checked.
 
-//#define LT_NDEBUG   // todo: what was I thinking here? my error??
-//#undef LT_DEBUG   // todo: what was I thinking here? my error??
-
-/** Lib_tty by GrantRostig.com
-Used to read keyboard raw character even within a multibyte sequence such as with functions keys such as F1
+/** Lib_tty README
+ *  Used to read keyboard / tty/ kb input on a character by character basis as raw characters even within a multibyte sequence
+ *  such as with functions keys such as F1. Also is able to react to a single key press without waiting for CR or Enter.
+ *  Uses: C++17 (or probaly even C++11), except for one test function that demonstrates C++ Concepts and can be commented out easily.
+ *  Requires: termios.h which appears to be readily available in Fedora and other Linux variants, from the POSIX standard.
+ *  Can be tested using this main program, for which lib_tty was created: https://github.com/grantrostig/file_maintenance_clipped
+ *  The Qt Creator IDE was used to edit and compile it.
+ *  This project is in early stages of development, but does seem to work.
  */
 namespace Lib_tty {
 using std::string;
 using namespace std::chrono_literals; // for wait().  todo??: is there a better way? Marc may know.
 
 inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
-//inline constexpr   ssize_t     C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
-//inline constexpr   ssize_t     C_FERR =            EOF;
+//inline constexpr   ssize_t     C_EOF =           EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
+//inline constexpr   ssize_t     C_FERR =          EOF;
 inline constexpr   ssize_t     POSIX_EOF =         0;
 inline constexpr   ssize_t     POSIX_ERROR =       -1;
 using              Lt_errno =  int;                    // using Lt_errno = typeof (errno);
@@ -88,14 +92,25 @@ inline constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automa
  * c_cc[5] VTIME  0	 	  =			10
  * c_cc[6] VMIN   1	 	  =			 0
  * c_lflag	    3538{7}  3538{5}	 =
-
-//if ( char * my_tty_name = ttyname(fileno(stdin)); my_tty_name == nullptr ) // could have used isatty().
-//    perror("user_input_raw: not a tty.");
-//else
-//    cerr<< "ttyname: "<< my_tty_name << endl;
+ *
+ * Not sure if this code would be useful, I removed it for some reason.  Maybe what I have now serves the same purpose, or
+ * if I choose to do it later and so there is no such check currently.
+    //if ( char * my_tty_name = ttyname(fileno(stdin)); my_tty_name == nullptr ) // could have used isatty().
+    //    perror("user_input_raw: not a tty.");
+    //else
+    //    cerr<< "ttyname: "<< my_tty_name << endl;
  */
 
-using Termios =     termios;    // Tty terminal IO & speed structure, used for setting them. // C++ class name capitalization convention of the POSIX C type;
+/**  *** POSIX termial IO level declarations *** */
+using Termios = termios;    // Tty terminal IO & speed structure, used for setting them. // C++ class name capitalization convention of the POSIX C type;
+Termios &termio_get();
+Termios &termio_set_raw();
+Termios &termio_set_timer( cc_t const time);
+void     termio_restore( Termios const &terminal_status);       /** restore terminal state to what it was when program was started??? todo: verify my comment here.
+bool     check_equality( Termios const &, Termios const &); 	/** used for debugging */
+void     print_iostate( std::istream const &stream); 		/** print the information to cerr, used for debugging */
+
+/**  *** POSIX OS Signals level declarations *** */
 using Siginfo_t =   siginfo_t;  // The siginfo_t structure is passed as the second parameter to a user signal handler function, if the SA_SIGINFO flag was specified when the handler
                                 // was installed with sigaction().  // C++ class name capitalization convention of the POSIX C type;
 using Sigaction_handler_fn_t =  void(
@@ -108,7 +123,7 @@ using Sigaction_handler_fn_t =  void(
 
 struct Sigaction_return {
     int       signal_for_user;  // todo??: why not init this int?
-    struct    sigaction
+    struct    sigaction   		// Structure describing the action to be taken when a signal arrives.
                     action_prior;  // TODO?? what is this special use of struct statement?  What about an init of this?
 };
 // todo??: could this be used instead of above? >> using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
@@ -121,38 +136,30 @@ struct Sigaction_termination_return {
   struct sigaction &action_prior5;
 };
 
-/** print the signal information to cerr */
-void print_signal(int const signal);
-
 /** The signal handler function to be called when signals relating to "job control" are received, such as when handling a termination signal. */
 void handler_termination(int const sig, Siginfo_t *, void *);
 /** The signal handler function to be called when signals relating to "job control" are received, such as when handling a inactivity??? signal. */
 void handler_inactivity(int const sig, Siginfo_t *, void *);  // The function invoked when handling an inactivity signal.
 
 Sigaction_termination_return
-set_sigaction_for_termination(Sigaction_handler_fn_t handler_in);
+     set_sigaction_for_termination(Sigaction_handler_fn_t handler_in);
 void sigaction_restore_for_termination(Sigaction_termination_return const &);
 
 /** Only called once internally todo? */
 Sigaction_return
 set_sigaction_for_inactivity(Sigaction_handler_fn_t handler_in);
 
-/* Called once internally and also every time the timer interval needs to be reset to wait for the full time. In other words after we get a character, we start waiting all over again. */
-void set_a_run_inactivity_timer(timer_t const &inactivity_timer_ptr, int const seconds);
+/** Called once internal to Lib_tty,
+ *  and also every time the timer interval needs to be reset to wait for the full time,
+ *  even if it had not expired.
+ *  In other words after we get a character, we start waiting all over again. */
+void set_a_run_inactivity_timer(timer_t const &inactivity_timer_ptr, int const seconds);  // a = and
 
-std::tuple<timer_t &, int, struct sigaction>
+std::tuple<timer_t &, int, struct sigaction>  // todo??:  I would prefer to define this type using a "using", but I think I had trouble with the "struct" and gave up.
 enable_inactivity_handler(int const seconds);
 void disable_inactivity_handler(timer_t const inactivity_timer_ptr, int const sig_user, struct sigaction const old_action);
 
-void print_iostate(std::istream const &stream);
-
-bool check_equality(Termios const &, Termios const &);
-
-Termios &termio_get();
-Termios &termio_set_raw();
-Termios &termio_set_timer(cc_t const time);
-void termio_restore(Termios const &terminal_status);
-                                /* void termio_unset_timer( Termios const & terminal_status_orig_p ); // obsolete because replaced by termio_restore(), but will I need it again? */
+void print_signal(int const signal); 					/** print the signal information to cerr, used for debugging */
 
 /**  *** Application level declarations *** */
 
@@ -239,6 +246,7 @@ struct Ascii_posix_relation {
   char ascii_char{};      // ascii_char and posix_char appear to be the same.  Don't remember why I have both separately, probably some sort of flexibility...?
   char posix_char{};
 };
+
 /** a lookup table for keyboard key presses */
 using Ascii_Posix_map = std::vector<Ascii_posix_relation>; // todo: use proper capitalization.
 
@@ -291,8 +299,6 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
 Kb_key_a_fstat
 get_kb_key(bool const is_strip_control_chars = true);
 
-/** todo?: Likely should be in calling program using this library? since never used in Lib_tty. */
-
 /** not used??  was this an un-fully implemented enhancement? */
 // void nav_intra_field(Hot_key const &hk, Kb_regular_value &value, unsigned int /*OUT*/ &value_index, bool const is_echo_chars = true);
 
@@ -310,10 +316,10 @@ get_kb_key(bool const is_strip_control_chars = true);
  * The user's goal is to just grab one key and take action such as in a menu, where a selection is just one key.
  * However, in case some field would want automatic action on n>1, we have provided that feature.
  * Maybe a menu takes two keys?  Probably not, but the feature exists.
+ *
  */
 Kb_value_plus get_kb_keys_raw(size_t length_in_simple_key_chars, bool const is_require_field_completion = true, bool const echo_skc_to_tty = true,
                               bool const is_strip_control_chars = true, bool const is_password = false);
 
 }  // end namespace
-
 #endif // LIB_TTY_H

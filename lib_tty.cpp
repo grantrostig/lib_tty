@@ -246,7 +246,7 @@ void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_us
     if ( sigaction(    sig_user, &old_action, nullptr) 	== POSIX_ERROR) { perror("lib_tty:disable_inactivity_handler:sigaction"); exit(1); } // should print out message based on ERRNO // todo: fix this up.  TODO __THROW ???
 }
 
-void print_iostate(const std::istream &stream) {  // todo: TODO how do I pass in cin or cout to this? gmail
+void print_iostate(const std::istream &stream) {  // Used for debugging. // todo: TODO how do I pass in cin or cout to this?
     cerr << "lib_tty:print_iostate(): ";
     if (stream.rdstate() == std::ios_base::goodbit) cerr << "goodbit only, ";
     if (stream.rdstate() &  std::ios_base::goodbit) cerr << "goodbit, ";
@@ -256,7 +256,7 @@ void print_iostate(const std::istream &stream) {  // todo: TODO how do I pass in
     cerr << "." << endl;
 }
 
-bool check_equality(const Termios &terminal_status, const Termios &terminal_status2){
+bool check_equality(const Termios &terminal_status, const Termios &terminal_status2){  // Used for debugging using assert().
     /* https://embeddedgurus.com/stack-overflow/2009/12/effective-c-tip-8-structure-comparison/
      * https://isocpp.org/blog/2016/02/a-bit-of-background-for-the-default-comparison-proposal-bjarne-stroustrup
      * https://stackoverflow.com/questions/141720/how-do-you-compare-structs-for-equality-in-c
@@ -721,7 +721,7 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
     assert(false);
 }
 
-/** not used??  was this an un-fully implemented enhancement? */
+/// Not used, was this an un-fully implemented enhancement?
 //void nav_intra_field(Hot_key const & hk, Kb_regular_value & value, unsigned int /* OUT */ & value_index,
 /*
                      const bool is_echo_chars) {
