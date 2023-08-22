@@ -26,6 +26,7 @@ HEADERS += \
 
 LIBS += \
         -lpthread \
+        -lstdc++_libbacktrace 			\
         -lrt
 
 # Default rules for deployment.

@@ -44,16 +44,17 @@ namespace Lib_tty {
 using std::string;
 using namespace std::chrono_literals; // for wait().  todo??: is there a better way? Marc may know.
 
-inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
-//inline constexpr   ssize_t     C_EOF =           EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
-//inline constexpr   ssize_t     C_FERR =          EOF;
-inline constexpr   ssize_t     POSIX_EOF =         0;
+//inline constexpr   ssize_t   C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
+//inline constexpr   ssize_t   C_FERR =            EOF;
+//inline constexpr   ssize_t   POSIX_EOF =         0;
 inline constexpr   ssize_t     POSIX_ERROR =       -1;
+
 using              Lt_errno =  int;                    // using Lt_errno = typeof (errno);
 inline constexpr   Lt_errno    E_NO_MATCH =        1;  // todo: new convention for my errno like codes
 inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  // todo: new convention for my errno like codes
 inline constexpr   ssize_t     NO_MORE_CHARS =     0;  // Identifier to concatinate to a CSI_ESC to denote that the CSI_ESC is alone and is not part/start of a multibyte sequence.
 inline constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automatic additional chars appear/are readable from the keyboard, used for CSI_ESC handling.
+inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
 
 /**  *** POSIX level declarations *** */
 
@@ -106,14 +107,13 @@ using Termios = termios;    // Tty terminal IO & speed structure, used for setti
 Termios &termio_get();
 Termios &termio_set_raw();
 Termios &termio_set_timer( cc_t const time);
-void     termio_restore( Termios const &terminal_status);       /** restore terminal state to what it was when program was started??? todo: verify my comment here.
-bool     check_equality( Termios const &, Termios const &); 	/** used for debugging */
-void     print_iostate( std::istream const &stream); 		/** print the information to cerr, used for debugging */
+void     termio_restore( Termios const &terminal_status);      	/** restore terminal state to what it was when program was started??? todo: verify my comment here. */
 
 /**  *** POSIX OS Signals level declarations *** */
 using Siginfo_t =   siginfo_t;  // The siginfo_t structure is passed as the second parameter to a user signal handler function, if the SA_SIGINFO flag was specified when the handler
                                 // was installed with sigaction().  // C++ class name capitalization convention of the POSIX C type;
-using Sigaction_handler_fn_t =  void(
+using Sigaction_handler_fn_t =
+    void(
         int,
         Siginfo_t *,
         void *                      // ucontext_t*
@@ -139,18 +139,19 @@ struct Sigaction_termination_return {
 /** The signal handler function to be called when signals relating to "job control" are received, such as when handling a termination signal. */
 void handler_termination(int const sig, Siginfo_t *, void *);
 /** The signal handler function to be called when signals relating to "job control" are received, such as when handling a inactivity??? signal. */
-void handler_inactivity(int const sig, Siginfo_t *, void *);  // The function invoked when handling an inactivity signal.
+void handler_inactivity(int const  sig, Siginfo_t *, void *);  // The function invoked when handling an inactivity signal.
 
+/** Internally called only. */
 Sigaction_termination_return
-     set_sigaction_for_termination(Sigaction_handler_fn_t handler_in);
+set_sigaction_for_termination(Sigaction_handler_fn_t handler_in);
 void sigaction_restore_for_termination(Sigaction_termination_return const &);
 
-/** Only called once internally todo? */
+/** Internally called only. */
 Sigaction_return
 set_sigaction_for_inactivity(Sigaction_handler_fn_t handler_in);
 
-/** Called once internal to Lib_tty,
- *  and also every time the timer interval needs to be reset to wait for the full time,
+/** Internally called only at this time.
+ *  Initially and every time the timer interval needs to be reset to wait for the full time,
  *  even if it had not expired.
  *  In other words after we get a character, we start waiting all over again. */
 void set_a_run_inactivity_timer(timer_t const &inactivity_timer_ptr, int const seconds);  // a = and
@@ -159,11 +160,15 @@ std::tuple<timer_t &, int, struct sigaction>  // todo??:  I would prefer to defi
 enable_inactivity_handler(int const seconds);
 void disable_inactivity_handler(timer_t const inactivity_timer_ptr, int const sig_user, struct sigaction const old_action);
 
-void print_signal(int const signal); 					/** print the signal information to cerr, used for debugging */
+/** debugging only functions */
+void print_signal(   int const signal); 					/** print the signal information to cerr, used for debugging */
+bool check_equality( Termios const &, Termios const &); 	/** Debugging only */
+void print_iostate(  std::istream const &stream); 			/** Debugging only - print the information to cerr */
 
-/**  *** Application level declarations *** */
+/**  *** Application Level Declarations *** */
 
-/** There are two semantic EOFs: 1) eof_simple_key_char is a logical eof intended by the user by typing in a CTL-D,
+/** There are two semantic EOFs:
+ * 1) eof_simple_key_char is a logical eof intended by the user by typing in a CTL-D,
  * 2) eof_file_descriptor occurs when a read() fails with that error.
  * But I'm unclear about the exact distinction between these two especially with regard to COOKED versus RAW on a tty.
  * todo: refactor these two out since I don't think we need a separate EOFs, since in tty raw mode we recognize ^D as a hot_key. */
@@ -175,37 +180,37 @@ enum class File_status {
   other                // probably means got a good value.
 };                     // todo: eof is a hot_key, so should not be here.
 
-/** the user level intent of all HotKeys */
+/** the user level intent of all "Categories" of HotKeys */
 enum class HotKeyFunctionCat {
-  nav_field_completion,     // nav == navigation between elements of a certain type.
-  nav_intra_field,
+  nav_field_completion,     // nav == user navigation between elements of a certain type.  here user want to finish that field input and move to next thing.
+  nav_intra_field,			// user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
 
-  navigation_esc,           // is used similarly to nav_field_completion, todo:not sure if it is needed seperately.
+  navigation_esc,           // user ESCAPE key, is used similarly to nav_field_completion, todo:not sure if it is needed seperately.
 
-  job_control,              // todo: not implemented yet, or mapped in hot_keys vector. maybe is not a HotKeyFunctionCat?? // QUIT Ctrl-z,  STOP Ctrl-s, START Ctrl-q ,
-  help_popup,               // like F1 for help.
-  editing_mode,             // <Insert> toggles this.
-  na,
-  other                     // used as ::na filler designation, probably means none.
+  job_control,              // todo: not implemented yet, nor mapped in hot_keys vector. maybe this is not a HotKeyFunctionCat?? // QUIT Ctrl-z,  STOP Ctrl-s, START Ctrl-q ,
+  help_popup,               // user is asking for help using keyboard, ie. F1 for help.
+  editing_mode,             // <Insert> (or possibly other) HotKey toggles this.
+  na,						// todo:
+  other                     // todo:, used as ::na filler designation, probably means none.
 };
 
-/** the user level intent of a pressed HotKey of this type */
-enum class FieldCompletionNav { // the intent of the user as demonstrated by the last navigation hot_key entered at a prompt. NOTE: each of these has a HotKeyFunctionCat (or is
-                                // ignored/not currently assigned) in hot_keys object in .cpp file.  NOTE: also, each has multiple entries in FNIMap object in file_maintenance
-                                // project which uses lib_tty library.
-  no_result,                    // there was no interaction, and so there is no result.  is this different from ::na?
+/** the user level intent of a pressed HotKey of this HotKeyFunctionCat "Category" */
+enum class FieldCompletionNav { ///the intent of the user as demonstrated by the last navigation hot_key entered at a prompt. NOTE: each of these has a HotKeyFunctionCat (or is
+                                /// ignored/not currently assigned) in hot_keys object in .cpp file.  NOTE: also, each has multiple entries in FNIMap object in file_maintenance
+                                /// project which uses lib_tty library.
+  no_result,                    /// there was no interaction, and so there is no result.  is this different from ::na?
   up_one_field,
-  down_one_field, // MOST COMMON response, meaning <CR> <ENTER> <RETURN> key
-  skip_one_field, // same as <TAB> with no data value.
+  down_one_field, 				// MOST COMMON response, meaning <CR> <ENTER> <RETURN> key
+  skip_one_field, 				// same as <TAB> with no data value.
   skip_to_end_of_fields,
   page_up,
   page_down,
-  browse_up,       // if at default value selection input, then select prior value on list of default values, else consider this as 'up_one_field'.
-  browse_down,     //  also see prior comment.
-  save_form_as_is, // skip_to_end_of_fields and save?
+  browse_up,       				// if at default value selection input, then select prior value on list of default values, else consider this as 'up_one_field'.
+  browse_down,     				//  also see prior comment.
+  save_form_as_is, 				// skip_to_end_of_fields and save?
 
-  esc, // skip_to_end_of_fields and don't save, just prompt?
-  // help,  // todo: is a bad duplicate from HotKeyFunctionCat?
+  esc, 							// skip_to_end_of_fields and don't save, just prompt?
+  //help,  						// todo: is this a erronious duplicate from HotKeyFunctionCat?
 
   eof,                                 // same handling as esc?, no more like <Enter> but save_form_as_is, then get out? todo:
   interrupt_signal,                    // same as esc, no, more like CTRL-C. todo:
@@ -217,8 +222,8 @@ enum class FieldCompletionNav { // the intent of the user as demonstrated by the
   na
 };
 
-/** the user level intent of a pressed HotKey of this type */
-enum class FieldIntraNav { // each of these has a HotKeyFunctionCat
+/** the user level intent of a pressed HotKey of this HotKeyFunctionCat "Category" */
+enum class FieldIntraNav {
   move_left,
   move_right,
   backspace_left_erase, // delete char to left of cursor
@@ -230,39 +235,41 @@ enum class FieldIntraNav { // each of these has a HotKeyFunctionCat
   na
 };
 
-/** the user level handling of subsequent character key presses */
-enum class Input_mode { // todo: not implemented yet.  // clashes with the boolean I toggle, that is partially implemented.
+/** todo: the user level handling of subsequent character key presses
+enum class Input_mode { /// todo: not implemented yet.  // clashes with the boolean I toggle in  HotKeyFunctionCat????, that is partially implemented.
   insert,
   overwrite
-};
+}; */
 
-/** each row of struct documents a key press within various nameing conventions */
+/** each row of this struct, documents a potential user key press, and places them within various nameing conventions, mostly ASCII and POSIX */
 struct Ascii_posix_relation {
   string ascii_id{};
   string ascii_name{};
   string posix_name{};
-  char ascii_ctrl_char{}; // note: lowercase and uppercase: for example Ctrl-j and J.
-  char c_char{};          // note: \n for LF
-  char ascii_char{};      // ascii_char and posix_char appear to be the same.  Don't remember why I have both separately, probably some sort of flexibility...?
-  char posix_char{};
+  char   ascii_ctrl_char{}; // note: lowercase and uppercase: for example Ctrl-j and J.
+  char   c_char{};          // note: \n for LF
+  char   ascii_char{};      // ascii_char and posix_char appear to be the same.  Don't remember why I have both separately, probably some sort of flexibility...?
+  char   posix_char{};
 };
 
-/** a lookup table for keyboard key presses */
-using Ascii_Posix_map = std::vector<Ascii_posix_relation>; // todo: use proper capitalization.
+/** a lookup table for user keyboard key presses */
+using Ascii_Posix_map = std::vector< Ascii_posix_relation >; // todo: use proper capitalization.
 
 // todo: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
 // then fix next two lines of documentation.
-using KbFundamentalUnit = char; // todo:should this be unsigned or ssize_t? Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char" one
-                                // byte long or the components of a hot key sequence.
+using KbFundamentalUnit = char; /// Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char" one
+                                /// byte long or the components of a hot key sequence.
+                                /// todo??: should this be unsigned or ssize_t?
 
-/// a single ascii value that represents one key press on a keyboard, which does not generate a multibye burst of characters, like F1
-using Simple_key_char = KbFundamentalUnit;
-using Hot_key_chars = std::vector<KbFundamentalUnit>;
-using Kb_regular_value = string;          // a value is one or more normal alphanumeric characters entered by the user //  todo: make this the correct/internationalized char type.
-constexpr KbFundamentalUnit CSI_ESC = 27; // the first char of POSIX CSI Control Sequence Introducer, the ESC character that designates a hot_key, is the first char in
-                                          // Hot_key_chars. this could turn into a "termcap" like table.
+/// a single ascii? value that represents one key press on a keyboard, which does not generate a multibye burst of characters, like F1
+using Simple_key_char 	= KbFundamentalUnit;
+using Hot_key_chars 	= std::vector<KbFundamentalUnit>;
+using Kb_regular_value 	= string;          // a value is one or more normal alphanumeric characters entered by the user //  todo: make this the correct/internationalized char type.
 
-/** the first char of our special manual alternative CSI Control Sequence Introducer, the character that designates a hot_key, is the first char in Hot_key_chars. The cell
+constexpr KbFundamentalUnit CSI_ESC = 27; /// the first char of the POSIX CSI Control Sequence Introducer, the ESC character that designates a hot_key, is the first char in
+                                          /// Hot_key_chars. This could turn into a "termcap" like table.
+
+/** the first char of lib_tty's custom manual alternative to the CSI Control Sequence Introducer, is the first char in Hot_key_chars. The cell
  *  phone (or other limited/alternate keyboard) user can type this character and follow it by the codes that their full keyboard would. */
 constexpr KbFundamentalUnit CSI_ALT = '`';
 
@@ -277,20 +284,20 @@ struct Hot_key {
   FieldIntraNav intra_f_nav{FieldIntraNav::na};                // gets a value if HotKeyFunctionCat::nav_intra_field
   bool operator<(Hot_key const &) const;                       // used to sort the list of easy lookup by characters.
 };
-using Hot_keys = std::vector<Hot_key>;
-using Hotkey_o_errno = std::variant<Hot_key, Lt_errno>; /// _o_ == "exclusive or"
+using  Hot_keys = std::vector< Hot_key >;
+using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >; /// _o_ == "exclusive or"
 
-using Hot_key_o_fstat = std::variant<Hot_key, File_status>; /// _o_ == "exclusive or"
+using  Hot_key_o_fstat = std::variant< Hot_key, File_status >; /// _o_ == "exclusive or"
 
 /** a "Kb_key" is one char or one Hot_key, ie. the result of hitting any key whether it is special or not. todo: does this include an EOF character? */
-using Kb_key_optvariant = std::variant<std::monostate, Simple_key_char, Hot_key_chars, Hot_key, File_status>;              // todo: maybe File_status is not needed in RAW case.
+using Kb_key_optvariant = std::variant< std::monostate, Simple_key_char, Hot_key_chars, Hot_key, File_status >;              // todo: maybe File_status is not needed in RAW case.
 
 /** a pair tells us if we got a Kb_key and?, or? is we got EOF. todo?: */
-using Kb_key_a_fstat = std::pair<Kb_key_optvariant, File_status>; // _a_ == "and"  todo: we have a problem with File_status, don't need it twice!  This one is not used.
+using Kb_key_a_fstat = std::pair< Kb_key_optvariant, File_status >; // _a_ == "and"  todo: we have a problem with File_status, don't need it twice!  This one is not used.
                                                                   // todo: complete this: replace std::tuple/std::pair with struct!
 
 /** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. todo?: */
-using Kb_value_plus = std::tuple<Kb_regular_value, Hot_key, File_status>;
+using Kb_value_plus = std::tuple< Kb_regular_value, Hot_key, File_status >;
 // todo?: is this old, or a new idea? using Kb_value_o_hkey    = std::variant< Kb_regular_value, Hot_key >;
 
 std::optional<Hot_key>
@@ -298,9 +305,6 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
 
 Kb_key_a_fstat
 get_kb_key(bool const is_strip_control_chars = true);
-
-/** not used??  was this an un-fully implemented enhancement? */
-// void nav_intra_field(Hot_key const &hk, Kb_regular_value &value, unsigned int /*OUT*/ &value_index, bool const is_echo_chars = true);
 
 /** Seeks to get n simple_key_chars from keyboard in raw stty mode.
  *
@@ -318,8 +322,12 @@ get_kb_key(bool const is_strip_control_chars = true);
  * Maybe a menu takes two keys?  Probably not, but the feature exists.
  *
  */
-Kb_value_plus get_kb_keys_raw(size_t length_in_simple_key_chars, bool const is_require_field_completion = true, bool const echo_skc_to_tty = true,
-                              bool const is_strip_control_chars = true, bool const is_password = false);
+Kb_value_plus
+get_kb_keys_raw( size_t const length_in_simple_key_chars,
+                 bool const   is_require_field_completion = true,
+                 bool const   is_echo_skc_to_tty 		  = true,  // skc == Simple_key_char
+                 bool const   is_strip_control_chars 	  = true,
+                 bool const   is_password 				  = false);
 
 }  // end namespace
 #endif // LIB_TTY_H
