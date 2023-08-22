@@ -11,9 +11,13 @@
 #include <source_location>
 
 using std::endl, std::cin, std::cout, std::cerr, std::string;
-#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
-#define LOGGERI( msg,i ) using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<","<<i<<".\n";
-#define LOGGERS( msg,s ) using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<","<<s<<".\n";
+
+//#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<        ".\n";
+//#define LOGGERI( msg,i ) using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<","<<i<<".\n";
+//#define LOGGERS( msg,s ) using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<","<<s<<".\n";
+#define LOGGER_( msg )
+#define LOGGERI( msg,i )
+#define LOGGERS( msg,s )
 
 //int nested_func(int c)
 //{
@@ -23,18 +27,20 @@ using std::endl, std::cin, std::cout, std::cerr, std::string;
 // todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
 namespace Lib_tty {
 
-/* *** todo??: C++20? illustration of how to print vectors and some other containers with various types of members/structs. */
+/** *** Start of C++23 illustration
+ * Debugging only.
+ * todo??: Illustration of how to print vectors and some other containers with various types of members/structs.
+ */
 template <typename T>
 concept can_insert = requires( std::ostream & out, T my_t ) {
     // todo??: is this the same, or just more clear to me? $ { out << my_t; } -> is_convertable <std::ostream & >;
-    { out << my_t }; // todo??: does my_t have std::ostream_iterator<T>?  how related, or needed, or my misunderstanding
+    // todo??: does my_t have std::ostream_iterator<T>?  how related, or needed, or my misunderstanding
+    { out << my_t };
 };
 
 template<typename T>            // utility f() to print vectors
 std::ostream&
-operator<<( std::ostream & out, const std::vector<T> & v)
-    requires can_insert<T>
-{
+operator<<( std::ostream & out, const std::vector<T> & v) requires can_insert<T> {
     if (!v.empty()) {
         out << '<';
         std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, "&"));
@@ -43,13 +49,9 @@ operator<<( std::ostream & out, const std::vector<T> & v)
     }
     return out;
 }
-// todo??: what is this junk, or something very specific?
-//template<typename T>            // utility f() to print vectors
-//std::ostream &operator<<(std::ostream &out, const std::forward_iterator<T> &v)   // needs iterator concept
-/* *** end of C++20 illustration */
+/* *** End of C++23 illustration */
 
-/** Obsolete if above works? */
-void print_vec( const std::vector<char> & v) {  // for debugging.
+void print_vec( const std::vector<char> & v) {  /// Debugging only. Obsolete if above works?
     cerr << "::";
     for (auto const i: v) {
         cerr << std::setw(3) << (int)i << "&";
@@ -66,7 +68,7 @@ bool Hot_key::operator< ( Hot_key const  & in ) const {  // found in lib_tty.h
 }
 
 void print_signal(int const signal) {
-    LOGGERI("lib_tty:print_signal(): signal is:",signal);
+    LOGGERI("Signal is:",signal);
     switch (signal) {
     /* ISO C99 signals.  */
     case ( SIGINT):		/* Interactive attention signal.  */
@@ -103,31 +105,30 @@ void print_signal(int const signal) {
     case ( SIGWINCH):	/* Window size change (4.3 BSD, Sun).  */
     case ( SIGSTKFLT):	/* Stack fault (obsolete).  */
     case ( SIGPWR):		/* Power failure imminent.  */
-        LOGGER_("Typical POSIX signal, also note: SigRtMin, SigRtMax.");
+        LOGGER_("Above is a typical POSIX signal");
         break;
     default:
         LOGGER_( "Non-typical POSIX signal");
     }
-
-    // also note: SIGRTMIN,SIGRTMAX
-    // non signals
-    // SIG_ERR	 ((__sighandler_t) -1)	/* Error return.  */
-    // SIG_DFL	 ((__sighandler_t)  0)	/* Default action.  */
-    // SIG_IGN	 ((__sighandler_t)  1)	/* Ignore signal.  */
-    // __USE_XOPEN
-    // SIG_HOLD ((__sighandler_t) 2)	/* Add signal to hold mask.  */
+    /* also note: SIGRTMIN,SIGRTMAX
+     * non signals
+     SIG_ERR	 ((__sighandler_t) -1)	// Error return.
+     SIG_DFL	 ((__sighandler_t)  0)	// Default action.
+     SIG_IGN	 ((__sighandler_t)  1)	// Ignore signal.
+     __USE_XOPEN
+     SIG_HOLD ((__sighandler_t) 2)	// Add signal to hold mask.
+    */
 }
 
 void handler_termination(int const sig, Siginfo_t *, void *) {
-    LOGGERI( "This signal got us here:", sig);
-    LOGGER_ (print_signal( sig ));
+    LOGGERI( "This signal # got us here:", sig);
+    print_signal( sig );
     set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
 }
 
 /* signal handler function to be called when a timeout alarm goes off via a user defined signal is received */
 void handler_inactivity(int const sig, Siginfo_t *, void *) {  // todo: TODO why can't I add const here without compiler error?
     LOGGERI( "This signal got us here:", sig);
-    LOGGER_ (print_signal( sig ));
     print_signal( sig );
     set_sigaction_for_inactivity( handler_inactivity );  //  re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
     // todo: ?? raise (sig);
@@ -323,14 +324,14 @@ Termios & termio_set_raw() { // uses POSIX
         exit(1);
     }
     Termios terminal_status_actual { termio_get() };
-    assert( check_equality( terminal_status_actual, terminal_status_new) && ") termio not fully raw.");
+    assert( check_equality( terminal_status_actual, terminal_status_new) && "Termio not fully raw.");
     return terminal_status_orig;
 }
 
 void termio_restore(Termios const &terminal_status_orig) { // uses POSIX  // todo: TODO do you like my const 2x, what is effect calling POSIX?
     if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_orig); result == POSIX_ERROR) { // restore prior status
         int errno_save = errno;
-        LOGGERI( "Standard in is not a tty keyboard??",errno_save);
+        LOGGERI( "Standard in is not a tty keyboard??", errno_save);
         errno = errno_save;
         perror("termio_restore()");
         exit(1);
@@ -353,7 +354,7 @@ Termios & termio_set_timer(const cc_t time) {  // uses POSIX
         exit(1);
     }
     Termios terminal_status_actual { termio_get() };
-    assert ( !check_equality( terminal_status_actual, terminal_status_new ) && "lib_tty: termio_restore() termio not fully raw.");
+    assert ( !check_equality( terminal_status_actual, terminal_status_new ) && "Termio_restore() termio not fully raw.");
     return terminal_status_orig;
 }
 
@@ -620,7 +621,8 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         cout << "\b\b. " << endl;
 #endif
     }
-    LOGGER_( "consider_hot_key() candidate_hk_chars: "); print_vec(candidate_hk_chars);
+    LOGGERS( "candidate_hk_chars: ", candidate_hk_chars);
+    //LOGGER_(print_vec(candidate_hk_chars));
     Hot_key const candidate_hk { {}, candidate_hk_chars };
     auto const lower_bound_itr = std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk );
     LOGGERS( "consider_hot_key() lower_bount_itr:", lower_bound_itr->my_name); print_vec(lower_bound_itr->characters); cerr << "." << endl;
@@ -702,16 +704,18 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
 
 bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE on File Status
     switch (file_status) {
-    case File_status::other : LOGGER_( "is_ignore_key_file_status: other."); //
+    case File_status::other : LOGGER_( "File_status is: other."); //
         return false;
-    case File_status::eof_simple_key_char : LOGGER_( "_ignore_key_file_status: keyboard eof, which is a hotkey."); //
+    case File_status::eof_simple_key_char : LOGGER_( "File_status is: keyboard eof, which is a hotkey."); //
         return false;
-    case File_status::timed_out : LOGGER_( "\ais_ignore_key_file_status: keyboard timeout, try again."); //
+    case File_status::timed_out :
+        cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
         break;
-    case File_status::unexpected_data : LOGGER_( "\ais_ignore_key_file_status: bad keyboard character sequence, try again."); // we throw away bad character sequence or char // todo: handle scrolling and dialog
+    case File_status::unexpected_data :
+        cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // todo: handle scrolling and dialog
         break;
-    case File_status::eof_file_descriptor : LOGGER_( "\ais_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?"); //
-        assert( false && "is_ignore_key_file_status: file descriptor eof, we are ignoring it, try again?");  // todo: is this correct, or should we not ignore it?
+    case File_status::eof_file_descriptor :
+        assert( false && "is_ignore_key_file_status: file descriptor is at eof.");  // todo: is this correct, or should we not ignore it?
         break;
     }
     return true;  // we add back the input character that we have decided to ignore.
