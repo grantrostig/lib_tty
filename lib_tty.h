@@ -283,6 +283,7 @@ struct Hot_key {
   FieldCompletionNav f_completion_nav{FieldCompletionNav::na}; // gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
   FieldIntraNav intra_f_nav{FieldIntraNav::na};                // gets a value if HotKeyFunctionCat::nav_intra_field
   bool operator<(Hot_key const &) const;                       // used to sort the list of easy lookup by characters.
+  std::string to_string() const;                               // for debugging.
 };
 using  Hot_keys = std::vector< Hot_key >;
 using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >; /// _o_ == "exclusive or"

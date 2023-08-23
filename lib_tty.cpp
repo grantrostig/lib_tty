@@ -67,6 +67,12 @@ bool Hot_key::operator< ( Hot_key const  & in ) const {  // found in lib_tty.h
     return ( characters < in.characters );
 }
 
+std::string
+Hot_key::to_string() const {  // found in lib_tty.h
+    std::string s {my_name};  // todo: finish this
+    return s;
+}
+
 void print_signal(int const signal) {
     LOGGERI("Signal is:",signal);
     switch (signal) {
