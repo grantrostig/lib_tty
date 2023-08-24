@@ -12,7 +12,8 @@ CONFIG += warn_on
 
 QMAKE_CXXFLAGS += \
         -std=gnu++2b		\
-        -ggdb 		        \
+        -g3 		        \
+        -O0 		        \
 
 LIBS += \
         -lpthread \
