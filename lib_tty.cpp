@@ -9,27 +9,26 @@
 #include <concepts>
 #include <stacktrace>
 #include <source_location>
-
 using std::endl, std::cin, std::cout, std::cerr, std::string;
-
-//#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<        ".\n";
-//#define LOGGERI( msg,i ) using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<","<<i<<".\n";
-//#define LOGGERS( msg,s ) using loc = std::source_location;std::cerr<<loc::current().file_name()<<'('<<loc::current().line()<<':'<<loc::current().column()<<")`"<<loc::current().function_name()<<"`:" <<#msg<<","<<s<<".\n";
-#define LOGGER_( msg )
-#define LOGGERI( msg,i )
-#define LOGGERS( msg,s )
-
-//int nested_func(int c)
-//{
-    //std::cout << std::stacktrace::current() << 'hello\n';
-//}
-
-// todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
+/// todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
 namespace Lib_tty {
 
-/** *** Start of C++23 illustration
+/// define if asserts are NOT to be checked.  Put in *.h file not *.CPP
+//#define 	NDEBUG
+/// define I'm Debugging LT.  Put in *.h file not *.CPP
+#define  	GR_DEBUG
+//#undef  	GR_DEBUG
+//#ifdef   	GR_DEBUG
+//#endif  # GR_DEBUG
+#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
+#define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
+
+/*  *** START Debugging only section *** */
+//  *** START of C++20 illustration ***
+/** print_vec replacement
  * Debugging only.
  * todo??: Illustration of how to print vectors and some other containers with various types of members/structs.
+ * todo??: What forward declartions would I have to do to move this to bottom of this file, to get it out of the way?
  */
 template <typename T>
 concept can_insert = requires( std::ostream & out, T my_t ) {
@@ -38,6 +37,7 @@ concept can_insert = requires( std::ostream & out, T my_t ) {
     { out << my_t };
 };
 
+/// print_vec replacement
 template<typename T>            // utility f() to print vectors
 std::ostream&
 operator<<( std::ostream & out, const std::vector<T> & v) requires can_insert<T> {
@@ -49,32 +49,18 @@ operator<<( std::ostream & out, const std::vector<T> & v) requires can_insert<T>
     }
     return out;
 }
-/* *** End of C++23 illustration */
 
 void print_vec( const std::vector<char> & v) {  /// Debugging only. Obsolete if above works?
-    cerr << "::";
+    LOGGER_("Elements:[")
     for (auto const i: v) {
         cerr << std::setw(3) << (int)i << "&";
     }
-    cerr << "\b::";
+    cerr << "\b]";
 }
-
-bool is_hk_chars_equal( Hot_key const & left, Hot_key const & right ) {
-    return ( left.characters == right.characters );
-}
-
-bool Hot_key::operator< ( Hot_key const  & in ) const {  // found in lib_tty.h
-    return ( characters < in.characters );
-}
-
-std::string
-Hot_key::to_string() const {  // found in lib_tty.h
-    std::string s {my_name};  // todo: finish this
-    return s;
-}
+// 	*** END   of C++20 illustration ***
 
 void print_signal(int const signal) {
-    LOGGERI("Signal is:",signal);
+    LOGGERS( "Signal is:", signal);
     switch (signal) {
     /* ISO C99 signals.  */
     case ( SIGINT):		/* Interactive attention signal.  */
@@ -126,23 +112,25 @@ void print_signal(int const signal) {
     */
 }
 
-void handler_termination(int const sig, Siginfo_t *, void *) {
-    LOGGERI( "This signal # got us here:", sig);
-    print_signal( sig );
-    set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
+/*  *** END   Debugging only section *** */
+
+bool is_hk_chars_equal( Hot_key const & left, Hot_key const & right ) {
+    return ( left.characters == right.characters );
 }
 
-/* signal handler function to be called when a timeout alarm goes off via a user defined signal is received */
-void handler_inactivity(int const sig, Siginfo_t *, void *) {  // todo: TODO why can't I add const here without compiler error?
-    LOGGERI( "This signal got us here:", sig);
-    print_signal( sig );
-    set_sigaction_for_inactivity( handler_inactivity );  //  re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
-    // todo: ?? raise (sig);
-    // todo: ?? signal(sig, SIG_IGN);
+bool Hot_key::operator< ( Hot_key const  & in ) const {  // found in lib_tty.h
+    return ( characters < in.characters );
 }
+
+std::string
+Hot_key::to_string() const {  // found in lib_tty.h
+    std::string s {my_name};  // todo: finish this
+    return s;
+}
+
 
 Sigaction_termination_return
-set_sigaction_for_termination(Sigaction_handler_fn_t handler_in) {  // todo: TODO why does const have no effect here?
+set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TODO why does const have no effect here?
     LOGGER_ ("lib_tty:set_sigaction_for_termination(): starting.");
     struct sigaction action 		{};    			 // todo:  TODO?? why is struct required by compiler.  TODO?? does this initialize deeply in c++ case?
     sigemptyset( &action.sa_mask );  				 // Isn't this already empty because of declaration? We do it just to be safe.
@@ -195,7 +183,26 @@ set_sigaction_for_termination(Sigaction_handler_fn_t handler_in) {  // todo: TOD
     return { action_prior_SIGINT, action_prior_SIGQUIT, action_prior_SIGTERM, action_prior_SIGTSTP, action_prior_SIGHUP };
 }
 
-void sigaction_restore_for_termination( Sigaction_termination_return const & actions_prior ) {
+// forward declaration
+Sigaction_return
+set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in );
+
+/* signal handler function to be called when a timeout alarm goes off via a user defined signal is received */
+void handler_inactivity(int const sig, Siginfo_t *, void *) {  // todo: TODO why can't I add const here without compiler error?
+    LOGGERS( "This signal got us here:", sig);
+    print_signal( sig );
+    set_sigaction_for_inactivity( handler_inactivity );  //  re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
+    // todo: ?? raise (sig);
+    // todo: ?? signal(sig, SIG_IGN);
+}
+
+void handler_termination(int const sig, Siginfo_t *, void *) {
+    LOGGERS( "This signal # got us here:", sig);
+    print_signal( sig );
+    set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
+}
+/// put signal handling back? todo:
+    void sigaction_restore_for_termination( Sigaction_termination_return const & actions_prior ) {
     if (sigaction( SIGINT,  &actions_prior.action_prior1, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
     else {LOGGER_( "SIGINT set to original state." )};
     if (sigaction( SIGQUIT, &actions_prior.action_prior2, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
@@ -209,6 +216,7 @@ void sigaction_restore_for_termination( Sigaction_termination_return const & act
     return;
 }
 
+/// called by enable_inactivity_handler
 Sigaction_return
 set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
     struct sigaction action {};
@@ -222,12 +230,16 @@ set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
 
     int 				signal_for_user  	 { SIGRTMIN };
     struct 	sigaction 	action_prior {};
-    LOGGERI( "Signal going to be set is SIGRTMIN and int is:",signal_for_user);
-    if (sigaction( signal_for_user , &action, /* out */ &action_prior ) == POSIX_ERROR) { perror("lib_tty:"); exit(1); }
+    LOGGERS( "Signal going to be set is int SIGRTMIN, which is:", signal_for_user);
+    if (sigaction( signal_for_user , &action, /* out */ &action_prior ) == POSIX_ERROR) { perror("lib_tty:unable to set signal action, exit(1) now."); exit(1); }
     return {signal_for_user, action_prior};
 }
 
-/* Called once internally and also every time the timer interval needs to be reset to wait for the full time. In other words after we get a character, we start waiting all over again. */
+/** Called internally every time the timer interval needs to be reset to wait for the full time. In other words after we get a character, we start waiting all over again.
+ *  Called by enable_inactivity_handler.
+ *  Initially and every time the timer interval needs to be reset to wait for the full time,
+ *  even if it had not expired.
+ *  In other words after we get a character, we start waiting all over again. */
 void set_a_run_inactivity_timer(const timer_t & inactivity_timer, const int seconds) {  // todo: is timer_t a pointer or NOT or struct or int?!?
     int settime_flags 						{};				// TIMER_ABSTIME is only flag noted. Not used here.
     static itimerspec timer_specification 	{};				// todo: does this need to be static, ie. what does timer_settime() do with it?
@@ -237,7 +249,7 @@ void set_a_run_inactivity_timer(const timer_t & inactivity_timer, const int seco
     return;
 }
 
-/* Configures and sets timer and runs timer.  Timer needs to be deleted when no longer wanted. */
+/// Configures and sets timer and runs timer which waits for additional user kb characters.  Timer needs to be deleted when no longer wanted. */
 std::tuple<timer_t &, int, struct sigaction>
 enable_inactivity_handler(const int seconds) {
     static sigevent inactivity_event  {};
@@ -253,15 +265,16 @@ enable_inactivity_handler(const int seconds) {
     return { inactivity_timer, result.signal_for_user, result.action_prior };
 }
 
-/* delete the timer */
+/// todo:verify> stop waiting for additional keyboard characters from the user? delete the CSI/ESC timer
 void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_user, const struct sigaction old_action) {
-    LOGGERI( "disable inactivity handler on signal: ", sig_user);
+    LOGGERS( "disable inactivity handler on signal: ", sig_user);
     if ( timer_delete( inactivity_timer) 			    == POSIX_ERROR) { perror("lib_tty:disable_inactivity_handler"); exit(1); } // should print out message based on ERRNO // todo: fix this up. TODO this throws in c lang???
     if ( sigaction(    sig_user, &old_action, nullptr) 	== POSIX_ERROR) { perror("lib_tty:disable_inactivity_handler:sigaction"); exit(1); } // should print out message based on ERRNO // todo: fix this up.  TODO __THROW ???
 }
 
+/// to show what is happening on standard-in/cin
 void print_iostate(const std::istream &stream) {  // Used for debugging. // todo: TODO how do I pass in cin or cout to this?
-    LOGGER_( "lib_tty:print_iostate(): ");
+    LOGGER_( "Is:");
     if (stream.rdstate() == std::ios_base::goodbit) {LOGGER_( "goodbit only, ")};
     if (stream.rdstate() &  std::ios_base::goodbit) {LOGGER_( "goodbit, ")};
     if (stream.rdstate() &  std::ios_base::eofbit)  {LOGGER_( "eofbit, ")};
@@ -269,6 +282,7 @@ void print_iostate(const std::istream &stream) {  // Used for debugging. // todo
     if (stream.rdstate() &  std::ios_base::badbit)  {LOGGER_( "badbit,")};
 }
 
+/// since == doesn't work on structs.
 bool check_equality(const Termios &terminal_status, const Termios &terminal_status2){  // Used for debugging using assert().
     /* https://embeddedgurus.com/stack-overflow/2009/12/effective-c-tip-8-structure-comparison/
      * https://isocpp.org/blog/2016/02/a-bit-of-background-for-the-default-comparison-proposal-bjarne-stroustrup
@@ -284,6 +298,7 @@ bool check_equality(const Termios &terminal_status, const Termios &terminal_stat
         && terminal_status.c_ospeed != terminal_status2.c_ospeed ) return false;
     for (int i=0; i< NCCS; ++i)
         if (terminal_status.c_cc[i] != terminal_status2.c_cc[i]) return false; */
+    // Apparently this is inreliable, but perhaps with this simple datastructure it will work on most/all machines?
     if ( std::memcmp( &terminal_status, &terminal_status2, sizeof terminal_status) != 0) return false;  // does not set ERRNO.  todo:?? Are Termios structures initialized, including the possible padding when defined as below?  How does c++ know the padding that the Linux kernel expects in a system call?
     return true;
 }
@@ -292,9 +307,10 @@ Termios & termio_get() { // uses POSIX  // todo TODO what are advantages of othe
     static Termios terminal_status;
     if (auto result = tcgetattr( fileno(stdin), &terminal_status); result == POSIX_ERROR) { // todo: TODO throw() in signature?
         int errno_save = errno;
-        LOGGERI( "Standard in is not a tty keyboard??",errno_save);
+        LOGGERS( "Standard-in is not a tty keyboard??",errno_save);
         errno = errno_save;
         perror("termio_get()");
+        LOGGER_( "We will exit(1) for this error");
         exit(1);
     }
     return terminal_status;  // copy of POD?
@@ -320,11 +336,11 @@ Termios & termio_set_raw() { // uses POSIX
     terminal_status_new.c_oflag 		&= static_cast<tcflag_t>(~OPOST);   // turn off all output processing.
     terminal_status_new.c_cc[VTIME] 	= 0; 								// wait forever to get that char. // http://www.unixwiz.net/techtips/termios-vmin-vtime.html
     terminal_status_new.c_cc[VMIN]  	= 1;  								// get minimun one char
-    if (auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_new); result == POSIX_ERROR) { // if ((result = ioctl(fileno(stdin), TCSETA, &terminal_status)) < 0) {  // old way to do this.
-                                                                    // https://pubs.opengroup.org/onlinepubs/9699919799/
-                                                                    // todo: Applications that need all of the requested changes made to work properly should follow tcsetattr() with a call to tcgetattr() and compare the appropriate field values.
+    if (auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_new); result == POSIX_ERROR) {
+                                 // https://pubs.opengroup.org/onlinepubs/9699919799/
+                                 // todo: Applications that need all of the requested changes made to work properly should follow tcsetattr() with a call to tcgetattr() and compare the appropriate field values.
         int errno_save = errno;
-        LOGGERI( "Standard in is not a tty keyboard??",errno_save);
+        LOGGERS( "Standard in is not a tty keyboard??",errno_save);
         errno = errno_save;
         perror("termio_set_raw()");
         exit(1);
@@ -337,7 +353,7 @@ Termios & termio_set_raw() { // uses POSIX
 void termio_restore(Termios const &terminal_status_orig) { // uses POSIX  // todo: TODO do you like my const 2x, what is effect calling POSIX?
     if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_orig); result == POSIX_ERROR) { // restore prior status
         int errno_save = errno;
-        LOGGERI( "Standard in is not a tty keyboard??", errno_save);
+        LOGGERS( "Standard in is not a tty keyboard??", errno_save);
         errno = errno_save;
         perror("termio_restore()");
         exit(1);
@@ -345,7 +361,6 @@ void termio_restore(Termios const &terminal_status_orig) { // uses POSIX  // tod
     cin.sync_with_stdio(true);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
     return;
 }
-
 Termios & termio_set_timer(const cc_t time) {  // uses POSIX
     static Termios terminal_status_orig { termio_get() }; // todo: TODO why does this compile with terminal_status and &terminal_status?
     Termios terminal_status_new = terminal_status_orig;
@@ -354,7 +369,7 @@ Termios & termio_set_timer(const cc_t time) {  // uses POSIX
     terminal_status_new.c_cc[VMIN]  = 0;  // no minimum char to get
     if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_new); result == POSIX_ERROR) {
         int errno_save = errno;
-        LOGGERI( "Standard in is not a tty keyboard??",errno_save);
+        LOGGERS( "Standard in is not a tty keyboard??",errno_save);
         errno = errno_save;
         perror("termio_set_timer()");
         exit(1);
@@ -364,7 +379,7 @@ Termios & termio_set_timer(const cc_t time) {  // uses POSIX
     return terminal_status_orig;
 }
 
-/* give it the string "EOF" and you get back 4 or ^D */
+/// give it the string "EOF" and you get back 4 or ^D */
 char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::string name) {
     for (auto & ch : vec) {
         if ( ch.posix_name == name )
@@ -375,7 +390,7 @@ char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::stri
     // we never get here.
 }
 
-/* give it "CSI [ A" get back the string name of the hot_key, ie. "right arrow" */
+/// give it "CSI [ A" get back the string name of the hot_key, ie. "right arrow" */
 std::optional<Hot_key> find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
     for (auto & hk : hot_keys)
         if ( hk.characters == this_key )
@@ -383,6 +398,7 @@ std::optional<Hot_key> find_hot_key(const Hot_keys &hot_keys, const Hot_key_char
     return {};
 }
 
+/// ?
 Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/termios.h.html
        https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap11.html#tag_11_01_09
@@ -605,43 +621,44 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
             Ctrl+Y				Redoes the last undone operation.
         */
     };
-    if (static bool once {false}; !once) {
+    if ( static bool once {false}; !once) {
         once = true;
         if ( hot_keys.empty() ) {
-            #pragma GCC diagnostic push
-            #pragma GCC diagnostic ignored "-Wunused-value"  // todo?: is this the best way to do this, find other occurences in code to fix?
             assert( false && "consider_hot_key() lib_tty logic error: we don't allow empty hotkeys");
-            #pragma GCC diagnostic pop
         }
         std::sort( hot_keys.begin(), hot_keys.end() );
         if ( auto dup = std::adjacent_find( hot_keys.begin(), hot_keys.end(), is_hk_chars_equal ); dup != hot_keys.end() ) {
-            LOGGERS( "consider_hot_key() duplicate hot_key:", dup->my_name);
-            assert( false && "lib_tty logic error: we don't allow duplicate hotkey character sequences" );
+            LOGGERS( "Duplicate hot_key:", dup->my_name);
+            assert( false && "Logic error: we don't allow duplicate hotkey character sequences" );
         }
-#ifdef LT_DEBUG
+#ifdef GR_DEBUG
+        // todo??: make it accept operator<< : LOGGERS( "Run once only now, here are the hot_keys,characters:",hot_keys)
+        LOGGER_( "Run once only now, here are the hot_keys,characters:")
         for (auto & i : hot_keys) {
-            cout << std::setw(18) << i.my_name;
-            print_vec(i.characters);
-            cout << endl;
+            cerr << std::setw(18) << i.my_name;
+            //print_vec(i.characters);
+            cerr <<"[" << i.characters <<"]";
+            cerr << endl;
         }
         cout << "\b\b. " << endl;
 #endif
     }
-    LOGGERS( "candidate_hk_chars: ", candidate_hk_chars);
-    //LOGGER_(print_vec(candidate_hk_chars));
-    Hot_key const candidate_hk { {}, candidate_hk_chars };
-    auto const lower_bound_itr = std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk );
-    LOGGERS( "consider_hot_key() lower_bount_itr:", lower_bound_itr->my_name); print_vec(lower_bound_itr->characters); cerr << "." << endl;
-    bool const no_match_end  		{ lower_bound_itr == hot_keys.end() }; // due to the fact we skipped all values, we have one, of several reasons for, no match.
-    bool const partial_match 		{ !no_match_end &&
+
+    LOGGERS( "candidate_hk_chars: ", candidate_hk_chars); //LOGGER_(print_vec(candidate_hk_chars));
+
+    Hot_key const candidate_hk 		{ {}, candidate_hk_chars };
+    auto    const lower_bound_itr = std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk );  LOGGERS( "lower_bount_itr:", lower_bound_itr->my_name); LOGGERS( "Characters within above", lower_bound_itr->characters); //print_vec(lower_bound_itr->characters); cerr << "." << endl;
+
+    bool const no_match_end  	{ lower_bound_itr == hot_keys.end() }; // due to the fact we skipped all values, we have one, of several reasons for not having a match.
+    bool const partial_match 	{ !no_match_end &&
                                       std::equal( candidate_hk_chars.begin(),	// not the same as == since length of candidate is not length of hot_key
                                                   candidate_hk_chars.end(),
                                                   lower_bound_itr->characters.begin(),
                                                   std::next( lower_bound_itr->characters.begin(), candidate_hk_chars.size() ) )  // check at most the min of both lengths.
-                                    };
-    bool const full_match 			{ partial_match &&
-                                      lower_bound_itr->characters.size() == candidate_hk_chars.size()
-                                    };
+                                };
+    bool const full_match		{ partial_match &&
+                                    lower_bound_itr->characters.size() == candidate_hk_chars.size()
+                                };
     // *** NOTE: we still might not have a match.  The if below determines final determination of no_match.
     if      ( full_match )    return *lower_bound_itr;
     else if ( partial_match ) return E_PARTIAL_MATCH;
@@ -770,7 +787,7 @@ bool is_ignore_key_skchar( Simple_key_char const skc,
                            bool const is_echo_skc_to_tty = true,
                            bool const is_allow_control_chars = false,
                            bool const is_ring_bell = true) {
-    LOGGERI("get_kb_keys_raw(): Got a Simple_key_char: ", static_cast<int>(skc));
+    LOGGERS("get_kb_keys_raw(): Got a Simple_key_char: ", static_cast<int>(skc));
     if ( is_usable_char( skc, is_allow_control_chars )) {
         if ( is_echo_skc_to_tty )
             cout << skc <<endl;

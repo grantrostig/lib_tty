@@ -89,10 +89,10 @@ inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, t
  * the cooked mode edition characters, whereas tcsh, zsh and fish stick to their own key bindings.
  *
  * ?? https://www.gnu.org/software/bash/manual/html_node/Bindable-Readline-Commands.html
- * 			Cannonical	  Raw		wait
- * c_cc[5] VTIME  0	 	  =			10
- * c_cc[6] VMIN   1	 	  =			 0
- * c_lflag	    3538{7}  3538{5}	 =
+        Cannonical  Raw wait
+ * c_cc[5] VTIME  0  =10
+ * c_cc[6] VMIN   1  = 0
+ * c_lflag    3538{7}  3538{5} =
  *
  * Not sure if this code would be useful, I removed it for some reason.  Maybe what I have now serves the same purpose, or
  * if I choose to do it later and so there is no such check currently.
@@ -103,15 +103,30 @@ inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, t
  */
 
 /**  *** POSIX termial IO level declarations *** */
+
+/// C++ class name capitalization convention of the POSIX C type.
 using Termios = termios;    // Tty terminal IO & speed structure, used for setting them. // C++ class name capitalization convention of the POSIX C type;
+
+/// to get user's tty termial status
 Termios &termio_get();
+
+/// to allow capturing one character at a time and gaining control immediately after user presses that key, ie. not buffered.
 Termios &termio_set_raw();
+
+/// to assist in finding additional keys after CSI/ESC of a multi-character function key.
 Termios &termio_set_timer( cc_t const time);
+
+/// to normal cooked? condition
 void     termio_restore( Termios const &terminal_status);      	/** restore terminal state to what it was when program was started??? todo: verify my comment here. */
 
 /**  *** POSIX OS Signals level declarations *** */
-using Siginfo_t =   siginfo_t;  // The siginfo_t structure is passed as the second parameter to a user signal handler function, if the SA_SIGINFO flag was specified when the handler
-                                // was installed with sigaction().  // C++ class name capitalization convention of the POSIX C type;
+
+/** C++ class name capitalization convention of the POSIX C type.
+ *  The siginfo_t structure is passed as the second parameter to a user signal handler function,
+ *  if the SA_SIGINFO flag was specified when the handler was installed with sigaction(). */
+using Siginfo_t =   siginfo_t;
+
+/// todo??: some POSIX thing?, super complicated C stuff
 using Sigaction_handler_fn_t =
     void(
         int,
@@ -121,13 +136,15 @@ using Sigaction_handler_fn_t =
                                     // todo??: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
                                     // todo??: more ideas: std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
 
+/// todo?: some POSIX thing?
 struct Sigaction_return {
-    int       signal_for_user;  // todo??: why not init this int?
-    struct    sigaction   		// Structure describing the action to be taken when a signal arrives.
+    int       signal_for_user;     // todo??: why not init this int?
+    struct    sigaction         // Structure describing the action to be taken when a signal arrives.
                     action_prior;  // TODO?? what is this special use of struct statement?  What about an init of this?
 };
 // todo??: could this be used instead of above? >> using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
 
+/// todo?: A datastructure to simply function calls.  todo: I don't recall why there are five, but I didn't just make up that number. :)
 struct Sigaction_termination_return {
   struct sigaction &action_prior1; /* Structure describing the action to be taken when a signal arrives.  */
   struct sigaction &action_prior2;
@@ -136,34 +153,6 @@ struct Sigaction_termination_return {
   struct sigaction &action_prior5;
 };
 
-/** The signal handler function to be called when signals relating to "job control" are received, such as when handling a termination signal. */
-void handler_termination(int const sig, Siginfo_t *, void *);
-/** The signal handler function to be called when signals relating to "job control" are received, such as when handling a inactivity??? signal. */
-void handler_inactivity(int const  sig, Siginfo_t *, void *);  // The function invoked when handling an inactivity signal.
-
-/** Internally called only. */
-Sigaction_termination_return
-set_sigaction_for_termination(Sigaction_handler_fn_t handler_in);
-void sigaction_restore_for_termination(Sigaction_termination_return const &);
-
-/** Internally called only. */
-Sigaction_return
-set_sigaction_for_inactivity(Sigaction_handler_fn_t handler_in);
-
-/** Internally called only at this time.
- *  Initially and every time the timer interval needs to be reset to wait for the full time,
- *  even if it had not expired.
- *  In other words after we get a character, we start waiting all over again. */
-void set_a_run_inactivity_timer(timer_t const &inactivity_timer_ptr, int const seconds);  // a = and
-
-std::tuple<timer_t &, int, struct sigaction>  // todo??:  I would prefer to define this type using a "using", but I think I had trouble with the "struct" and gave up.
-enable_inactivity_handler(int const seconds);
-void disable_inactivity_handler(timer_t const inactivity_timer_ptr, int const sig_user, struct sigaction const old_action);
-
-/** debugging only functions */
-void print_signal(   int const signal); 					/** print the signal information to cerr, used for debugging */
-bool check_equality( Termios const &, Termios const &); 	/** Debugging only */
-void print_iostate(  std::istream const &stream); 			/** Debugging only - print the information to cerr */
 
 /**  *** Application Level Declarations *** */
 
@@ -183,7 +172,7 @@ enum class File_status {
 /** the user level intent of all "Categories" of HotKeys */
 enum class HotKeyFunctionCat {
   nav_field_completion,     // nav == user navigation between elements of a certain type.  here user want to finish that field input and move to next thing.
-  nav_intra_field,			// user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
+  nav_intra_field,          // user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
 
   navigation_esc,           // user ESCAPE key, is used similarly to nav_field_completion, todo:not sure if it is needed seperately.
 
@@ -255,11 +244,11 @@ struct Ascii_posix_relation {
 /** a lookup table for user keyboard key presses */
 using Ascii_Posix_map = std::vector< Ascii_posix_relation >; // todo: use proper capitalization.
 
-// todo: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
-// then fix next two lines of documentation.
-using KbFundamentalUnit = char; /// Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char" one
-                                /// byte long or the components of a hot key sequence.
-                                /// todo??: should this be unsigned or ssize_t?
+/** Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char"
+ *  one byte long or the components of a hot key sequence.
+ *  todo: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
+ *  then fix next two lines of documentation.*/
+using KbFundamentalUnit = char;         /// todo??: should this be unsigned or ssize_t?
 
 /// a single ascii? value that represents one key press on a keyboard, which does not generate a multibye burst of characters, like F1
 using Simple_key_char 	= KbFundamentalUnit;

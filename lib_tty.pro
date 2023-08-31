@@ -14,6 +14,12 @@ QMAKE_CXXFLAGS += \
         -std=gnu++2b		\
         -g3 		        \
         -O0 		        \
+        -Wall   		\  # https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
+        -Wextra   		\
+        #-Wno-comment 		\
+        #-Wno-uninitialized 	\
+        #-Wno-reorder 		\
+        #-Wno-unused-parameter 	\
 
 LIBS += \
         -lpthread \
@@ -21,7 +27,8 @@ LIBS += \
         -lrt
 
 SOURCES += \
-    lib_tty.cpp
+    lib_tty.cpp \
+    main.cpp
 
 HEADERS += \
     lib_tty.h
