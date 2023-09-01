@@ -1,5 +1,6 @@
 #include "lib_tty.h"
 #include <cstring>
+#include <cstdio>
 #include <iomanip>
 #include <iterator>
 //#include <variant>
@@ -10,9 +11,11 @@
 #include <stacktrace>
 #include <source_location>
 using std::endl, std::cin, std::cout, std::cerr, std::string;
+using namespace std::string_literals;
 /// todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
 namespace Lib_tty {
 
+/*  *** START Debugging only section *** */
 /// define if asserts are NOT to be checked.  Put in *.h file not *.CPP
 //#define 	NDEBUG
 /// define I'm Debugging LT.  Put in *.h file not *.CPP
@@ -20,10 +23,17 @@ namespace Lib_tty {
 //#undef  	GR_DEBUG
 //#ifdef   	GR_DEBUG
 //#endif  # GR_DEBUG
-#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
-#define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
+#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
+#define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
 
-/*  *** START Debugging only section *** */
+string
+source_loc( ) {  // give more detail on error location, used by perror()
+    using loc = std::source_location;
+    //using ts = std::to_string;  // todo??: why not?  alternative approach?
+    string result {"\n"s+loc::current().file_name() +":"s +std::to_string(loc::current().line()) +std::to_string(loc::current().column())+"]`"s +loc::current().function_name()+"`."s};
+    return result;
+}
+
 //  *** START of C++20 illustration ***
 /** print_vec replacement
  * Debugging only.
@@ -142,7 +152,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
     // 		sigset_t block_mask; sigaddset(&block_mask, SIGINT and SIGQUIT); action.sa_mask = block_mask;  // SS 24.7.5 GNU libc manual
 
     static struct sigaction action_prior_SIGINT 	{};
-    if (sigaction( SIGINT , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) { perror("lib_tty:"); exit(1); }  // just doing a get()
+    if (sigaction( SIGINT , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) { perror( source_loc().data()); exit(1); }  // just doing a get()
 
     //if (action_prior_SIGINT.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
     //if ( (void *) action_prior_SIGINT.sa_sigaction != (void *) SIG_IGN) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
@@ -150,7 +160,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
 
     if ( reinterpret_cast<void *>(action_prior_SIGINT.sa_handler) != reinterpret_cast<void *>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
         LOGGER_( "set_sigaction_for_termination(): SIGINT going to be set.");
-        if (sigaction(SIGINT, &action, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
+        if (sigaction(SIGINT, &action, nullptr) == POSIX_ERROR ) { perror( source_loc().data()); exit(1); }
     }
 
     static struct sigaction action_prior_SIGQUIT 	{};
@@ -342,11 +352,11 @@ Termios & termio_set_raw() { // uses POSIX
         int errno_save = errno;
         LOGGERS( "Standard in is not a tty keyboard??",errno_save);
         errno = errno_save;
-        perror("termio_set_raw()");
+        perror( source_loc().data() );
         exit(1);
     }
     Termios terminal_status_actual { termio_get() };
-    assert( check_equality( terminal_status_actual, terminal_status_new) && "Termio not fully raw.");
+    assert( check_equality( terminal_status_actual, terminal_status_new) && "Tcsetattr apprently failed.");
     return terminal_status_orig;
 }
 
@@ -355,7 +365,7 @@ void termio_restore(Termios const &terminal_status_orig) { // uses POSIX  // tod
         int errno_save = errno;
         LOGGERS( "Standard in is not a tty keyboard??", errno_save);
         errno = errno_save;
-        perror("termio_restore()");
+        perror( source_loc().data() );
         exit(1);
     }
     cin.sync_with_stdio(true);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
@@ -371,11 +381,11 @@ Termios & termio_set_timer(const cc_t time) {  // uses POSIX
         int errno_save = errno;
         LOGGERS( "Standard in is not a tty keyboard??",errno_save);
         errno = errno_save;
-        perror("termio_set_timer()");
+        perror( source_loc().data() );
         exit(1);
     }
     Termios terminal_status_actual { termio_get() };
-    assert ( !check_equality( terminal_status_actual, terminal_status_new ) && "Termio_restore() termio not fully raw.");
+    assert( check_equality( terminal_status_actual, terminal_status_new) && "Tcsetattr apprently failed.");
     return terminal_status_orig;
 }
 
@@ -385,8 +395,8 @@ char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::stri
         if ( ch.posix_name == name )
             return ch.posix_char;
     }
-    std::string err_message {"bad_name >"+name+"<"};
-    assert ( false && err_message.c_str());
+    std::string err_message {"Bad name for a keyboard key, it being:"+name+"."};
+    assert( false && err_message.c_str());
     // we never get here.
 }
 
@@ -624,12 +634,12 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     if ( static bool once {false}; !once) {
         once = true;
         if ( hot_keys.empty() ) {
-            assert( false && "consider_hot_key() lib_tty logic error: we don't allow empty hotkeys");
+            assert( false && "We don't allow empty hotkeys.");
         }
         std::sort( hot_keys.begin(), hot_keys.end() );
         if ( auto dup = std::adjacent_find( hot_keys.begin(), hot_keys.end(), is_hk_chars_equal ); dup != hot_keys.end() ) {
             LOGGERS( "Duplicate hot_key:", dup->my_name);
-            assert( false && "Logic error: we don't allow duplicate hotkey character sequences" );
+            assert( false && "We don't allow duplicate hotkey character sequences.");
         }
 #ifdef GR_DEBUG
         // todo??: make it accept operator<< : LOGGERS( "Run once only now, here are the hot_keys,characters:",hot_keys)
@@ -647,7 +657,7 @@ Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     LOGGERS( "candidate_hk_chars: ", candidate_hk_chars); //LOGGER_(print_vec(candidate_hk_chars));
 
     Hot_key const candidate_hk 		{ {}, candidate_hk_chars };
-    auto    const lower_bound_itr = std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk );  LOGGERS( "lower_bount_itr:", lower_bound_itr->my_name); LOGGERS( "Characters within above", lower_bound_itr->characters); //print_vec(lower_bound_itr->characters); cerr << "." << endl;
+    auto    const lower_bound_itr = std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk );  LOGGERS( "Lower_bount_itr:", lower_bound_itr->my_name); LOGGERS( "Characters within above", lower_bound_itr->characters); //prior line probably replaces this line: print_vec(lower_bound_itr->characters); cerr << "." << endl;
 
     bool const no_match_end  	{ lower_bound_itr == hot_keys.end() }; // due to the fact we skipped all values, we have one, of several reasons for not having a match.
     bool const partial_match 	{ !no_match_end &&
@@ -682,7 +692,7 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
         ) {
         File_status file_status { File_status::other };
         if ( cin.eof() || first_skc == 0) {
-            assert( (cin.eof() || first_skc == 0) && "we probably don't handle eof well."); // todo: more eof handling needed
+            assert( (cin.eof() || first_skc == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
             file_status = File_status::eof_file_descriptor;
             return { hkc, file_status};
         };
@@ -691,7 +701,7 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
             Simple_key_char timed_test_char {} ;
             cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
             /* if ( cin.eof() ) {  // todo: this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
-                assert( (cin.eof()) && "post timer, we probably don't handle eof well."); // todo: more eof handling needed
+                assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
                 file_status = File_status::eof_file_descriptor;
                 termio_restore( terminal_status_orig );
                 return { hkc, file_status};
@@ -707,7 +717,7 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
         if ( std::holds_alternative<Hot_key>(k) )
             return { std::get<Hot_key>(k),         File_status::other };
         else {
-            assert ( std::holds_alternative<Lt_errno>(k) && "We have an Lt_errno." );
+            assert( std::holds_alternative<Lt_errno>(k) && "We have an Lt_errno, which we DIDN'T handle??." );
             switch ( std::get<Lt_errno>(k) ) {
             case E_PARTIAL_MATCH:
                 continue;
@@ -738,7 +748,7 @@ bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE o
         cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // todo: handle scrolling and dialog
         break;
     case File_status::eof_file_descriptor :
-        assert( false && "is_ignore_key_file_status: file descriptor is at eof.");  // todo: is this correct, or should we not ignore it?
+        assert( false && "File descriptor is at eof.");  // todo: is this correct, or should we not ignore it?
         break;
     }
     return true;  // we add back the input character that we have decided to ignore.
@@ -751,7 +761,7 @@ bool is_ignore_hotkey_function_cat( HotKeyFunctionCat const hot_key_function_cat
         case HotKeyFunctionCat::other :
             LOGGER_( "HotKeyFunctionCat::other");
             cout << "\aLast key press not handled here, so ignored.\n";
-            assert(false && "\aHotKeyFunctionCat::other not sure about what cases are and how to handle." );  // todo:
+            assert(false && "\aHotKeyFunctionCat::other sounds bad like a bad type, not sure about what cases are and how to handle." );  // todo:
             return false;
             break;
         case HotKeyFunctionCat::nav_field_completion :
@@ -800,7 +810,7 @@ bool is_ignore_key_skchar( Simple_key_char const skc,
         cout << "Last key press invalid/unusable here, so ignored."<<endl;
         return true;
     }
-    assert(false && "we never get here.");
+    assert(false && "We never get here.");
 }
 
 Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
@@ -808,7 +818,7 @@ Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
                               bool const   is_echo_skc_to_tty,
                               bool const   is_strip_control_chars,
                               bool const   is_password ) {
-    assert( length_in_simple_key_chars > 0 && "too small get length." );   // todo: can debug n>1 case later.
+    assert( length_in_simple_key_chars > 0 && "Too small get length." );   // todo: must debug n>1 case later.
     Kb_regular_value 	value_rv 				{}; //  *** need to load the 3 "_rv" vars below
     Hot_key		 		hot_key_rv				{};
     File_status  		file_status_rv			{File_status::other};
@@ -840,7 +850,7 @@ Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
                 //                }
                 is_ignore_key_hk     = is_ignore_hotkey_function_cat( hot_key_function_cat );
             }
-            else  assert( false && "ERROR:Not sure why we got here, we require that either a Simple_key_char or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
+            else  assert( false && "Not sure why we got here, we require that either a Simple_key_char or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
         }
         if ( !is_ignore_key_fd || !is_ignore_key_skc || !is_ignore_key_hk )
             --additional_skc;

@@ -1,6 +1,11 @@
 # This file is used to ignore files which are generated
 # ----------------------------------------------------------------------------
 
+# next three presume all source code files are in . and we may need to run ~/bin/mk_dir.sh to allow for use of Makefile builds.
+build/
+src/
+inc/
+
 *~
 *.autosave
 *.a
