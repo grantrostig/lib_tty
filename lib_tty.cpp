@@ -23,8 +23,8 @@ namespace Lib_tty {
 //#undef  	GR_DEBUG
 //#ifdef   	GR_DEBUG
 //#endif  # GR_DEBUG
-#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
-#define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<loc::current().line()<<','<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
+#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
+#define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
 
 string
 source_loc( ) {  // give more detail on error location, used by perror()
@@ -138,6 +138,8 @@ Hot_key::to_string() const {  // found in lib_tty.h
     return s;
 }
 
+/**  *** POSIX level declarations            *** */
+/**  *** POSIX OS Signals level definitions  *** */
 
 Sigaction_termination_return
 set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TODO why does const have no effect here?
@@ -197,7 +199,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
 Sigaction_return
 set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in );
 
-/* signal handler function to be called when a timeout alarm goes off via a user defined signal is received */
+/// signal handler function to be called when a timeout alarm goes off via a user defined signal is received
 void handler_inactivity(int const sig, Siginfo_t *, void *) {  // todo: TODO why can't I add const here without compiler error?
     LOGGERS( "This signal got us here:", sig);
     print_signal( sig );
@@ -211,8 +213,9 @@ void handler_termination(int const sig, Siginfo_t *, void *) {
     print_signal( sig );
     set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
 }
+
 /// put signal handling back? todo:
-    void sigaction_restore_for_termination( Sigaction_termination_return const & actions_prior ) {
+void sigaction_restore_for_termination( Sigaction_termination_return const & actions_prior ) {
     if (sigaction( SIGINT,  &actions_prior.action_prior1, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
     else {LOGGER_( "SIGINT set to original state." )};
     if (sigaction( SIGQUIT, &actions_prior.action_prior2, nullptr) == POSIX_ERROR ) { perror("lib_tty:"); exit(1); }
@@ -282,8 +285,8 @@ void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_us
     if ( sigaction(    sig_user, &old_action, nullptr) 	== POSIX_ERROR) { perror("lib_tty:disable_inactivity_handler:sigaction"); exit(1); } // should print out message based on ERRNO // todo: fix this up.  TODO __THROW ???
 }
 
-/// to show what is happening on standard-in/cin
-void print_iostate(const std::istream &stream) {  // Used for debugging. // todo: TODO how do I pass in cin or cout to this?
+/// to show what is happening on standard-in/cin. Used for debugging. todo: TODO how do I pass in cin or cout to this?
+void print_iostate(const std::istream &stream) {
     LOGGER_( "Is:");
     if (stream.rdstate() == std::ios_base::goodbit) {LOGGER_( "goodbit only, ")};
     if (stream.rdstate() &  std::ios_base::goodbit) {LOGGER_( "goodbit, ")};
@@ -293,29 +296,29 @@ void print_iostate(const std::istream &stream) {  // Used for debugging. // todo
 }
 
 /// since == doesn't work on structs.
-bool check_equality(const Termios &terminal_status, const Termios &terminal_status2){  // Used for debugging using assert().
+bool check_equality(const Termios &termios, const Termios &termios2){  // Used for debugging using assert().
     /* https://embeddedgurus.com/stack-overflow/2009/12/effective-c-tip-8-structure-comparison/
      * https://isocpp.org/blog/2016/02/a-bit-of-background-for-the-default-comparison-proposal-bjarne-stroustrup
      * https://stackoverflow.com/questions/141720/how-do-you-compare-structs-for-equality-in-c
      * https://stackoverflow.com/questions/46995631/why-are-structs-not-allowed-in-equality-expressions-in-c
      * https://stackoverflow.com/questions/7179174/why-doesnt-c-provide-struct-comparison/47056810#47056810
-     * if ( terminal_status.c_iflag != terminal_status2.c_iflag
-        && terminal_status.c_oflag  != terminal_status2.c_oflag
-        && terminal_status.c_cflag  != terminal_status2.c_cflag
-        && terminal_status.c_lflag  != terminal_status2.c_lflag
-        && terminal_status.c_line   != terminal_status2.c_line
-        && terminal_status.c_ispeed != terminal_status2.c_ispeed
-        && terminal_status.c_ospeed != terminal_status2.c_ospeed ) return false;
+     * if ( termios.c_iflag != termios2.c_iflag
+        && termios.c_oflag  != termios2.c_oflag
+        && termios.c_cflag  != termios2.c_cflag
+        && termios.c_lflag  != termios2.c_lflag
+        && termios.c_line   != termios2.c_line
+        && termios.c_ispeed != termios2.c_ispeed
+        && termios.c_ospeed != termios2.c_ospeed ) return false;
     for (int i=0; i< NCCS; ++i)
-        if (terminal_status.c_cc[i] != terminal_status2.c_cc[i]) return false; */
+        if (termios.c_cc[i] != termios2.c_cc[i]) return false; */
     // Apparently this is inreliable, but perhaps with this simple datastructure it will work on most/all machines?
-    if ( std::memcmp( &terminal_status, &terminal_status2, sizeof terminal_status) != 0) return false;  // does not set ERRNO.  todo:?? Are Termios structures initialized, including the possible padding when defined as below?  How does c++ know the padding that the Linux kernel expects in a system call?
+    if ( std::memcmp( &termios, &termios2, sizeof termios) != 0) return false;  // does not set ERRNO.  todo:?? Are Termios structures initialized, including the possible padding when defined as below?  How does c++ know the padding that the Linux kernel expects in a system call?
     return true;
 }
 
 Termios & termio_get() { // uses POSIX  // todo TODO what are advantages of other version of this function?
-    static Termios terminal_status;
-    if (auto result = tcgetattr( fileno(stdin), &terminal_status); result == POSIX_ERROR) { // todo: TODO throw() in signature?
+    static Termios termios;
+    if (auto result = tcgetattr( fileno(stdin), &termios); result == POSIX_ERROR) { // todo: TODO throw() in signature?
         int errno_save = errno;
         LOGGERS( "Standard-in is not a tty keyboard??",errno_save);
         errno = errno_save;
@@ -323,30 +326,31 @@ Termios & termio_get() { // uses POSIX  // todo TODO what are advantages of othe
         LOGGER_( "We will exit(1) for this error");
         exit(1);
     }
-    return terminal_status;  // copy of POD?
+    return termios;  // copy of POD?
 }
 
+/// setting the user terminal to get one character at a time and return control to the reader.
 Termios & termio_set_raw() { // uses POSIX
     cin.sync_with_stdio( false );  									// todo:  iostreams bug?  This is required for timer time-out bug occurs.
-    static Termios terminal_status_orig { termio_get() };
-    Termios 	   terminal_status_new 	{ terminal_status_orig };
-    terminal_status_new.c_lflag 		&= static_cast<tcflag_t>(~ICANON);  // turn off "canonical" or "cooked" mode and go to "non-canonical" or "raw" mode, ie. don't wait for <Enter>. // want this bit OFF for cbreak mode.
-    terminal_status_new.c_lflag 		&= static_cast<tcflag_t>(~ECHO);    // turn off "echo" mode, ie. don't automatically show the characters being typed. // want this bit OFF for cbreak mode.
-    terminal_status_new.c_lflag 		&= static_cast<tcflag_t>(~IEXTEN);  // turn off ???
-    terminal_status_new.c_lflag 		&= static_cast<tcflag_t>(~ISIG);    // turn off ???  // want this bit ON for cbreak mode.
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~BRKINT);  // turn off ???
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~ICRNL);   // turn off ???  // want this bit OFF for cbreak mode.
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~IGNBRK);  // turn off ???
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~IGNCR);   // turn off ???
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~INLCR);   // turn off ???
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~INPCK);   // turn off ???
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~ISTRIP);  // turn off ???
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~IXON);    // turn off ???
-    terminal_status_new.c_iflag 		&= static_cast<tcflag_t>(~PARMRK);  // turn off ???
-    terminal_status_new.c_oflag 		&= static_cast<tcflag_t>(~OPOST);   // turn off all output processing.
-    terminal_status_new.c_cc[VTIME] 	= 0; 								// wait forever to get that char. // http://www.unixwiz.net/techtips/termios-vmin-vtime.html
-    terminal_status_new.c_cc[VMIN]  	= 1;  								// get minimun one char
-    if (auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_new); result == POSIX_ERROR) {
+    static Termios termios_orig { termio_get() };
+    Termios 	   termios_new 	{ termios_orig };
+    termios_new.c_lflag 		&= static_cast<tcflag_t>(~ICANON);  // turn off "canonical" or "cooked" mode and go to "non-canonical" or "raw" mode, ie. don't wait for <Enter>. // want this bit OFF for cbreak mode.
+    termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHO);    // turn off "echo" mode, ie. don't automatically show the characters being typed. // want this bit OFF for cbreak mode.
+    termios_new.c_lflag 		&= static_cast<tcflag_t>(~IEXTEN);  // turn off ???
+    termios_new.c_lflag 		&= static_cast<tcflag_t>(~ISIG);    // turn off ???  // want this bit ON for cbreak mode.
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~BRKINT);  // turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~ICRNL);   // turn off ???  // want this bit OFF for cbreak mode.
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNBRK);  // turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNCR);   // turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~INLCR);   // turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~INPCK);   // turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~ISTRIP);  // turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IXON);    // turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~PARMRK);  // turn off ???
+    termios_new.c_oflag 		&= static_cast<tcflag_t>(~OPOST);   // turn off all output processing.
+    termios_new.c_cc[VTIME] 	= 0; 								// wait forever to get the next char. // http://www.unixwiz.net/techtips/termios-vmin-vtime.html
+    termios_new.c_cc[VMIN]  	= 1;  								// get minimun one char
+    if (auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new); result == POSIX_ERROR) {
                                  // https://pubs.opengroup.org/onlinepubs/9699919799/
                                  // todo: Applications that need all of the requested changes made to work properly should follow tcsetattr() with a call to tcgetattr() and compare the appropriate field values.
         int errno_save = errno;
@@ -355,13 +359,13 @@ Termios & termio_set_raw() { // uses POSIX
         perror( source_loc().data() );
         exit(1);
     }
-    Termios terminal_status_actual { termio_get() };
-    assert( check_equality( terminal_status_actual, terminal_status_new) && "Tcsetattr apprently failed.");
-    return terminal_status_orig;
+    Termios termios_actual { termio_get() };
+    assert( check_equality( termios_actual, termios_new) && "Tcsetattr apprently failed.");
+    return termios_orig;
 }
 
-void termio_restore(Termios const &terminal_status_orig) { // uses POSIX  // todo: TODO do you like my const 2x, what is effect calling POSIX?
-    if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_orig); result == POSIX_ERROR) { // restore prior status
+void termio_restore(Termios const &termios_orig) { // uses POSIX  // todo: TODO do you like my const 2x, what is effect calling POSIX?
+    if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &termios_orig); result == POSIX_ERROR) { // restore prior status
         int errno_save = errno;
         LOGGERS( "Standard in is not a tty keyboard??", errno_save);
         errno = errno_save;
@@ -371,22 +375,24 @@ void termio_restore(Termios const &terminal_status_orig) { // uses POSIX  // tod
     cin.sync_with_stdio(true);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
     return;
 }
-Termios & termio_set_timer(const cc_t time) {  // uses POSIX
-    static Termios terminal_status_orig { termio_get() }; // todo: TODO why does this compile with terminal_status and &terminal_status?
-    Termios terminal_status_new = terminal_status_orig;
+
+Termios &
+termio_set_timer(const cc_t time) {  // uses POSIX
+    static Termios termios_orig { termio_get() }; // todo: TODO why does this compile with termios and &termios?
+    Termios termios_new = termios_orig;
     cin.sync_with_stdio(false);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
-    terminal_status_new.c_cc[VTIME] = time;  // wait some time to get that char
-    terminal_status_new.c_cc[VMIN]  = 0;  // no minimum char to get
-    if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &terminal_status_new); result == POSIX_ERROR) {
+    termios_new.c_cc[VTIME] = time;  // wait some time to get that char
+    termios_new.c_cc[VMIN]  = 0;  // no minimum char to get
+    if (auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &termios_new); result == POSIX_ERROR) {
         int errno_save = errno;
         LOGGERS( "Standard in is not a tty keyboard??",errno_save);
         errno = errno_save;
         perror( source_loc().data() );
         exit(1);
     }
-    Termios terminal_status_actual { termio_get() };
-    assert( check_equality( terminal_status_actual, terminal_status_new) && "Tcsetattr apprently failed.");
-    return terminal_status_orig;
+    Termios termios_actual { termio_get() };
+    assert( check_equality( termios_actual, termios_new) && "Tcsetattr apprently failed.");
+    return termios_orig;
 }
 
 /// give it the string "EOF" and you get back 4 or ^D */
@@ -401,7 +407,8 @@ char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::stri
 }
 
 /// give it "CSI [ A" get back the string name of the hot_key, ie. "right arrow" */
-std::optional<Hot_key> find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
+std::optional<Hot_key>
+find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
     for (auto & hk : hot_keys)
         if ( hk.characters == this_key )
             return hk;
@@ -409,7 +416,8 @@ std::optional<Hot_key> find_hot_key(const Hot_keys &hot_keys, const Hot_key_char
 }
 
 /// ?
-Hotkey_o_errno consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
+Hotkey_o_errno
+consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/termios.h.html
        https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap11.html#tag_11_01_09
        ttp://osr600doc.xinuos.com/en/SDK_sysprog/TDC_SpecialChars.html
@@ -683,9 +691,8 @@ bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_ch
                                   :   isprint(i);
 }
 
-//Kb_key_a_fstat get_kb_key( [[maybe_unused]] bool const is_strip_control_chars) {
-//Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars [[maybe_unused]] ) {
-Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter or get rid of it????
+Kb_key_a_fstat
+get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter, or get rid of it.  All calls set it to true, but I don't think we are stripping those chars.
     Hot_key_chars hkc {};
     for ( Simple_key_char first_skc {};
           first_skc = 0, cin.get( first_skc ), hkc.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true;
@@ -697,16 +704,16 @@ Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars ) {  // todo: use t
             return { hkc, file_status};
         };
         if ( first_skc == CSI_ESC ) {
-            Termios terminal_status_orig { termio_set_timer( VTIME_ESC ) }; // return with no char within timer, if not a multicharacter ESC sequence
+            Termios const termios_orig { termio_set_timer( VTIME_ESC ) }; // set stdin to return with no char that arrives within timer interval, meaning it is not a multicharacter ESC sequence.  A mulitchar ESC seq will provide characters within the interval.
             Simple_key_char timed_test_char {} ;
             cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
             /* if ( cin.eof() ) {  // todo: this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
                 assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
                 file_status = File_status::eof_file_descriptor;
-                termio_restore( terminal_status_orig );
+                termio_restore( termios_orig );
                 return { hkc, file_status};
             }; */
-            termio_restore( terminal_status_orig );
+            termio_restore( termios_orig );
             if ( timed_test_char == TIMED_NULL_GET ) {  // todo: magic number // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!
                 hkc.push_back( NO_MORE_CHARS );  // todo: magic number // add a flag value to show a singular ESC
                 cin.clear();  // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
@@ -813,7 +820,8 @@ bool is_ignore_key_skchar( Simple_key_char const skc,
     assert(false && "We never get here.");
 }
 
-Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
+Kb_value_plus
+get_kb_keys_raw(size_t const length_in_simple_key_chars,
                               bool const   is_require_field_completion_key,
                               bool const   is_echo_skc_to_tty,
                               bool const   is_strip_control_chars,
@@ -826,13 +834,13 @@ Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::na};			// reset some variables from prior loop if any, specifically old/prior hot_key.
     //unsigned 			int value_index			{0}; // Note: Points to the character beyond the current character (presuming zero origin), like an STL iterator it.end(), hence 0 == empty field.
     //bool 		 		is_editing_mode_insert {true};
-    Termios const terminal_status_orig 	{ termio_set_raw() };
+    Termios const termios_orig 	{ termio_set_raw() };
     do {  // *** begin loop *** 	// Gather char(s) to make a value until we get a "completion" Hot_key, or number of chars, or error.
         hot_key_rv 			 = {};  							// reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat = {HotKeyFunctionCat::na};			// reset some variables from prior loop if any, specifically old/prior hot_key.
         bool is_ignore_key_skc {false}, is_ignore_key_hk {false}, is_ignore_key_fd {false};  // todo: don't seem to need these variables, but think I might.
 
-        Kb_key_a_fstat kb_key_a_fstat { get_kb_key( is_strip_control_chars ) }; //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr //--additional_skc, additional_skc > 0 && static_cast<bool>( ( kb_key_a_fstat = get_kb_key( false ) ).second ) //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr
+        Kb_key_a_fstat const kb_key_a_fstat { get_kb_key( is_strip_control_chars ) }; //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr //--additional_skc, additional_skc > 0 && static_cast<bool>( ( kb_key_a_fstat = get_kb_key( false ) ).second ) //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr
         file_status_rv 		  		= kb_key_a_fstat.second;
         if ( ! (is_ignore_key_fd = is_ignore_key_file_status( file_status_rv )) )
         {
@@ -863,13 +871,13 @@ Kb_value_plus get_kb_keys_raw(size_t const length_in_simple_key_chars,
             file_status_rv          != File_status::eof_file_descriptor   &&
             hot_key_rv.function_cat != HotKeyFunctionCat::nav_field_completion &&  // todo: may need more cats like intra_field, editing_mode?
             hot_key_rv.function_cat != HotKeyFunctionCat::navigation_esc ) { // prior: hot_key_rv.f_completion_nav != FieldCompletionNav::down_one_field ) {
-        Kb_key_a_fstat const kb_key_a_fstat = get_kb_key( is_strip_control_chars );
-        Kb_key_optvariant const k 			= kb_key_a_fstat.first;
+        Kb_key_a_fstat const kb_key_a_fstat { get_kb_key( is_strip_control_chars)};
+        Kb_key_optvariant const k 			{ kb_key_a_fstat.first};
         file_status_rv                      = kb_key_a_fstat.second;
         if ( std::holds_alternative< Hot_key >( k ) )
             hot_key_rv = std::get< Hot_key >( k );
     }
-    termio_restore( terminal_status_orig );
+    termio_restore( termios_orig );
     return { value_rv, hot_key_rv, file_status_rv };  // NOTE: we designed to copy OUT these variables.
 }
 

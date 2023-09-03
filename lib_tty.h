@@ -57,6 +57,7 @@ inline constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automa
 inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
 
 /**  *** POSIX level declarations *** */
+/**  *** POSIX OS Signals level declarations *** */
 
 /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
  * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#trap
@@ -102,25 +103,6 @@ inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, t
     //    cerr<< "ttyname: "<< my_tty_name << endl;
  */
 
-/**  *** POSIX termial IO level declarations *** */
-
-/// C++ class name capitalization convention of the POSIX C type.
-using Termios = termios;    // Tty terminal IO & speed structure, used for setting them. // C++ class name capitalization convention of the POSIX C type;
-
-/// to get user's tty termial status
-Termios &termio_get();
-
-/// to allow capturing one character at a time and gaining control immediately after user presses that key, ie. not buffered.
-Termios &termio_set_raw();
-
-/// to assist in finding additional keys after CSI/ESC of a multi-character function key.
-Termios &termio_set_timer( cc_t const time);
-
-/// to normal cooked? condition
-void     termio_restore( Termios const &terminal_status);      	/** restore terminal state to what it was when program was started??? todo: verify my comment here. */
-
-/**  *** POSIX OS Signals level declarations *** */
-
 /** C++ class name capitalization convention of the POSIX C type.
  *  The siginfo_t structure is passed as the second parameter to a user signal handler function,
  *  if the SA_SIGINFO flag was specified when the handler was installed with sigaction(). */
@@ -132,26 +114,43 @@ using Sigaction_handler_fn_t =
         int,
         Siginfo_t *,
         void *                      // ucontext_t*
-    );                              // todo??: TODO why does POSIX have the wrong sighandler_t.  Ie. 1 input parameter versus 3? // maybe use std::function
-                                    // todo??: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
-                                    // todo??: more ideas: std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
+        );                              // todo??: TODO why does POSIX have the wrong sighandler_t.  Ie. 1 input parameter versus 3? // maybe use std::function
+    // todo??: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
+    // todo??: more ideas: std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
 
 /// todo?: some POSIX thing?
 struct Sigaction_return {
     int       signal_for_user;     // todo??: why not init this int?
     struct    sigaction         // Structure describing the action to be taken when a signal arrives.
-                    action_prior;  // TODO?? what is this special use of struct statement?  What about an init of this?
+        action_prior;  // TODO?? what is this special use of struct statement?  What about an init of this?
 };
 // todo??: could this be used instead of above? >> using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
 
 /// todo?: A datastructure to simply function calls.  todo: I don't recall why there are five, but I didn't just make up that number. :)
 struct Sigaction_termination_return {
-  struct sigaction &action_prior1; /* Structure describing the action to be taken when a signal arrives.  */
-  struct sigaction &action_prior2;
-  struct sigaction &action_prior3;
-  struct sigaction &action_prior4;
-  struct sigaction &action_prior5;
+    struct sigaction &action_prior1; /* Structure describing the action to be taken when a signal arrives.  */
+    struct sigaction &action_prior2;
+    struct sigaction &action_prior3;
+    struct sigaction &action_prior4;
+    struct sigaction &action_prior5;
 };
+
+/**  *** POSIX termial IO level declarations *** */
+
+/// C++ class name capitalization convention of the POSIX C type.
+using Termios = termios;    // Tty terminal IO & speed structure, used for getting and setting them. // Enforcing the C++ struct type name capitalization convention for the POSIX C type.  I like it that way.
+
+/// to get user's tty termial status
+Termios &termio_get();
+
+/// to allow capturing one character at a time and gaining control immediately after user presses that key, ie. not buffered.
+Termios &termio_set_raw();
+
+/// to assist in finding additional keys after CSI/ESC of a multi-character function key.
+Termios &termio_set_timer( cc_t const time);
+
+/// to normal cooked? condition
+void     termio_restore( Termios const &termios);      	/** restore terminal state to what it was when program was started??? todo: verify my comment here. */
 
 
 /**  *** Application Level Declarations *** */
@@ -248,12 +247,11 @@ using Ascii_Posix_map = std::vector< Ascii_posix_relation >; // todo: use proper
  *  one byte long or the components of a hot key sequence.
  *  todo: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
  *  then fix next two lines of documentation.*/
-using KbFundamentalUnit = char;         /// todo??: should this be unsigned or ssize_t?
+using KbFundamentalUnit = char;         /// the most basic character type this associated with a user keyboard on the supported computer/OS. todo??: should this be unsigned char or ssize_t or unit8?
 
-/// a single ascii? value that represents one key press on a keyboard, which does not generate a multibye burst of characters, like F1
-using Simple_key_char 	= KbFundamentalUnit;
-using Hot_key_chars 	= std::vector<KbFundamentalUnit>;
-using Kb_regular_value 	= string;          // a value is one or more normal alphanumeric characters entered by the user //  todo: make this the correct/internationalized char type.
+using Simple_key_char 	= KbFundamentalUnit;                /// the most basic character that a keyboard can generate like ASCII or UNICODE 8? or 16? or 32?, which does not generate a multibye burst of characters, like F1
+using Hot_key_chars 	= std::vector<KbFundamentalUnit>;   /// a sequence of basic characters that are generated by a user single keypress on a keyboard, ie. ESC, or F1 for help.
+using Kb_regular_value 	= string;                           /// is one or more normal alphanumeric/ASCII like characters entered by the user //  todo: make this the correct/internationalized char type.
 
 constexpr KbFundamentalUnit CSI_ESC = 27; /// the first char of the POSIX CSI Control Sequence Introducer, the ESC character that designates a hot_key, is the first char in
                                           /// Hot_key_chars. This could turn into a "termcap" like table.
@@ -274,12 +272,15 @@ struct Hot_key {
   bool operator<(Hot_key const &) const;                       // used to sort the list of easy lookup by characters.
   std::string to_string() const;                               // for debugging.
 };
+/// stores all known Hot_keys for internal library use.
 using  Hot_keys = std::vector< Hot_key >;
+/// Hotkey OR an ERRNO
 using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >; /// _o_ == "exclusive or"
 
+/// Hotkey OR a file_status
 using  Hot_key_o_fstat = std::variant< Hot_key, File_status >; /// _o_ == "exclusive or"
 
-/** a "Kb_key" is one char or one Hot_key, ie. the result of hitting any key whether it is special or not. todo: does this include an EOF character? */
+/// a "Kb_key" is one char or one Hot_key, ie. the result of hitting any key whether it is special or not. todo: does this include an EOF character?
 using Kb_key_optvariant = std::variant< std::monostate, Simple_key_char, Hot_key_chars, Hot_key, File_status >;              // todo: maybe File_status is not needed in RAW case.
 
 /** a pair tells us if we got a Kb_key and?, or? is we got EOF. todo?: */
@@ -293,10 +294,14 @@ using Kb_value_plus = std::tuple< Kb_regular_value, Hot_key, File_status >;
 std::optional<Hot_key>
 find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
 
+/// called by get_kb_keys_raw().
+/// PUBLIC FUNCTION can also? BE CALLED BY END USER, but not used in the client "file_maintenance_*" programs.
+/// Probably needs debugging to be called directly.
 Kb_key_a_fstat
-get_kb_key(bool const is_strip_control_chars = true);
+get_kb_key(bool const is_strip_control_chars = true); //Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars [[maybe_unused]] ) {
 
 /** Seeks to get n simple_key_chars from keyboard in raw stty mode.
+ *  PUBLIC FUNCTION TO BE CALLED BY END USER, is used in the client "file_maintenance_*" programs.
  *
  * It returns immediately on n number of simple_key_chars and
  * that is the reason 'raw' mode is used/set by this function.
@@ -309,7 +314,12 @@ get_kb_key(bool const is_strip_control_chars = true);
  * This function is generally used with n=1.
  * The user's goal is to just grab one key and take action such as in a menu, where a selection is just one key.
  * However, in case some field would want automatic action on n>1, we have provided that feature.
- * Maybe a menu takes two keys?  Probably not, but the feature exists.
+ *
+ * Perhaps some menu takes two keys to select the option?  Probably not, but the feature exists.
+ * Note that only the last function key pressed by the user, as part of the sequence of keys will be set in result.
+ *
+ * This function sets POSIX terminal settings and signals for the time that it is getting characters,
+ * and lastly restores the terminal to original configuration
  *
  */
 Kb_value_plus
