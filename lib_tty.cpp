@@ -1,9 +1,13 @@
+/*
+ * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
+ * BOOST 1.0 license
+ */
 #include "lib_tty.h"
 #include <cstring>
 #include <cstdio>
 #include <iomanip>
 #include <iterator>
-//#include <variant>
+#include <variant>
 #include <algorithm>
 #include <iostream>
 #include <type_traits>
@@ -675,10 +679,9 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 }
 
 bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_chars = false ) {
-    // assert( !( is_allow_control_chars && is_password) && "Only one may be true at a time.") ;  //todo: fix this
     int const i	{ static_cast<int>(kbc) };
     return is_allow_control_chars ? ( isprint(i) || iscntrl(i) ) && !( isspace(i) || i==17 || i==19 ) 	// allowing control chars in pw, except: spaces and XON & XOFF,
-                                                                                                            // but note some may have been parsed out as hot_keys prior to this test.
+                                                                                                        // but note some may have been parsed out as hot_keys prior to this test.
                                   :   isprint(i);
 }
 
@@ -738,7 +741,7 @@ get_kb_key_old( bool const is_strip_control_chars ) {  // todo: use the paramete
 }
 
 Kb_key_a_fstat
-get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter, or get rid of it.  All calls set it to true, but I don't think we are stripping those chars.
+get_kb_key() {
     Hot_key_chars   hkcs {};
     File_status     file_status { File_status::other };
     //for ( Simple_key_char first_skc {} ;
@@ -749,14 +752,14 @@ get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter, o
     cin.get( first_skc );
     if ( first_skc == CSI_ALT ) hkcs.push_back( CSI_ESC ); else hkcs.push_back( first_skc );
 
-    while ( true ) {
+    while ( true ) {                 // So far, we have a kb char, but is it more complicated, ie. a hot_key? possibly a multibyte function key like F1, let's continue and see.
         file_status = File_status::other;
         if ( cin.eof() || first_skc == 0) {     // does this every happen? todo: 0 == the break character or what else could it mean?
             assert( (cin.eof() || first_skc == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
             file_status = File_status::eof_file_descriptor;
             return { hkcs, file_status};
         };
-        if ( first_skc == CSI_ESC ) {  // We might have more characters in that single keystroke.
+        if ( first_skc == CSI_ESC ) {  // If all is as expected, we might have more characters from that single keystroke, so let's get another char.
             Simple_key_char timed_test_char {0};
             Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
             cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
@@ -774,7 +777,7 @@ get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter, o
                 //cin.putback( timed_test_char );   // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
                 hkcs.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
         }
-        Hotkey_o_errno const k { consider_hot_key( hkcs )};  // We may have a single char or multi-byte sequence which is either complete, or only partially read. todo: consider using ref for speed?
+        Hotkey_o_errno const k { consider_hot_key( hkcs )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. todo: consider using ref for speed?
         if ( std::holds_alternative< Hot_key >( k ) )  // We have a real hot_key, so we are done!
             return { std::get< Hot_key >(k),         File_status::other };  // todo: file_status is what? might be EOF or other?
         else {
@@ -857,11 +860,11 @@ bool is_ignore_hotkey_function_cat( HotKeyFunctionCat const hot_key_function_cat
 }
 
 // true if we disallow the character
-bool is_ignore_key_skchar( Simple_key_char const skc,
-                           bool const is_echo_skc_to_tty = true,
-                           bool const is_allow_control_chars = false,
-                           bool const is_ring_bell = true) {
-    LOGGERS("get_kb_keys_raw(): Got a Simple_key_char: ", static_cast<int>(skc));
+bool is_ignore_skc( Simple_key_char const skc,
+                    bool const is_echo_skc_to_tty = true,
+                    bool const is_allow_control_chars = false,
+                    bool const is_ring_bell = true) {
+    LOGGERS("Char is:", static_cast< int >( skc ));
     if ( is_usable_char( skc, is_allow_control_chars )) {
         if ( is_echo_skc_to_tty )
             cout << skc <<endl;
@@ -878,11 +881,11 @@ bool is_ignore_key_skchar( Simple_key_char const skc,
 }
 
 Kb_value_plus
-get_kb_keys_raw(size_t const length_in_simple_key_chars,
-                              bool const   is_require_field_completion_key,
-                              bool const   is_echo_skc_to_tty,
-                              bool const   is_strip_control_chars,
-                              bool const   is_password ) {
+get_kb_keys_raw( size_t const length_in_simple_key_chars,
+                 bool const   is_require_field_completion_key,
+                 bool const   is_echo_skc_to_tty,
+                 bool const   is_strip_control_chars,
+                 bool const   is_password ) {
     assert( length_in_simple_key_chars > 0 && "Too small get length." );   // todo: must debug n>1 case later.
     Kb_regular_value 	value_rv 				{}; //  *** need to load the 3 "_rv" vars below
     Hot_key		 		hot_key_rv				{};
@@ -893,17 +896,17 @@ get_kb_keys_raw(size_t const length_in_simple_key_chars,
     //bool 		 		is_editing_mode_insert {true};
     Termios const termios_orig 	{ termio_set_raw() };
     do {  // *** begin loop *** 	// Gather char(s) to make a value until we get a "completion" Hot_key, or number of chars, or error.
+        bool is_ignore_key_skc {false}, is_ignore_key_hk {false}, is_ignore_key_fd {false};  // todo: don't seem to need these variables, but think I might.
         hot_key_rv 			 = {};  							// reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat = {HotKeyFunctionCat::na};			// reset some variables from prior loop if any, specifically old/prior hot_key.
-        bool is_ignore_key_skc {false}, is_ignore_key_hk {false}, is_ignore_key_fd {false};  // todo: don't seem to need these variables, but think I might.
 
-        Kb_key_a_fstat const kb_key_a_fstat { get_kb_key( is_strip_control_chars ) }; //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr //--additional_skc, additional_skc > 0 && static_cast<bool>( ( kb_key_a_fstat = get_kb_key( false ) ).second ) //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr
+        Kb_key_a_fstat const kb_key_a_fstat { get_kb_key() }; //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr //--additional_skc, additional_skc > 0 && static_cast<bool>( ( kb_key_a_fstat = get_kb_key( false ) ).second ) //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr
         file_status_rv 		  		= kb_key_a_fstat.second;
         if ( ! (is_ignore_key_fd = is_ignore_key_file_status( file_status_rv )) )
         {
             if      ( std::holds_alternative< Simple_key_char >( kb_key_a_fstat.first )) {
                 Simple_key_char const skc { std::get < Simple_key_char >( kb_key_a_fstat.first ) };
-                if ( ! ( is_ignore_key_skc = is_ignore_key_skchar( skc, is_echo_skc_to_tty, is_password )) )
+                if ( ! ( is_ignore_key_skc = is_ignore_skc( skc, is_echo_skc_to_tty, is_password )) )
                     value_rv += skc;
             }
             else if ( std::holds_alternative< Hot_key > ( kb_key_a_fstat.first )) {
@@ -919,23 +922,23 @@ get_kb_keys_raw(size_t const length_in_simple_key_chars,
         }
         if ( !is_ignore_key_fd || !is_ignore_key_skc || !is_ignore_key_hk )
             --additional_skc;
-    } while ( additional_skc >  0 && // *** end loop ***
+    } while ( additional_skc > 0 &&                                 // *** end loop ***
               file_status_rv != File_status::eof_simple_key_char &&
               file_status_rv != File_status::eof_file_descriptor &&
-              hot_key_function_cat == HotKeyFunctionCat::na ); // todo: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
+              hot_key_function_cat == HotKeyFunctionCat::na );      // todo: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
 
     while ( is_require_field_completion_key &&
             file_status_rv          != File_status::eof_file_descriptor   &&
             hot_key_rv.function_cat != HotKeyFunctionCat::nav_field_completion &&  // todo: may need more cats like intra_field, editing_mode?
             hot_key_rv.function_cat != HotKeyFunctionCat::navigation_esc ) { // prior: hot_key_rv.f_completion_nav != FieldCompletionNav::down_one_field ) {
-        Kb_key_a_fstat const kb_key_a_fstat { get_kb_key( is_strip_control_chars)};
+        Kb_key_a_fstat const kb_key_a_fstat { get_kb_key() };
         Kb_key_optvariant const k 			{ kb_key_a_fstat.first};
         file_status_rv                      = kb_key_a_fstat.second;
         if ( std::holds_alternative< Hot_key >( k ) )
             hot_key_rv = std::get< Hot_key >( k );
-    }
+    }                                                               // *** end loop ***
     termio_restore( termios_orig );
-    return { value_rv, hot_key_rv, file_status_rv };  // NOTE: we designed to copy OUT these variables.
+    return { value_rv, hot_key_rv, file_status_rv };
 }
 
 }

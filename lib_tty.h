@@ -1,6 +1,6 @@
 /*
- * Copyright 2019 Grant Rostig all rights reserved,
- * BOOST license
+ * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
+ * BOOST 1.0 license
  */
 #ifndef LIB_TTY_H
 #define LIB_TTY_H
@@ -306,7 +306,7 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
  *  PUBLIC FUNCTION can also? BE CALLED BY END USER, but not used in the client "file_maintenance_*" programs.
  *  Probably needs debugging, if it is to be called directly. */
 Kb_key_a_fstat
-get_kb_key(bool const is_strip_control_chars = true); // todo??: handle warning how? $Kb_key_a_fstat get_kb_key( bool const is_strip_control_chars [[maybe_unused]] ) {
+get_kb_key();
 
 /** Seeks to get n simple_key_chars from keyboard in raw stty mode.
  *  PUBLIC FUNCTION TO BE CALLED BY END USER, is used in the client "file_maintenance_*" programs.

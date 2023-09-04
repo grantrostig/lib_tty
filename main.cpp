@@ -1,11 +1,18 @@
-/*  Used to test lib_tty.so
+/*
+ * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
+ * BOOST 1.0 license
+ *
+ *  Used to test lib_tty.so
  *  Testing should be expanded considerably.
  *  We test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
  */
 
 //#include <bits/stdc++>  // todo??: why is .h needed?
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
 #include "lib_tty.h"
+#include <stacktrace>
+#include <source_location>
+#include <iostream>
 
 using std::cin; using std::cout; using std::cerr; using std::clog; using std::endl; using std::string;  // using namespace std;
 using namespace std::string_literals;;
@@ -28,8 +35,23 @@ source_loc() {
 #define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
 #define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
 
+auto crash_tracer(int const signal_number) ->void {
+    cout << "CRASH_ERROR: signal#, stack trace:<<<" << signal_number << ">>>,<<<" << std::stacktrace::current() << "<<<END STACK TRACE.\n";
+}
+
+auto crash_signals_register() -> void {
+    std::signal( SIGHUP,  crash_tracer );
+    std::signal( SIGINT,  crash_tracer );
+    std::signal( SIGQUIT, crash_tracer );
+    std::signal( SIGILL,  crash_tracer );
+    std::signal( SIGTRAP, crash_tracer );
+    std::signal( SIGABRT, crash_tracer );
+    std::signal( SIGSEGV, crash_tracer );
+}
+
 ///  This main() is used solely to test our linked shared library: lib_tty.so
 int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,argv:"<<argc<<","<<my_arv<<"."<<endl;
+    crash_signals_register();
     Lib_tty::Kb_regular_value   kbrv {};
     Lib_tty::Hot_key            hk {};
     Lib_tty::File_status        fs {};
