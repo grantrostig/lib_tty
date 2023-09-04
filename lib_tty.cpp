@@ -23,8 +23,8 @@ namespace Lib_tty {
 //#undef  	GR_DEBUG
 //#ifdef   	GR_DEBUG
 //#endif  # GR_DEBUG
-#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
-#define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
+#define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".\n";
+#define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
 
 string
 source_loc( ) {  // give more detail on error location, used by perror()
@@ -52,10 +52,7 @@ template<typename T>            // utility f() to print vectors
 std::ostream&
 operator<<( std::ostream & out, const std::vector<T> & v) requires can_insert<T> {
     if (!v.empty()) {
-        out << '<';
-        std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, "&"));
-        // out << "\b\b]";
-        out << ">";
+        std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, ","));
     }
     return out;
 }
@@ -443,7 +440,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         basic keys (A, B, C, D, E, F, G, K, L, N, O, P, R, T, U, V, W, X, Y, Z).
      */
     static const Ascii_Posix_map ascii_posix_map {  // TODO?? why no constexpr  is it the vector?
-    //ascii_id, ascii_name,        posix_id, ascii_ctrl+,  \+, ascii_char, posix_char
+    //ascii_id, ascii_name,             posix_id, ascii_ctrl+,\+,ascii_char,posix_char
         {"NUL", "Null",					"EOL", 		'@',	{},		0,	0},   // [ctl-spacebar does this!] (typically, ASCII NUL) is an additional line delimiter, like the NL character. EOL is not normally used. // If ICANON is set, the EOL character is recognized and acts as a special character on input (see ``Local modes and line disciplines'' in termio(M)).  probably of not used or even available as a char from a PC or any type of keyboard?!
         {"SOH",	"start_of_heading",		"???", 	    'a',	{},		1,	1},   //
         {"STX",	"start_of_text",		"???",	 	'b',	{},		2,	2},   //
@@ -482,9 +479,10 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"\\",	"backslash",			"???",		{},		0x5C,   92, 92}, // simple
     };
     static       Hot_keys 		 hot_keys {
-        // my_name	     char sequence
+        // my_name,     char sequence,                                                      Cat,                                        Nav,                                    IntraNav
         // first the single key char action keys that are the good old Unix shell standard.
-        {"escape",		{find_posix_char_from_posix_name(ascii_posix_map, "ESC"), NO_MORE_CHARS}, HotKeyFunctionCat::navigation_esc,			FieldCompletionNav::esc,			 	FieldIntraNav::na},
+        {"escape",		{find_posix_char_from_posix_name(ascii_posix_map, "ESC"),
+                          NO_MORE_CHARS},                                                   HotKeyFunctionCat::navigation_esc,          FieldCompletionNav::esc,			 	FieldIntraNav::na},
         {"eof",			{find_posix_char_from_posix_name(ascii_posix_map, "EOF")}, 			HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::eof,			 	FieldIntraNav::na},
         {"quit",		{find_posix_char_from_posix_name(ascii_posix_map, "QUIT")}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
         {"interrupt",	{find_posix_char_from_posix_name(ascii_posix_map, "INTR")},			HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
@@ -501,22 +499,22 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         // Secondly the multicharacter ESC sequences for the XTERM initially and then VT100 or ANSI.SYS? keyboard, which might be different as in "termcap" on some other hardware.
         // XTERM https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
         {"f1",			{CSI_ESC,'O','P'}, 				HotKeyFunctionCat::help_popup, 				FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f2",			{CSI_ESC,'O','Q'}, 				HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f3",			{CSI_ESC,'O','R'}, 				HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f4",			{CSI_ESC,'O','S'}, 				HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f2",			{CSI_ESC,'O','Q'}, 				HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f3",			{CSI_ESC,'O','R'}, 				HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f4",			{CSI_ESC,'O','S'}, 				HotKeyFunctionCat::nav_field_completion,    FieldCompletionNav::exit_with_prompts, FieldIntraNav::na},
         {"up_arrow",	{CSI_ESC,'[','A'}, 				HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::browse_up, 		FieldIntraNav::na},
         {"down_arrow",	{CSI_ESC,'[','B'}, 				HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::browse_down, 	FieldIntraNav::na},
         {"right_arrow",	{CSI_ESC,'[','C'}, 				HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_right},
         {"left_arrow",	{CSI_ESC,'[','D'}, 				HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_left},
         {"end",			{CSI_ESC,'[','F'}, 				HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::goto_end},
-        {"key_pad_5",	{CSI_ESC,'[','G'}, 				HotKeyFunctionCat::na,			 		FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"key_pad_5",	{CSI_ESC,'[','G'}, 				HotKeyFunctionCat::na,			 		    FieldCompletionNav::na, 			FieldIntraNav::na},
         {"home",		{CSI_ESC,'[','H'}, 				HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
         {"shift-tab",	{CSI_ESC,'[','Z'}, 				HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::up_one_field, 	FieldIntraNav::na},
         // VT100/220
-        {"insert",		{CSI_ESC,'[',    '2','~'}, 			HotKeyFunctionCat::editing_mode,			FieldCompletionNav::na,			 	FieldIntraNav::na},
-        {"delete",		{CSI_ESC,'[',    '3','~'}, 			HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na, 			FieldIntraNav::delete_char},
-        {"pageup",	  	{CSI_ESC,'[',    '5','~'}, 			HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_up,		FieldIntraNav::na},
-        {"pagedown",	{CSI_ESC,'[',    '6','~'}, 			HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_down,		FieldIntraNav::na},
+        {"insert",		{CSI_ESC,'[',    '2','~'}, 		HotKeyFunctionCat::editing_mode,			FieldCompletionNav::na,			 	FieldIntraNav::na},
+        {"delete",		{CSI_ESC,'[',    '3','~'}, 		HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na, 			FieldIntraNav::delete_char},
+        {"pageup",	  	{CSI_ESC,'[',    '5','~'}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_up,		FieldIntraNav::na},
+        {"pagedown",	{CSI_ESC,'[',    '6','~'}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_down,		FieldIntraNav::na},
         {"f5",			{CSI_ESC,'[','1','5','~'}, 		HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         {"f6",			{CSI_ESC,'[','1','7','~'}, 		HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
         {"f7",			{CSI_ESC,'[','1','8','~'}, 		HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
@@ -641,9 +639,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     };
     if ( static bool once {false}; !once) {
         once = true;
-        if ( hot_keys.empty() ) {
-            assert( false && "We don't allow empty hotkeys.");
-        }
+        assert ( !hot_keys.empty() && "We don't allow empty hotkeys set.");
         std::sort( hot_keys.begin(), hot_keys.end() );
         if ( auto dup = std::adjacent_find( hot_keys.begin(), hot_keys.end(), is_hk_chars_equal ); dup != hot_keys.end() ) {
             LOGGERS( "Duplicate hot_key:", dup->my_name);
@@ -653,30 +649,25 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         // todo??: make it accept operator<< : LOGGERS( "Run once only now, here are the hot_keys,characters:",hot_keys)
         LOGGER_( "Run once only now, here are the hot_keys,characters:")
         for (auto & i : hot_keys) {
-            cerr << std::setw(18) << i.my_name;
+            LOGGERS( "hot_key:   ", i.my_name);
             //print_vec(i.characters);
-            cerr <<"[" << i.characters <<"]";
-            cerr << endl;
+            LOGGERS( "it's chars:", i.characters);
         }
-        cout << "\b\b. " << endl;
 #endif
     }
-
-    LOGGERS( "candidate_hk_chars: ", candidate_hk_chars); //LOGGER_(print_vec(candidate_hk_chars));
-
+    LOGGERS( "Candidate_hk_chars:", candidate_hk_chars);
     Hot_key const candidate_hk 		{ {}, candidate_hk_chars };
-    auto    const lower_bound_itr = std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk );  LOGGERS( "Lower_bount_itr:", lower_bound_itr->my_name); LOGGERS( "Characters within above", lower_bound_itr->characters); //prior line probably replaces this line: print_vec(lower_bound_itr->characters); cerr << "." << endl;
-
-    bool const no_match_end  	{ lower_bound_itr == hot_keys.end() }; // due to the fact we skipped all values, we have one, of several reasons for not having a match.
-    bool const partial_match 	{ !no_match_end &&
+    auto    const lower_bound_itr   { std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk)};  LOGGERS( "Lower_bount_itr:", lower_bound_itr->my_name); LOGGERS( "Characters within above", lower_bound_itr->characters); //prior line probably replaces this line: print_vec(lower_bound_itr->characters); cerr << "." << endl;
+    bool    const no_match_end  	{ lower_bound_itr == hot_keys.end() }; // due to the fact we skipped all values, we have one, of several reasons for not having a match.
+    bool    const partial_match 	{ !no_match_end &&
                                       std::equal( candidate_hk_chars.begin(),	// not the same as == since length of candidate is not length of hot_key
                                                   candidate_hk_chars.end(),
                                                   lower_bound_itr->characters.begin(),
                                                   std::next( lower_bound_itr->characters.begin(), candidate_hk_chars.size() ) )  // check at most the min of both lengths.
-                                };
-    bool const full_match		{ partial_match &&
-                                    lower_bound_itr->characters.size() == candidate_hk_chars.size()
-                                };
+                                    };
+    bool    const full_match		{ partial_match &&
+                                      lower_bound_itr->characters.size() == candidate_hk_chars.size()
+                                    };
     // *** NOTE: we still might not have a match.  The if below determines final determination of no_match.
     if      ( full_match )    return *lower_bound_itr;
     else if ( partial_match ) return E_PARTIAL_MATCH;
@@ -692,20 +683,82 @@ bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_ch
 }
 
 Kb_key_a_fstat
-get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter, or get rid of it.  All calls set it to true, but I don't think we are stripping those chars.
-    Hot_key_chars hkc {};
-    for ( Simple_key_char first_skc {};
-          first_skc = 0, cin.get( first_skc ), hkc.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true;
+get_kb_key_old( bool const is_strip_control_chars ) {  // todo: use the parameter, or get rid of it.  All calls set it to true, but I don't think we are stripping those chars.
+    Hot_key_chars hkcs {};
+    for ( Simple_key_char first_skc {} ;
+          first_skc = 0, cin.get( first_skc ), hkcs.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true ;
+          // No increment. // todo??: is there a better way to note this?  Or not use "for" at all?
         ) {
         File_status file_status { File_status::other };
         if ( cin.eof() || first_skc == 0) {
             assert( (cin.eof() || first_skc == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
             file_status = File_status::eof_file_descriptor;
-            return { hkc, file_status};
+            return { hkcs, file_status};
         };
         if ( first_skc == CSI_ESC ) {
             Termios const termios_orig { termio_set_timer( VTIME_ESC ) }; // set stdin to return with no char that arrives within timer interval, meaning it is not a multicharacter ESC sequence.  A mulitchar ESC seq will provide characters within the interval.
             Simple_key_char timed_test_char {} ;
+            cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
+            // if ( cin.eof() ) {  // todo: this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
+                //assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
+                //file_status = File_status::eof_file_descriptor;
+                //termio_restore( termios_orig );
+                //return { hkc, file_status};
+            //};
+            termio_restore( termios_orig );
+            if ( timed_test_char == TIMED_NULL_GET ) {  // todo: magic number // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!
+                hkcs.push_back( NO_MORE_CHARS );  // todo: magic number // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!
+                cin.clear();  // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
+            } else
+                cin.putback( timed_test_char ); 		// part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
+        }
+        Hotkey_o_errno const hot_key_or_error = consider_hot_key( hkcs );
+        if ( std::holds_alternative< Hot_key >( hot_key_or_error ))     // We got a hotkey of lenght >= 1;
+            return { std::get< Hot_key >( hot_key_or_error), File_status::other };
+        else {                                                          // We got a partial match on multi-byte sequence, or something else.
+            assert( std::holds_alternative< Lt_errno >( hot_key_or_error ) && "Logic error: the error alternative is broken." );
+            switch ( std::get< Lt_errno >( hot_key_or_error )) {
+            case E_PARTIAL_MATCH:
+                continue;                                               // We got a prefix match, so we get more chars and see what comes.
+            case E_NO_MATCH:
+                if ( hkcs.size() == 1 )                                 // We got a simple_key_char, ie. a simple ASCII char.
+                    return { hkcs[0] , File_status::other };
+                // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
+                // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Simple_key_char i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
+                // hkc.clear();
+                // Hot_key_chars const hot_key_chars_unfound { hkc.begin(), hkc.end() };
+                else
+                    return { hkcs, File_status::unexpected_data };
+                assert(false && "Logic error.");
+                break;
+            }
+        }
+      } // * end loop *
+    assert(false && "We should never get here, because we turned within the infinite loop.");
+}
+
+Kb_key_a_fstat
+get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter, or get rid of it.  All calls set it to true, but I don't think we are stripping those chars.
+    Hot_key_chars   hkcs {};
+    File_status     file_status { File_status::other };
+    //for ( Simple_key_char first_skc {} ;
+          //first_skc = 0, cin.get( first_skc ), hkcs.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true ;
+          // No increment. // todo??: is there a better way to note this?  Or not use "for" at all?
+        //)
+    Simple_key_char first_skc {0} ;
+    cin.get( first_skc );
+    if ( first_skc == CSI_ALT ) hkcs.push_back( CSI_ESC ); else hkcs.push_back( first_skc );
+
+    while ( true ) {
+        file_status = File_status::other;
+        if ( cin.eof() || first_skc == 0) {     // does this every happen? todo: 0 == the break character or what else could it mean?
+            assert( (cin.eof() || first_skc == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
+            file_status = File_status::eof_file_descriptor;
+            return { hkcs, file_status};
+        };
+        if ( first_skc == CSI_ESC ) {  // We might have more characters in that single keystroke.
+            Simple_key_char timed_test_char {0};
+            Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
             cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
             /* if ( cin.eof() ) {  // todo: this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
                 assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
@@ -715,30 +768,34 @@ get_kb_key( bool const is_strip_control_chars ) {  // todo: use the parameter, o
             }; */
             termio_restore( termios_orig );
             if ( timed_test_char == TIMED_NULL_GET ) {  // todo: magic number // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!
-                hkc.push_back( NO_MORE_CHARS );  // todo: magic number // add a flag value to show a singular ESC
-                cin.clear();  // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
+                hkcs.push_back( NO_MORE_CHARS );  // todo: magic number // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!
+                cin.clear();                      // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
             } else
-                cin.putback( timed_test_char ); 		// part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
+                //cin.putback( timed_test_char );   // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
+                hkcs.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
         }
-        Hotkey_o_errno const k = consider_hot_key( hkc );  // todo: consider using ref for speed?
-        if ( std::holds_alternative<Hot_key>(k) )
-            return { std::get<Hot_key>(k),         File_status::other };
+        Hotkey_o_errno const k { consider_hot_key( hkcs )};  // We may have a single char or multi-byte sequence which is either complete, or only partially read. todo: consider using ref for speed?
+        if ( std::holds_alternative< Hot_key >( k ) )  // We have a real hot_key, so we are done!
+            return { std::get< Hot_key >(k),         File_status::other };  // todo: file_status is what? might be EOF or other?
         else {
-            assert( std::holds_alternative<Lt_errno>(k) && "We have an Lt_errno, which we DIDN'T handle??." );
-            switch ( std::get<Lt_errno>(k) ) {
-            case E_PARTIAL_MATCH:
-                continue;
+            LOGGERS( "We have an Lt_errno.", std::get< Lt_errno >(k) );
+            switch ( std::get< Lt_errno >( k ) ) {
             case E_NO_MATCH:
-                if ( hkc.size() == 1 )
-                    return { hkc[0] , File_status::other };
+                if ( hkcs.size() == 1 )
+                    return { hkcs[0] , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
                 // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
                 // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Simple_key_char i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
                 // hkc.clear();
                 // Hot_key_chars const hot_key_chars_unfound { hkc.begin(), hkc.end() };
-                return { hkc, File_status::unexpected_data };
+                else
+                    return { hkcs, File_status::unexpected_data };  // we got a CSI, but that followed didn't match any of the subsequent chars of a multi-byte sequence.
+                break;
+            case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get a hotkey.
+                continue;
+                break;
             }
         }
-      } // * end loop *
+    } // * end loop *
     assert(false && "We should never get here.");
 }
 
