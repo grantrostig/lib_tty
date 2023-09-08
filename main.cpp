@@ -36,51 +36,73 @@ source_loc() {
 #define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
 
 auto crash_tracer(int const signal_number) ->void {
-    cout << "CRASH_ERROR: signal#, stack trace:<<<" << signal_number << ">>>,<<<" << std::stacktrace::current() << "<<<END STACK TRACE.\n";
+    cout << "CRASH_ERROR: signal#, stack trace:{" << signal_number << "},{" << std::stacktrace::current() << "}<<<END CRASH_ERROR STACK_TRACE.\n"; // We want the user to see this error
+    std::string reply; cout << "q for exit(1) or CR to continue:"; cout.flush(); cin.clear(); getline(cin, reply); if ( reply == "q") exit(1);
 }
 
-auto crash_signals_register() -> void {
-    std::signal( SIGHUP,  crash_tracer );
-    std::signal( SIGINT,  crash_tracer );
-    std::signal( SIGQUIT, crash_tracer );
-    std::signal( SIGILL,  crash_tracer );
-    std::signal( SIGTRAP, crash_tracer );
+auto crash_signals_register() -> void {    // signals that cause "terminate" and sometimes "core dump"  https://en.wikipedia.org/wiki/Signal_(IPC)
     std::signal( SIGABRT, crash_tracer );
+    std::signal( SIGALRM, crash_tracer );
+    std::signal( SIGBUS,  crash_tracer );
+    std::signal( SIGFPE,  crash_tracer );
+    std::signal( SIGHUP,  crash_tracer );
+    std::signal( SIGILL,  crash_tracer );
+    std::signal( SIGINT,  crash_tracer );
+    std::signal( SIGKILL, crash_tracer );
+    std::signal( SIGPIPE, crash_tracer );
+    std::signal( SIGPOLL, crash_tracer );
+    std::signal( SIGPROF, crash_tracer );
+    std::signal( SIGQUIT, crash_tracer );
     std::signal( SIGSEGV, crash_tracer );
+    std::signal( SIGSYS,  crash_tracer );
+    std::signal( SIGTERM, crash_tracer );
+    std::signal( SIGTRAP, crash_tracer );
+    std::signal( SIGUSR1, crash_tracer );
+    std::signal( SIGUSR2, crash_tracer );
+    std::signal( SIGVTALRM, crash_tracer );
+    std::signal( SIGXCPU, crash_tracer );
+    std::signal( SIGXFSZ, crash_tracer );
+    std::signal( SIGVTALRM, crash_tracer );
 }
 
 ///  This main() is used solely to test our linked shared library: lib_tty.so
 int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,argv:"<<argc<<","<<my_arv<<"."<<endl;
+    cin.exceptions(std::istream::failbit);  // throw on fail of cin.
     crash_signals_register();
     Lib_tty::Kb_regular_value   kbrv {};
     Lib_tty::Hot_key            hk {};
     Lib_tty::File_status        fs {};
+    string                      user_ack {};
+    char                        my_char {};
     // Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
     do { cout << "Enter a single keyboard key press now! (q or F4 to quit):"; cout.flush();
-        //auto [kb_regular_value, hot_key, file_status] = Lib_tty::get_kb_keys_raw( 1, false, true, true, false );
         Lib_tty::Kb_value_plus kvp {Lib_tty::get_kb_keys_raw( 1, false, true, true, false )};
         kbrv = std::get< Lib_tty::Kb_regular_value >( kvp );
         hk   = std::get< Lib_tty::Hot_key >         ( kvp );
         fs   = std::get< Lib_tty::File_status >     ( kvp );
-        LOGGER_("" ); LOGGER_("We got this in 3 variables below:" );
+        LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
         LOGGERS("kb_regular_value:", kbrv); LOGGERS("hot_key:", hk.my_name); LOGGERS("file_status:", (int) fs);
-    //} while ( kbrv != "q" && hk.my_name != "f4");
+        cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
     } while ( kbrv != "q" && hk.my_name != "f4");
+
     do { cout << "Enter a sequence of 3 key strokes, including possibly some function_keys. (qqq or ??F4):"; cout.flush();
         Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keys_raw( 3, false, true, true, false )};
         kbrv = std::get< Lib_tty::Kb_regular_value >( kvp );
         hk   = std::get< Lib_tty::Hot_key >         ( kvp );
         fs   = std::get< Lib_tty::File_status >     ( kvp );
-        LOGGER_("" ); LOGGER_("We got this in 3 variables below:" );
+        LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
         LOGGERS("kb_regular_value:", kbrv); LOGGERS("hot_key:", hk.my_name); LOGGERS("file_status:", (int) fs);
+        cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
     } while ( kbrv != "qqq" && hk.my_name != "f4");
+
     do { cout << "Enter a sequence of 3 key strokes, including possibly some function_keys, ending with a field_completion key stroke. (qqq or ??F4):"; cout.flush();
         Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keys_raw( 3, true, true, true, false )};
         kbrv = std::get< Lib_tty::Kb_regular_value >( kvp );
         hk   = std::get< Lib_tty::Hot_key >         ( kvp );
         fs   = std::get< Lib_tty::File_status >     ( kvp );
-        LOGGER_("" ); LOGGER_("We got this in 3 variables below:" );
+        LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
         LOGGERS("kb_regular_value:", kbrv); LOGGERS("hot_key:", hk.my_name); LOGGERS("file_status:", (int) fs);
+        cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
     } while ( kbrv != "qqq" && hk.my_name != "f4");
     // todo: Test other use cases of get_kb_keys_raw().
     // todo: Test other use cases of the library.

@@ -31,14 +31,21 @@
 
 //#define NDEBUG   // define if asserts are NOT to be checked.
 
-/** Lib_tty README
- *  Used to read keyboard / tty/ kb input on a character by character basis as raw characters even within a multibyte sequence
- *  such as with functions keys such as F1. Also is able to react to a single key press without waiting for CR or Enter.
- *  Uses: C++17 (or probaly even C++11), except for one test function that demonstrates C++ Concepts and can be commented out easily.
- *  Requires: termios.h which appears to be readily available in Fedora and other Linux variants, from the POSIX standard.
- *  Can be tested using this main program, for which lib_tty was created: https://github.com/grantrostig/file_maintenance_clipped
- *  The Qt Creator IDE was used to edit and compile it.
+/** Lib_tty README (aka LT and Lt)
+ *  A C++ library used to read keyboard(aka kb) / tty input from the user on a character by character basis, as single raw characters like ASCI,
+ *  even when they occur within a multibyte sequence such as with kb functions keys such as F1. Noteably it is able to react to a
+ *  single key press without waiting for CR or Enter or other line completion user input.  This allows the program to react immediately,
+ *  in what is commonly called "raw" and or "CBREAK" mode on a terminal/tty.
+ *  Uses: C++17 (mostly just C++14), except for one test function that demonstrates C++ Concepts (C++20) and can be commented out
+ *  easily since it is used for debugging.
+ *  Requires: termios.h (meaning: terminal input/output system call) which appears to be readily available in Fedora and other
+ *  Linux variants, derived from the POSIX UNIX standard.  May also exist on Apple MAC and Windows MinGW, and maybe even Windows POSIX compatibility.
+ *  Testing: can be tested manually by a programmger, using this the included main.cpp which can generate a testing program.
+ *  Also testing can be manually done by an end-user, using the application program for which lib_tty was created,
+ *  which is called "file maintenance" https://github.com/grantrostig/file_maintenance_clipped
+ *  The Qt Creator IDE was used to edit and compile the library.  The main program is compiled using the included Makefile.
  *  This project is in early stages of development, but does seem to work.
+ *  Except it seems to keep raw mode even after stty sane was restored between each get_kb_keys_raw() call.
  */
 namespace Lib_tty {
 using std::string;
@@ -47,17 +54,18 @@ using namespace std::chrono_literals; // for wait().  todo??: is there a better 
 /// provides string with location in source code. Used for debugging.
 std::string source_loc();
 
-//inline constexpr   ssize_t   C_EOF =             EOF;// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int?
-//inline constexpr   ssize_t   C_FERR =            EOF;
-//inline constexpr   ssize_t   POSIX_EOF =         0;
-inline constexpr   ssize_t     POSIX_ERROR =       -1;
+//inline constexpr   ssize_t   C_EOF =             EOF; /// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int? /// apparently"g not needed by this libary, but worth noting here.
+//inline constexpr   ssize_t   C_FERR =            EOF; /// apparenlty not needed by this libary, but worth noting here.
+//inline constexpr   ssize_t   POSIX_EOF =         0;   /// apparenlty not needed by this libary, but worth noting here.
 
-using              Lt_errno =  int;                    // using Lt_errno = typeof (errno);
-inline constexpr   Lt_errno    E_NO_MATCH =        1;  // todo: new convention for my errno like codes
-inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  // todo: new convention for my errno like codes
-inline constexpr   ssize_t     NO_MORE_CHARS =     0;  // Identifier to concatinate to a CSI_ESC to denote that the CSI_ESC is alone and is not part/start of a multibyte sequence.
-inline constexpr   ssize_t     TIMED_NULL_GET =    0;  // Flag to show no automatic additional chars appear/are readable from the keyboard, used for CSI_ESC handling.
-inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time.
+inline constexpr   ssize_t     POSIX_ERROR =       -1;  /// yes, believe it or not, it is not zero, which I think is good. :)
+
+using              Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. todo??: better? >using Lt_errno = typeof (errno);
+inline constexpr   ssize_t     TIMED_NULL_GET =    0;  /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  todo: 0 might be bad, especially since above is also 0 and they are used in same function.
+inline constexpr   ssize_t     NO_MORE_CHARS =     0;  /// Character used like as a "flag", and is concatinated to a singular CSI_ESC read from user, to generate an artificial multi-byte sequence to denote that the CSI_ESC is alone and is not part/start of a multibyte sequence.  But the CSI_ESC alone is important in that it represents the Escape/ESC key, which is a hot_key.
+inline constexpr   Lt_errno    E_NO_MATCH =        1;  /// Designates that a hot_key has not been found after examining all raw characters of a multi-byte sequence of a key stroke. todo: new convention for lib_tey errno-like codes
+inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  /// Designates that we have a partial match on the prefix characters, leading to a possible E_NO_MATCH, of above line. todo: new convention for lib_tey errno-like codes
+inline constexpr   cc_t        VTIME_ESC =         1;  /// Designates 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time. VTIME and VMIN are POSIX constructs
 
 /**  *** POSIX level declarations *** */
 /**  *** POSIX OS Signals level declarations *** */
@@ -65,14 +73,10 @@ inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, t
 /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
  * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#trap
  * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/kill.html
- * kill command does:
- * SIGHUP
- * SIGINT
- * SIGQUIT
- * SIGABRT
- * SIGKILL
- * SIGALARM
- * SIGTERM
+ * https://www.gnu.org/software/libc/manual/html_node/Standard-Signals.html
+ * https://en.wikipedia.org/wiki/Signal_(IPC)
+ * https://dsa.cs.tsinghua.edu.cn/oj/static/unix_signal.html
+ * kill command does: * SIGHUP * SIGINT * SIGQUIT * SIGABRT * SIGKILL * SIGALARM * SIGTERM and more, see print_signal().
  *
  * stty -a
  * speed 38400 baud; rows 24; columns 80; line = 0;
@@ -92,46 +96,54 @@ inline constexpr   cc_t        VTIME_ESC =         1;  // 1/10 th of a second, t
  * and set the terminal to raw mode, so the stty settings don't apply. Bash, csh and ksh emulate
  * the cooked mode edition characters, whereas tcsh, zsh and fish stick to their own key bindings.
  *
- * ?? https://www.gnu.org/software/bash/manual/html_node/Bindable-Readline-Commands.html
-        Cannonical  Raw wait
- * c_cc[5] VTIME  0  =10
- * c_cc[6] VMIN   1  = 0
- * c_lflag    3538{7}  3538{5} =
+ *            Cannonical / Raw wait
+ * c_cc[5] VTIME  0      / 10
+ * c_cc[6] VMIN   1      / 0
+ * c_lflag        3538{7}  3538{5} =  todo: which values for what?
  *
- * Not sure if this code would be useful, I removed it for some reason.  Maybe what I have now serves the same purpose, or
+ * todo: Not sure if this source code would be useful, I removed it for some reason.  Maybe what I have now serves the same purpose, or
  * if I choose to do it later and so there is no such check currently.
-    //if ( char * my_tty_name = ttyname(fileno(stdin)); my_tty_name == nullptr ) // could have used isatty().
-    //    perror("user_input_raw: not a tty.");
-    //else
-    //    cerr<< "ttyname: "<< my_tty_name << endl;
+ *      if ( char * my_tty_name = ttyname(fileno(stdin)); my_tty_name == nullptr ) // could have used isatty().
+ *          perror("user_input_raw: not a tty.");
+ *      else
+ *          cerr<< "ttyname: "<< my_tty_name << endl;
  */
 
-/** C++ class name capitalization convention of the POSIX C type.
- *  The siginfo_t structure is passed as the second parameter to a user signal handler function,
- *  if the SA_SIGINFO flag was specified when the handler was installed with sigaction(). */
+// using Sigaction =   sigaction;  // todo??: will this work, apparently not?  tried it?  Note the strange c code below.
+
+/** Used by the sigaction POSIX "system call" to designate the action to be taken when a signal arrives to the user process.
+ *  The action consists of running a "signal handler" function and sa_flags, which are specified in the user code, running in user space.
+ *  Here I have only enforced the C++ class name capitalization convention of the POSIX C type name.
+ */
 using Siginfo_t =   siginfo_t;
 
-/// todo??: some POSIX thing?, super complicated C stuff
+/** Used by the sigaction POSIX "system call" to designate the C type of the signal handler action function to be taken when a signal arrives to the user process.
+ *  Here I have only enforced the C++ class name capitalization convention of the POSIX C type name.  todo: not sure why I ended up with this strange struct, instead of just a typedef.
+ */
 using Sigaction_handler_fn_t =
     void(
-        int,
-        Siginfo_t *,
-        void *                      // ucontext_t*
-        );                              // todo??: TODO why does POSIX have the wrong sighandler_t.  Ie. 1 input parameter versus 3? // maybe use std::function
-    // todo??: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
-    // todo??: more ideas: std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
+            int,
+            Siginfo_t *,
+            void *          // ucontext_t*
+        );                  // todo??: TODO why does POSIX have the wrong sighandler_t.  Ie. 1 input parameter versus 3? // todo??: Maybe use std::function here somehow?
+                            // todo??: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
+                            // todo??: more ideas: std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
 
 /// todo?: some POSIX thing?
+/** Used by the sigaction POSIX "system call" to designate the C type of the signal handler action function to be taken when a signal arrives to the user process.
+ *  Here I have only enforced the C++ class name capitalization convention of the POSIX C type name.  todo: not sure why I ended up with this strange struct, instead of just a typedef.
+ */
 struct Sigaction_return {
-    int       signal_for_user;     // todo??: why not init this int?
-    struct    sigaction         // Structure describing the action to be taken when a signal arrives.
-        action_prior;  // TODO?? what is this special use of struct statement?  What about an init of this?
+    int       signal_for_user;           // todo??: why not init this int?
+    struct    sigaction                 // Structure describing the action to be taken when a signal arrives.
+                        action_prior;   // TODO?? what is this special use of struct statement?  What about an init of this?
 };
 // todo??: could this be used instead of above? >> using Sigaction_return =        std::tuple<int /*signal_for_user*/, struct sigaction>; // todo: complete this: replace std::tuple/std::pair with struct!
 
-/// todo?: A datastructure to simply function calls.  todo: I don't recall why there are five, but I didn't just make up that number. :)
+/// A type datastructure to simply function calls and parameters and return types.  todo: I don't recall why there are five, but I didn't just make up that number. :) Actually I think it is because I choose only 5IGNALs  todo??: how would I make an array of this strange sub type?
 struct Sigaction_termination_return {
-    struct sigaction &action_prior1; /* Structure describing the action to be taken when a signal arrives.  */
+                                     /// action_prior_SIGINT, action_prior_SIGQUIT, action_prior_SIGTERM, action_prior_SIGTSTP, action_prior_SIGHUP todo: another way to do this: ~/src/libexcept/libexcept/report_signal.cpp
+    struct sigaction &action_prior1; /// Structure describing the action to was to have been taken when a signal arrived. Used for restoring tty back to normal/prior state
     struct sigaction &action_prior2;
     struct sigaction &action_prior3;
     struct sigaction &action_prior4;
@@ -257,16 +269,17 @@ using Simple_key_char 	= KbFundamentalUnit;                /// the most basic ch
 using Hot_key_chars 	= std::vector<KbFundamentalUnit>;   /// a sequence of basic characters that are generated by a user single keypress on a keyboard, ie. ESC, or F1 for help.
 using Kb_regular_value 	= string;                           /// is one or more normal alphanumeric/ASCII like characters entered by the user //  todo: make this the correct/internationalized char type.
 
-/** The first char of the POSIX CSI Control Sequence Introducer, the ESC character that designates a hot_key,
- *  is the first char in /// Hot_key_chars. This could turn into a "termcap" like table. */
+/** The first char of the POSIX CSI Control Sequence Introducer, the initial ESC character of a series of characters that designates one type of hot_key,
+ *  Is the first char in Hot_key_chars. Note there are also hot_keys that are single char such as CTRL-D, or the ESC key on its own.
+ *  todo: Could this be implemented as a "termcap" like table. */
 constexpr KbFundamentalUnit CSI_ESC = 27;
 
-/** The first char of lib_tty's custom manual alternative to the CSI Control Sequence Introducer CSI_ESC, which is the first char in multi-byte sequence Hot_key_chars such as F1.
+/** Is lib_tty's customized manual alternative to the CSI Control Sequence Introducer CSI_ESC, which is the first char in multi-byte sequence Hot_key_chars such as F1.
  *  A cell phone (or other limited/alternate keyboard) user can type this character and follow it by the codes that a full keyboard would.
  *  so this allows manual entry of very special function keys, etc. */
 constexpr KbFundamentalUnit CSI_ALT = '`';
 
-/** a "Hot_key" is one keystroke of a ANSI keyboard of a SPECIAL key like "F1" or "Insert" or ESC or TAB, that is one or more chars/bytes long.
+/** A "Hot_key" is one keystroke of a ANSI keyboard of a SPECIAL key like "F1" or "Insert" or ESC or TAB, that is one or more chars/bytes long.
  * For multi-byte sequences, it can start with a CSI_ESC or we allow for another other designated char being CSI_ALT. */
 struct Hot_key {
   string             my_name{};
@@ -278,27 +291,30 @@ struct Hot_key {
   bool               operator<(Hot_key const &) const;         // used to sort the list of easy lookup by characters.
   std::string        to_string() const;                        // for debugging.
 };
-/// stores all known Hot_keys for internal library use.
+/// Stores all known Hot_keys for internal library use.
 using  Hot_keys = std::vector< Hot_key >;
-/// Hotkey OR an ERRNO
+/// A Hotkey OR an ERRNO.
 using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >; /// _o_ == "exclusive or"
 
 /// Hotkey OR a file_status
 using  Hot_key_o_fstat = std::variant< Hot_key, File_status >; /// _o_ == "exclusive or"
 
-/// a "Kb_key" is one char or one Hot_key, ie. the result of hitting any key whether it is special or not. todo: does this include an EOF character?
-using Kb_key_optvariant = std::variant< std::monostate, Simple_key_char, Hot_key_chars, Hot_key, File_status >;              // todo: maybe File_status is not needed in RAW case.
+/** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not.
+ *  or EOF.
+ *  todo: does this include an EOF character?
+ */
+using Kb_key_variant = std::variant< std::monostate, Simple_key_char, Hot_key_chars, Hot_key, File_status >;  // todo: maybe File_status is not needed in RAW case.
 
-/** a pair tells us if we got a Kb_key and?, or? is we got EOF. todo?: */
-using Kb_key_a_fstat = std::pair< Kb_key_optvariant, File_status >; // _a_ == "and"  todo: we have a problem with File_status, don't need it twice!  This one is not used.
-                                                                  // todo: complete this: replace std::tuple/std::pair with struct!
+/** Tells us if we got a Kb_key and if we got EOF.
+ *  _a_ == "and"
+ *  todo: we have a problem with File_status, don't need it twice!  This one is not currenlty used?.
+ *  todo: consider replacing std::tuple/std::pair with struct!
+*/
+using Kb_key_a_fstat = std::pair< Kb_key_variant, File_status >;
 
 /** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. todo?: */
 using Kb_value_plus = std::tuple< Kb_regular_value, Hot_key, File_status >;
 // todo?: is this old, or a new idea? using Kb_value_o_hkey    = std::variant< Kb_regular_value, Hot_key >;
-
-std::optional<Hot_key>
-find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
 
 /** Gets one single keystroke from user keyboard, which may consist of multiple characters in a key's multi-byte sequence
  *  Relies on cin being in raw mode!
@@ -306,7 +322,7 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
  *  PUBLIC FUNCTION can also? BE CALLED BY END USER, but not used in the client "file_maintenance_*" programs.
  *  Probably needs debugging, if it is to be called directly. */
 Kb_key_a_fstat
-get_kb_key();
+get_kb_keystroke();
 
 /** Seeks to get n simple_key_chars from keyboard in raw stty mode.
  *  PUBLIC FUNCTION TO BE CALLED BY END USER, is used in the client "file_maintenance_*" programs.
@@ -329,13 +345,21 @@ get_kb_key();
  * This function sets POSIX terminal settings and signals for the time that it is getting characters,
  * and lastly restores the terminal to original configuration
  *
+ * todo: probably should rename to: get_kb_keystrokes_raw()
+ *
  */
 Kb_value_plus
-get_kb_keys_raw( size_t const length_in_simple_key_chars,
+get_kb_keys_raw( size_t const length_in_keystrokes,
                  bool const   is_require_field_completion = true,
-                 bool const   is_echo_skc_to_tty 		  = true,  // skc == Simple_key_char
-                 bool const   is_strip_control_chars 	  = true,
+                 bool const   is_echo_skc_to_tty 		  = true,  /// skc == Simple_key_char
+                 bool const   is_allow_control_chars 	  = true,  /// todo: was is_strip_control_chars and now may be a bug?
                  bool const   is_password 				  = false);
 
-}  // end namespace
+/** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
+ *  Debugging use only at this time. */
+std::optional<Hot_key>
+find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
+
+}  // namespace end Lib_tty
+
 #endif // LIB_TTY_H
