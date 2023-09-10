@@ -499,12 +499,12 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"DC4", "device_control_4",		"STATUS",	't',	{},		20,	20},  // todo: NOT IMPLEMENTED in hot_keys // on macOS and BSD.
         {"NAK",	"neg. acknowledge OR line_erase",
                                         "KILL",		'u',	{},		21,	21},  // todo: NOT IMPLEMENTED in hot_keys // deletes entire line being typed. todo: "line erase character" kills the current input line when using the POSIX shell?
-                                                                              // OR backward-kill-line (C-x Rubout): Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
+                                                                              // OR todo? C-x??: backward-kill-line (C-x Rubout): Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
         {"SYNC","synchronous_idle",		"LNEXT",	'v',	{},		22,	22},  // todo: NOT IMPLEMENTED in hot_keys // paste (from copy-paste)?/
         {"ETB",	"end_of_tranmission_block",
                                         "WERASE",   'w',	{},		23,	23},  // todo: NOT IMPLEMENTED in hot_keys // erase the last word typed.
                                                                               // OR unix-word-rubout (C-w): Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.
-        {"CAN",	"cancel",				"CANCEL?",	'x',	{},		24,	24},  // todo: NOT IMPLEMENTED in hot_keys // cancel the input line? / cut (from copy-paste)? /
+        {"CAN",	"cancel",				"CANCEL?",	'x',	{},		24,	24},  // todo?: C-u??? todo: NOT IMPLEMENTED in hot_keys // cancel the input line? / cut (from copy-paste)? /
         {"EM",	"end_of_medium",		"???",		'y',	{},		25,	25},  // todo: NOT IMPLEMENTED? in hot_keys // OR yank (C-y): Yank the top of the kill ring into the buffer at point.
         {"SUB",	"substitute",			"SUSP",		'z',	{},		26,	26},  // todo: NOT IMPLEMENTED in hot_keys //send a terminal stop signal. posix job-control: suspend process.  note: use "fg" to bring to foreground, "bg" to make it run in background.  AKA SIGSTOP?-SIGTSTP
         {"ESC",	"escape",				"ESC",		'[',	'e',	27,	27},  // ESC key, the first char of POSIX CSI Control Sequence Introducer

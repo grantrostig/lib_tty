@@ -28,7 +28,7 @@ LIBS += \
 
 SOURCES += \
     lib_tty.cpp \
-    main.cpp
+#    main.cpp
 
 HEADERS += \
     lib_tty.h

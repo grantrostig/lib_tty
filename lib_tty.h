@@ -350,10 +350,10 @@ get_kb_keystroke();
  */
 Kb_value_plus
 get_kb_keys_raw( size_t const length_in_keystrokes,
-                 bool const   is_require_field_completion = true,
-                 bool const   is_echo_skc_to_tty 		  = true,  /// skc == Simple_key_char
-                 bool const   is_allow_control_chars 	  = true,  /// todo: was is_strip_control_chars and now may be a bug?
-                 bool const   is_password 				  = false);
+                 bool const   is_require_field_completion,
+                 bool const   is_echo_skc_to_tty,           /// skc == Simple_key_char
+                 bool const   is_allow_control_chars );      /// todo: was is_strip_control_chars and now may be a bug?
+
 
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */
