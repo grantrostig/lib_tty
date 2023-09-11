@@ -293,15 +293,21 @@ struct Hot_key {
 };
 /// Stores all known Hot_keys for internal library use.
 using  Hot_keys = std::vector< Hot_key >;
-/// A Hotkey OR an ERRNO.
+
+/** A Hotkey OR an ERRNO.
+ *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
+ */
 using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >; /// _o_ == "exclusive or"
 
-/// Hotkey OR a file_status
+/** Hotkey OR a file_status
+ *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
+ */
 using  Hot_key_o_fstat = std::variant< Hot_key, File_status >; /// _o_ == "exclusive or"
 
 /** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not.
  *  or EOF.
  *  todo: does this include an EOF character?
+ *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  */
 using Kb_key_variant = std::variant< std::monostate, Simple_key_char, Hot_key_chars, Hot_key, File_status >;  // todo: maybe File_status is not needed in RAW case.
 
@@ -309,10 +315,13 @@ using Kb_key_variant = std::variant< std::monostate, Simple_key_char, Hot_key_ch
  *  _a_ == "and"
  *  todo: we have a problem with File_status, don't need it twice!  This one is not currenlty used?.
  *  todo: consider replacing std::tuple/std::pair with struct!
+ *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
 */
 using Kb_key_a_fstat = std::pair< Kb_key_variant, File_status >;
 
-/** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. todo?: */
+/** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. todo?:
+ * todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
+ */
 using Kb_value_plus = std::tuple< Kb_regular_value, Hot_key, File_status >;
 // todo?: is this old, or a new idea? using Kb_value_o_hkey    = std::variant< Kb_regular_value, Hot_key >;
 
