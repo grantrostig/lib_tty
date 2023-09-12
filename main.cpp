@@ -10,6 +10,7 @@
 //#include <bits/stdc++>  // todo??: why is .h needed?
 //#include <bits/stdc++.h>
 #include "lib_tty.h"
+#include "lib_tty_internal.h"
 #include <stacktrace>
 #include <source_location>
 #include <iostream>

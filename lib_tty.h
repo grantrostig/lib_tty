@@ -1,35 +1,18 @@
-/*
- * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
+/* Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  * BOOST 1.0 license
  */
 #ifndef LIB_TTY_H
 #define LIB_TTY_H
+// posix define might be needed?  todo??:
 #define _POSIX_C_SOURCE 200809L
 
-#include <algorithm>
-#include <array>
-#include <chrono>
-#include <functional>
 #include <ios>
 #include <iostream>
 #include <locale>
 #include <optional>
 #include <string>
-#include <thread>
 #include <variant>
 #include <vector>
-// C lang API via C++ provided compatible functions.
-#include <cassert>
-#include <csignal>
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-// POSIX headers
-#include <termios.h>
-// #include <unistd.h>  // I thought I needed it, but apparently not.
-
-//#define NDEBUG   // define if asserts are NOT to be checked.
 
 /** Lib_tty README (aka LT and Lt)
  *  A C++ library used to read keyboard(aka kb) / tty input from the user on a character by character basis, as single raw characters like ASCI,
@@ -48,133 +31,18 @@
  *  Except it seems to keep raw mode even after stty sane was restored between each get_kb_keys_raw() call.
  */
 namespace Lib_tty {
-using std::string;
-using namespace std::chrono_literals; // for wait().  todo??: is there a better way? Marc may know.
-
-/// provides string with location in source code. Used for debugging.
-std::string source_loc();
-
-//inline constexpr   ssize_t   C_EOF =             EOF; /// value is: -1 (not 0 as in some older C books 1996 !)  // todo: why are these ssize_t/long and not short int? /// apparently"g not needed by this libary, but worth noting here.
-//inline constexpr   ssize_t   C_FERR =            EOF; /// apparenlty not needed by this libary, but worth noting here.
-//inline constexpr   ssize_t   POSIX_EOF =         0;   /// apparenlty not needed by this libary, but worth noting here.
-
-inline constexpr   ssize_t     POSIX_ERROR =       -1;  /// yes, believe it or not, it is not zero, which I think is good. :)
-
-using              Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. todo??: better? >using Lt_errno = typeof (errno);
-inline constexpr   ssize_t     TIMED_NULL_GET =    0;  /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  todo: 0 might be bad, especially since above is also 0 and they are used in same function.
-inline constexpr   ssize_t     NO_MORE_CHARS =     0;  /// Character used like as a "flag", and is concatinated to a singular CSI_ESC read from user, to generate an artificial multi-byte sequence to denote that the CSI_ESC is alone and is not part/start of a multibyte sequence.  But the CSI_ESC alone is important in that it represents the Escape/ESC key, which is a hot_key.
-inline constexpr   Lt_errno    E_NO_MATCH =        1;  /// Designates that a hot_key has not been found after examining all raw characters of a multi-byte sequence of a key stroke. todo: new convention for lib_tey errno-like codes
-inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  /// Designates that we have a partial match on the prefix characters, leading to a possible E_NO_MATCH, of above line. todo: new convention for lib_tey errno-like codes
-inline constexpr   cc_t        VTIME_ESC =         1;  /// Designates 1/10 th of a second, the shortest time, and keyboard will easily provide any ESC sequence subsequent characters within that time. VTIME and VMIN are POSIX constructs
-
-/**  *** POSIX level declarations *** */
-/**  *** POSIX OS Signals level declarations *** */
-
-/* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
- * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#trap
- * https://pubs.opengroup.org/onlinepubs/9699919799/utilities/kill.html
- * https://www.gnu.org/software/libc/manual/html_node/Standard-Signals.html
- * https://en.wikipedia.org/wiki/Signal_(IPC)
- * https://dsa.cs.tsinghua.edu.cn/oj/static/unix_signal.html
- * kill command does: * SIGHUP * SIGINT * SIGQUIT * SIGABRT * SIGKILL * SIGALARM * SIGTERM and more, see print_signal().
- *
- * stty -a
- * speed 38400 baud; rows 24; columns 80; line = 0;
- * intr = ^C; quit = ^\; erase = ^?; kill = ^U; eof = ^D; eol = <undef>;
- * eol2 = <undef>; swtch = <undef>; start = ^Q; stop = ^S; susp = ^Z; rprnt = ^R;
- * werase = ^W; lnext = ^V; discard = ^O; min = 1; time = 0;
- * -parenb -parodd -cmspar cs8 -hupcl -cstopb cread -clocal -crtscts
- * -ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr icrnl ixon -ixoff
- * -iuclc -ixany -imaxbel iutf8
- * opost -olcuc -ocrnl onlcr -onocr -onlret -ofill -ofdel nl0 cr0 tab0 bs0 vt0 ff0
- * isig icanon iexten echo echoe echok -echonl -noflsh -xcase -tostop -echoprt
- * echoctl echoke -flusho -extproc
- *
- * https://unix.stackexchange.com/questions/102940/how-do-you-find-what-keys-the-erase-and-line-kill-characters-are-in-ubuntu
- * The stty settings only apply when the terminal is in “cooked mode”, which is the extremely
- * crude command line editor built into the terminal driver. Modern shells have their own editor
- * and set the terminal to raw mode, so the stty settings don't apply. Bash, csh and ksh emulate
- * the cooked mode edition characters, whereas tcsh, zsh and fish stick to their own key bindings.
- *
- *            Cannonical / Raw wait
- * c_cc[5] VTIME  0      / 10
- * c_cc[6] VMIN   1      / 0
- * c_lflag        3538{7}  3538{5} =  todo: which values for what?
- *
- * todo: Not sure if this source code would be useful, I removed it for some reason.  Maybe what I have now serves the same purpose, or
- * if I choose to do it later and so there is no such check currently.
- *      if ( char * my_tty_name = ttyname(fileno(stdin)); my_tty_name == nullptr ) // could have used isatty().
- *          perror("user_input_raw: not a tty.");
- *      else
- *          cerr<< "ttyname: "<< my_tty_name << endl;
- */
-
-// using Sigaction =   sigaction;  // todo??: will this work, apparently not?  tried it?  Note the strange c code below.
-
-/** Used by the sigaction POSIX "system call" to designate the action to be taken when a signal arrives to the user process.
- *  The action consists of running a "signal handler" function and sa_flags, which are specified in the user code, running in user space.
- *  Here I have only enforced the C++ class name capitalization convention of the POSIX C type name.
- */
-using Siginfo_t =   siginfo_t;
-
-/** Used by the sigaction POSIX "system call" to designate the C type of the signal handler action function to be taken when a signal arrives to the user process.
- *  Here I have only enforced the C++ class name capitalization convention of the POSIX C type name.  todo: not sure why I ended up with this strange struct, instead of just a typedef.
- */
-using Sigaction_handler_fn_t =
-    void(
-            int,
-            Siginfo_t *,
-            void *          // ucontext_t*
-        );                  // todo??: TODO why does POSIX have the wrong sighandler_t.  Ie. 1 input parameter versus 3? // todo??: Maybe use std::function here somehow?
-                            // todo??: ideas: using Handler_func_signature = std::function< sighandler_t(int, siginfo_t *, void *)>;
-                            // todo??: more ideas: std::function< sighandler_t >; // todo: ideas: typedef void ( * my_magic)(int const, siginfo_t *, void*);
-
-/// todo?: some POSIX thing?
-/** Used by the sigaction POSIX "system call" to designate the C type of the signal handler action function to be taken when a signal arrives to the user process.
- *  Here I have only enforced the C++ class name capitalization convention of the POSIX C type name.  todo: not sure why I ended up with this strange struct, instead of just a typedef.
- */
-struct Sigaction_return {
-    int       signal_for_user;           // todo??: why not init this int?
-    struct    sigaction                 // Structure describing the action to be taken when a signal arrives.
-                        action_prior;   // TODO?? what is this special use of struct statement?  What about an init of this?
-};
-
-/// A type datastructure to simply function calls and parameters and return types.  todo: I don't recall why there are five, but I didn't just make up that number. :) Actually I think it is because I choose only 5IGNALs  todo??: how would I make an array of this strange sub type?
-struct Sigaction_termination_return {
-                                     /// action_prior_SIGINT, action_prior_SIGQUIT, action_prior_SIGTERM, action_prior_SIGTSTP, action_prior_SIGHUP todo: another way to do this: ~/src/libexcept/libexcept/report_signal.cpp
-    struct sigaction &action_prior1; /// Structure describing the action to was to have been taken when a signal arrived. Used for restoring tty back to normal/prior state
-    struct sigaction &action_prior2;
-    struct sigaction &action_prior3;
-    struct sigaction &action_prior4;
-    struct sigaction &action_prior5;
-};
-
-/**  *** POSIX termial IO level declarations *** */
-
-/// C++ class name capitalization convention of the POSIX C type.
-using Termios = termios;    // Tty terminal IO & speed structure, used for getting and setting them. // Enforcing the C++ struct type name capitalization convention for the POSIX C type.  I like it that way.
-
-/// to get user's tty termial status
-Termios &termio_get();
-
-/// to allow capturing one character at a time and gaining control immediately after user presses that key, ie. not buffered.
-Termios &termio_set_raw();
-
-/// to assist in finding additional keys after CSI/ESC of a multi-character function key.
-Termios &termio_set_timer( cc_t const time);
-
-/// to normal cooked? condition
-void     termio_restore( Termios const &termios);      	/** restore terminal state to what it was when program was started??? todo: verify my comment here. */
-
-
-/**  *** Application Level Declarations *** */
+/*****************************************************************************/
+/**************** START Lib_tty     Level Declarations ***********************/
+/*****************************************************************************/
+using Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. todo??: better? >using Lt_errno = typeof (errno);
 
 /** There are two semantic EOFs:
- * 1) eof_simple_key_char is a "We probably don't handle eof well."); // todo: more eof handling needed
+ *  1) eof_simple_key_char is a "We probably don't handle eof well."); // todo: more eof handling needed
             file_status = File_status::eof_file_desc logical eof intended by the user by typing in a CTL-D,
- * 2) eof_file_descriptor occurs when a read() fails with that error.
- * But I'm unclear about the exact distinction between these two especially with regard to COOKED versus RAW on a tty.
- * todo: refactor these two out since I don't think we need a separate EOFs, since in tty raw mode we recognize ^D as a hot_key. */
+ *  2) eof_file_descriptor occurs when a read() fails with that error.
+ *  But I'm unclear about the exact distinction between these two especially with regard to COOKED versus RAW on a tty.
+ *  todo: refactor these two out since I don't think we need a separate EOFs, since in tty raw mode we recognize ^D as a hot_key.
+ */
 enum class File_status { /// After reading a char, did we get something good, should we expect more?
   eof_simple_key_char, /// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
   eof_file_descriptor, /// get library or OS EOF.
@@ -183,7 +51,8 @@ enum class File_status { /// After reading a char, did we get something good, sh
   other                /// probably means got a good value.
 };                     // todo: eof is a hot_key ie. CTRL-D , so should not be here.
 
-/** the user level intent of all "Categories" of HotKeys */
+/** The user level intent of all "Categories" of HotKeys
+ */
 enum class HotKeyFunctionCat {
   nav_field_completion,     // nav == user navigation between elements of a certain type.  here user want to finish that field input and move to next thing.
   nav_intra_field,          // user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
@@ -197,7 +66,8 @@ enum class HotKeyFunctionCat {
   other                     // todo:, used as ::na filler designation, probably means none.
 };
 
-/** the user level intent of a pressed HotKey of this HotKeyFunctionCat "Category" */
+/** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
+ */
 enum class FieldCompletionNav { ///the intent of the user as demonstrated by the last navigation hot_key entered at a prompt. NOTE: each of these has a HotKeyFunctionCat (or is
                                 /// ignored/not currently assigned) in hot_keys object in .cpp file.  NOTE: also, each has multiple entries in FNIMap object in file_maintenance
                                 /// project which uses lib_tty library.
@@ -225,7 +95,8 @@ enum class FieldCompletionNav { ///the intent of the user as demonstrated by the
   na
 };
 
-/** the user level intent of a pressed HotKey of this HotKeyFunctionCat "Category" */
+/** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
+ */
 enum class FieldIntraNav {
   move_left,
   move_right,
@@ -238,51 +109,22 @@ enum class FieldIntraNav {
   na
 };
 
-/** todo: the user level handling of subsequent character key presses
-enum class Input_mode { /// todo: not implemented yet.  // clashes with the boolean I toggle in  HotKeyFunctionCat????, that is partially implemented.
-  insert,
-  overwrite
-}; */
-
-/** each row of this struct, documents a potential user key press, and places them within various nameing conventions, mostly ASCII and POSIX */
-struct Ascii_posix_relation {
-  string ascii_id{};
-  string ascii_name{};
-  string posix_name{};
-  char   ascii_ctrl_char{}; // note: lowercase and uppercase: for example Ctrl-j and J.
-  char   c_char{};          // note: \n for LF
-  char   ascii_char{};      // ascii_char and posix_char appear to be the same.  Don't remember why I have both separately, probably some sort of flexibility...?
-  char   posix_char{};
-};
-
-/** a lookup table for user keyboard key presses */
-using Ascii_Posix_map = std::vector< Ascii_posix_relation >; // todo: use proper capitalization.
-
 /** Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char"
  *  The most basic character type this associated with a user keyboard on the supported computer/OS. todo??: should this be unsigned char or ssize_t or unit8?
  *  one byte long or the components of a hot key sequence.
  *  todo: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
- *  then fix next two lines of documentation.*/
+ *  then fix next two lines of documentation.
+ */
 using KbFundamentalUnit = char;
-
 using Simple_key_char 	= KbFundamentalUnit;                /// the most basic character that a keyboard can generate like ASCII or UNICODE 8? or 16? or 32?, which does not generate a multibye burst of characters, like F1
 using Hot_key_chars 	= std::vector<KbFundamentalUnit>;   /// a sequence of basic characters that are generated by a user single keypress on a keyboard, ie. ESC, or F1 for help.
-using Kb_regular_value 	= string;                           /// is one or more normal alphanumeric/ASCII like characters entered by the user //  todo: make this the correct/internationalized char type, which would be KbFundamentalUnit from above?? or what???.
-
-/** The first char of the POSIX CSI Control Sequence Introducer, the initial ESC character of a series of characters that designates one type of hot_key,
- *  Is the first char in Hot_key_chars. Note there are also hot_keys that are single char such as CTRL-D, or the ESC key on its own.
- *  todo: Could this be implemented as a "termcap" like table. */
-constexpr KbFundamentalUnit CSI_ESC = 27;
-
-/** Is lib_tty's customized manual alternative to the CSI Control Sequence Introducer CSI_ESC, which is the first char in multi-byte sequence Hot_key_chars such as F1.
- *  A cell phone (or other limited/alternate keyboard) user can type this character and follow it by the codes that a full keyboard would.
- *  so this allows manual entry of very special function keys, etc. */
-constexpr KbFundamentalUnit CSI_ALT = '`';
+using Kb_regular_value 	= std::string;                           /// is one or more normal alphanumeric/ASCII like characters entered by the user //  todo: make this the correct/internationalized char type, which would be KbFundamentalUnit from above?? or what???.
 
 /** A "Hot_key" is one keystroke of a ANSI keyboard of a SPECIAL key like "F1" or "Insert" or ESC or TAB, that is one or more chars/bytes long.
- * For multi-byte sequences, it can start with a CSI_ESC or we allow for another other designated char being CSI_ALT. */
+ *  For multi-byte sequences, it can start with a CSI_ESC or we allow for another other designated char being CSI_ALT.
+ */
 struct Hot_key {
-  string             my_name{};
+  std::string             my_name{};
   Hot_key_chars      characters{};
   HotKeyFunctionCat  function_cat{HotKeyFunctionCat::na};      // depending on this value, either of the next two are used, like a discriminated union, or neither are used at all, shown // as ::na. which is the case for ::job_control,::help_popup,::editing_mode,::other.
   FieldCompletionNav f_completion_nav{FieldCompletionNav::na}; // gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
@@ -293,16 +135,6 @@ struct Hot_key {
 };
 /// Stores all known Hot_keys for internal library use.
 using  Hot_keys = std::vector< Hot_key >;
-
-/** A Hotkey OR an ERRNO.
- *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
- */
-using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >; /// _o_ == "exclusive or"
-
-/** Hotkey OR a file_status
- *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
- */
-using  Hot_key_o_fstat = std::variant< Hot_key, File_status >; /// _o_ == "exclusive or"
 
 /** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not.
  *  or EOF.
@@ -364,12 +196,8 @@ get_kb_keys_raw( size_t const length_in_keystrokes,
                  bool const   is_echo_skc_to_tty,           /// skc == Simple_key_char
                  bool const   is_allow_control_chars );      /// todo: was is_strip_control_chars and now may be a bug?
 
-
-/** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
- *  Debugging use only at this time. */
-std::optional<Hot_key>
-find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
-
+/*****************************************************************************/
+/**************** END   Lib_tty     Level Declarations ***********************/
+/*****************************************************************************/
 }  // namespace end Lib_tty
-
 #endif // LIB_TTY_H

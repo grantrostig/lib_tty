@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  * BOOST 1.0 license
  */
-#include "lib_tty.h"
+
 #include <cstring>
 #include <cstdio>
 #include <iomanip>
@@ -12,14 +12,22 @@
 #include <iostream>
 #include <type_traits>
 #include <concepts>
+#include <csignal>
 #include <stacktrace>
 #include <source_location>
+// POSIX headers
+#include <termios.h>
+#include "lib_tty.h"
+#include "lib_tty_internal.h"
+
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
+
 /// todo??: better alternative? >using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
 namespace Lib_tty {
-
-/*  *** START Debugging only section *** */
+/*****************************************************************************/
+/***************** START Debugging only section ******************************/
+/*****************************************************************************/
 /// define if asserts are NOT to be checked.  Put in *.h file not *.CPP
 //#define 	NDEBUG
 /// define I'm Debugging LT.  Put in *.h file not *.CPP
@@ -123,24 +131,23 @@ void print_signal(int const signal) {
     */
 }
 
-/*  *** END   Debugging only section *** */
-
-bool is_hk_chars_equal( Hot_key const & left, Hot_key const & right ) {
-    return ( left.characters == right.characters );
+///  Debugging use only at this time.
+std::optional<Hot_key>
+find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
+    for (auto & hk : hot_keys)
+        if ( hk.characters == this_key )
+            return hk;
+    return {};
 }
+/*****************************************************************************/
+/***************** END   Debugging only section ******************************/
+/*****************************************************************************/
 
-bool Hot_key::operator< ( Hot_key const  & in ) const {  // found in lib_tty.h
-    return ( characters < in.characters );
-}
-
-std::string
-Hot_key::to_string() const {  // found in lib_tty.h
-    std::string s {my_name};  // todo: finish this
-    return s;
-}
-
-/**  *** POSIX level declarations            *** */
-/**  *** POSIX OS Signals level definitions  *** */
+/*****************************************************************************/
+/**************** START POSIX level declarations *****************************/
+/*****************************************************************************/
+/********************** START POSIX OS Signals level declarations ************/
+/*****************************************************************************/
 
 Sigaction_termination_return
 set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TODO why does const have no effect here?
@@ -154,7 +161,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
     // we could block certain signals here, but we choose not to in the case where we prompt the end-user for the password.
     // 		sigset_t block_mask; sigaddset(&block_mask, SIGINT and SIGQUIT); action.sa_mask = block_mask;  // SS 24.7.5 GNU libc manual
 
-    // static, but why did I think that was a good idea? or was it needed? or was it needed by sigaction()?
+    // static, but why did I think that was a good idea? or was it needed? or was it needed by sigaction()? todo?:
     static struct sigaction action_prior_SIGINT 	{};
     if ( sigaction( SIGINT , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) {  // Just doing a get(), do setting next line
             perror( source_loc().data());
@@ -199,7 +206,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
 }
 
 // forward declaration
-Sigaction_return
+Lib_tty::Sigaction_return
 set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in );
 
 /// signal handler function to be called when a timeout alarm goes off via a user defined signal is received
@@ -233,7 +240,7 @@ void sigaction_restore_for_termination( Sigaction_termination_return const & act
 }
 
 /// called by enable_inactivity_handler
-Sigaction_return
+Lib_tty::Sigaction_return
 set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
     struct sigaction action {};
     sigemptyset( &action.sa_mask );
@@ -268,7 +275,7 @@ void set_a_run_inactivity_timer(const timer_t & inactivity_timer, const int seco
     if ( timer_settime( inactivity_timer, settime_flags, &timer_specification, / out / nullptr) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }
     return;
 }
-/** Configures and sets timer and runs timer which waits for additional user kb characters.  Timer needs to be deleted when no longer wanted.
+/// Configures and sets timer and runs timer which waits for additional user kb characters.  Timer needs to be deleted when no longer wanted.
 /// Not used in file_manager, so not sure it has any use beyond test program called: ../cpp_by_example/lib_tty_posix_signal_timer_settime_periodic/main.cpp:35:
 /// todo: consider replacing std::tuple/std::pair with struct!
 std::tuple<timer_t &, int, struct sigaction>
@@ -293,6 +300,10 @@ void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_us
     if ( sigaction(    sig_user, &old_action, nullptr) 	== POSIX_ERROR) { perror( source_loc().data()); exit(1); } // should print out message based on ERRNO // todo: fix this up.  TODO __THROW ???
 }
 
+/*****************************************************************************/
+/********************** END   POSIX OS signals level definitions *************/
+/********************** START POSIX OS termios level definitions *************/
+/*****************************************************************************/
 /// to show what is happening on standard-in/cin. Used for debugging. todo: TODO how do I pass in cin or cout to this?
 void print_iostate(const std::istream &stream) {
     LOGGER_( "Is:");
@@ -304,7 +315,7 @@ void print_iostate(const std::istream &stream) {
 }
 
 /// created as a "hack" since operator== doesn't work reliably? on structs.
-bool check_equality(const Termios &termios, const Termios &termios2){  // Used for debugging using assert().
+bool check_equality(const Lib_tty::Termios &termios, const Lib_tty::Termios &termios2){  // Used for debugging using assert().
     /* https://embeddedgurus.com/stack-overflow/2009/12/effective-c-tip-8-structure-comparison/
      * https://isocpp.org/blog/2016/02/a-bit-of-background-for-the-default-comparison-proposal-bjarne-stroustrup
      * https://stackoverflow.com/questions/141720/how-do-you-compare-structs-for-equality-in-c
@@ -324,7 +335,7 @@ bool check_equality(const Termios &termios, const Termios &termios2){  // Used f
     return true;
 }
 
-Termios & termio_get() { // uses POSIX  // todo TODO what are advantages of other version of this function?
+Lib_tty::Termios & termio_get() { // uses POSIX  // todo TODO what are advantages of other version of this function?
     static Termios termios;
     if (auto result = tcgetattr( fileno(stdin), &termios); result == POSIX_ERROR) { // todo: TODO throw() in signature?
         int errno_save = errno;
@@ -337,8 +348,7 @@ Termios & termio_get() { // uses POSIX  // todo TODO what are advantages of othe
     return termios;  // copy of POD?
 }
 
-/// setting the user terminal to get one character at a time and return control to the reader.
-Termios & termio_set_raw() { // uses POSIX
+Lib_tty::Termios & termio_set_raw() { // uses POSIX
     cin.sync_with_stdio( false );  									// todo:  iostreams bug?  This is required for timer time-out else a bug occurs.
     static Termios termios_orig { termio_get() };
     Termios 	   termios_new 	{ termios_orig };                   // https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Data-Types
@@ -399,7 +409,7 @@ Termios & termio_set_raw() { // uses POSIX
     return termios_orig;
 }
 
-void termio_restore( Termios const &termios_orig) { // uses POSIX  // todo: TODO do you like my const 2x, what is effect calling POSIX?
+void termio_restore( Lib_tty::Termios const &termios_orig) { // uses POSIX  // todo: TODO do you like my const 2x, what is effect calling POSIX?
     if ( auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &termios_orig );
          result == POSIX_ERROR) { // restore prior status
             int errno_save = errno;
@@ -412,7 +422,7 @@ void termio_restore( Termios const &termios_orig) { // uses POSIX  // todo: TODO
     return;
 }
 
-Termios &
+Lib_tty::Termios &
 termio_set_timer( cc_t const time) {  // uses POSIX
     static Termios termios_orig { termio_get() }; // todo: TODO why does this compile with termios and &termios?
     Termios termios_new = termios_orig;
@@ -432,6 +442,27 @@ termio_set_timer( cc_t const time) {  // uses POSIX
     return termios_orig;
 }
 
+/*****************************************************************************/
+/********************** END   POSIX OS termios level definitions *************/
+/**************** END   POSIX level definitions ******************************/
+/*****************************************************************************/
+/**************** START Lib_tty specific code ********************************/
+/*****************************************************************************/
+
+bool is_hk_chars_equal( Hot_key const & left, Hot_key const & right ) {
+    return ( left.characters == right.characters );
+}
+
+bool Hot_key::operator< ( Hot_key const  & in ) const {  // found in lib_tty.h
+    return ( characters < in.characters );
+}
+
+std::string
+Hot_key::to_string() const {  // found in lib_tty.h
+    std::string s {my_name};  // todo: finish this
+    return s;
+}
+
 /// give it the string "EOF" and you get back 4 or ^D */
 char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::string name) {
     for (auto & ch : vec) {
@@ -442,7 +473,6 @@ char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::stri
     assert( false && err_message.c_str());
     // we never get here.
 }
-
 
 /** Incrementally retrieves keystroke information based on the parameter being a character or multi-byte sequence of characters.
  *  Only used internally to lib_tty. */
@@ -715,8 +745,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     return E_NO_MATCH;
 }
 
-Kb_key_a_fstat
-get_kb_keystroke_old() {  // so complicated I want to keep old version untill I know the other works as well or better.
+/* Kb_key_a_fstat get_kb_keystroke_old() {  // so complicated I want to keep old version untill I know the other works as well or better.
     Hot_key_chars hkcs {};
     for ( Simple_key_char first_skc {} ;
           first_skc = 0, cin.get( first_skc ), hkcs.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true ;
@@ -768,7 +797,7 @@ get_kb_keystroke_old() {  // so complicated I want to keep old version untill I 
         }
       } // * end loop *
     assert(false && "We should never get here, because we turned within the infinite loop.");
-}
+} */
 
 Kb_key_a_fstat
 get_kb_keystroke() {
@@ -895,7 +924,7 @@ bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_ch
                                   :   isprint(i);
 }
 
-/// true if we disallow the character
+/// Is true if we disallow the character.
 bool is_ignore_skc( Simple_key_char const skc,
                     bool const is_echo_skc_to_tty,
                     bool const is_allow_control_chars,
@@ -978,16 +1007,6 @@ get_kb_keys_raw( size_t const length_in_keystrokes,
     }
     termio_restore( termios_orig );
     return { kb_chars_result, hot_key_result, file_status_result };
-}
-
-
-///  Debugging use only at this time.
-std::optional<Hot_key>
-find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
-    for (auto & hk : hot_keys)
-        if ( hk.characters == this_key )
-            return hk;
-    return {};
 }
 
 }  // namespace end Lib_tty

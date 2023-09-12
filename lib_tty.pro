@@ -31,7 +31,8 @@ SOURCES += \
 #    main.cpp
 
 HEADERS += \
-    lib_tty.h
+    lib_tty.h \
+    lib_tty_internal.h
 
 
 # Default rules for deployment.
