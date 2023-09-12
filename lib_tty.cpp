@@ -16,7 +16,7 @@
 #include <source_location>
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
-/// todo??: better alternative? $using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
+/// todo??: better alternative? >using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
 namespace Lib_tty {
 
 /*  *** START Debugging only section *** */
@@ -154,6 +154,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
     // we could block certain signals here, but we choose not to in the case where we prompt the end-user for the password.
     // 		sigset_t block_mask; sigaddset(&block_mask, SIGINT and SIGQUIT); action.sa_mask = block_mask;  // SS 24.7.5 GNU libc manual
 
+    // static, but why did I think that was a good idea? or was it needed? or was it needed by sigaction()?
     static struct sigaction action_prior_SIGINT 	{};
     if ( sigaction( SIGINT , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) {  // Just doing a get(), do setting next line
             perror( source_loc().data());
@@ -253,21 +254,23 @@ set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
     return { signal_for_user, action_prior};
 }
 
-/** Called internally every time the timer interval needs to be reset to wait for the full time. In other words after we get a character, we start waiting all over again.
+/** Not used in file_manager, so not sure it has any use beyond test program called: ../cpp_by_example/lib_tty_posix_signal_timer_settime_periodic/main.cpp:35:
+ *  Called internally every time the timer interval needs to be reset to wait for the full time. In other words after we get a character, we start waiting all over again.
  *  Called by enable_inactivity_handler.
  *  Initially and every time the timer interval needs to be reset to wait for the full time,
  *  even if it had not expired.
- *  In other words after we get a character, we start waiting all over again. */
+ *  In other words after we get a character, we start waiting all over again.
 void set_a_run_inactivity_timer(const timer_t & inactivity_timer, const int seconds) {  // todo: is timer_t a pointer or NOT or struct or int?!?
     int settime_flags 						{};				// TIMER_ABSTIME is only flag noted. Not used here.
     static itimerspec timer_specification 	{};				// todo: does this need to be static, ie. what does timer_settime() do with it?
     timer_specification.it_value.tv_sec 	= seconds;
     timer_specification.it_interval.tv_sec 	= timer_specification.it_value.tv_sec;  // interval is same value. todo: BUG: buggy behaviour when interval is very short ie. 1000 or long 1000000.
-    if ( timer_settime( inactivity_timer, settime_flags, &timer_specification, /*out*/ nullptr) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }
+    if ( timer_settime( inactivity_timer, settime_flags, &timer_specification, / out / nullptr) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }
     return;
 }
-
-/// Configures and sets timer and runs timer which waits for additional user kb characters.  Timer needs to be deleted when no longer wanted. */
+/** Configures and sets timer and runs timer which waits for additional user kb characters.  Timer needs to be deleted when no longer wanted.
+/// Not used in file_manager, so not sure it has any use beyond test program called: ../cpp_by_example/lib_tty_posix_signal_timer_settime_periodic/main.cpp:35:
+/// todo: consider replacing std::tuple/std::pair with struct!
 std::tuple<timer_t &, int, struct sigaction>
 enable_inactivity_handler(const int seconds) {
     static sigevent inactivity_event  {};
@@ -277,11 +280,11 @@ enable_inactivity_handler(const int seconds) {
     Sigaction_return result = set_sigaction_for_inactivity( handler_inactivity );
 
     static timer_t inactivity_timer   {};
-    if ( timer_create( CLOCK_REALTIME, &inactivity_event, /*out*/ &inactivity_timer) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // todo:  TODO address of a pointer? seriously ptr to ptr?
+    if ( timer_create( CLOCK_REALTIME, &inactivity_event, / out / &inactivity_timer) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // todo:  TODO address of a pointer? seriously ptr to ptr?
     set_a_run_inactivity_timer( inactivity_timer, seconds );
     // grostig todo bug? return { inactivity_timer, sig_user, action_prior };
     return { inactivity_timer, result.signal_for_user, result.action_prior };
-}
+} */
 
 /// todo:verify> stop waiting for additional keyboard characters from the user? delete the CSI/ESC timer
 void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_user, const struct sigaction old_action) {
