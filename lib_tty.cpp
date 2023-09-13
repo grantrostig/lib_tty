@@ -449,6 +449,7 @@ termio_set_timer( cc_t const time) {  // uses POSIX
 /**************** START Lib_tty specific code ********************************/
 /*****************************************************************************/
 
+/********** START Hot_key Class specific code ********************************/
 bool is_hk_chars_equal( Hot_key const & left, Hot_key const & right ) {
     return ( left.characters == right.characters );
 }
@@ -462,6 +463,7 @@ Hot_key::to_string() const {  // found in lib_tty.h
     std::string s {my_name};  // todo: finish this
     return s;
 }
+/********** END   Hot_key Class specific code ********************************/
 
 /// give it the string "EOF" and you get back 4 or ^D */
 char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::string name) {
@@ -550,22 +552,22 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"\\",	"backslash",			"???",		{},		0x5C,   92, 92}, // simple
     };
     static       Hot_keys 		 hot_keys {
-        // my_name,     char sequence,                                                      Cat,                                        Nav,                                    IntraNav
+        // my_name,     char sequence AKA characters,                                                   Cat,                                        Nav,                                    IntraNav
         // first the single key char action keys that are the good old Unix shell standard.
         {"escape",		{find_posix_char_from_posix_name(ascii_posix_map, "ESC"),
-                          NO_MORE_CHARS},                                                   HotKeyFunctionCat::navigation_esc,          FieldCompletionNav::esc,			 	FieldIntraNav::na},
-        {"eof",			{find_posix_char_from_posix_name(ascii_posix_map, "EOF")}, 			HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::eof,			 	FieldIntraNav::na},
-        {"quit",		{find_posix_char_from_posix_name(ascii_posix_map, "QUIT")}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
-        {"interrupt",	{find_posix_char_from_posix_name(ascii_posix_map, "INTR")},			HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
+                         NO_MORE_CHARS},                                                  HotKeyFunctionCat::navigation_esc,        FieldCompletionNav::esc,			 	FieldIntraNav::na},
+        {"eof",			{find_posix_char_from_posix_name(ascii_posix_map, "EOF")},        HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::eof,			 	FieldIntraNav::na},
+        {"quit",		{find_posix_char_from_posix_name(ascii_posix_map, "QUIT")}, 	  HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
+        {"interrupt",	{find_posix_char_from_posix_name(ascii_posix_map, "INTR")},       HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
 
-        {"tab",			{find_posix_char_from_posix_name(ascii_posix_map, "TAB")},   		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::skip_one_field, 	FieldIntraNav::na},
+        {"tab",			{find_posix_char_from_posix_name(ascii_posix_map, "TAB")},        HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::skip_one_field, 	FieldIntraNav::na},
 
-        {"CR_aka_CTL-M",    {find_posix_char_from_posix_name(ascii_posix_map, "CR")}, 			HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::down_one_field, 	FieldIntraNav::na},
-        {"LF_aka_CTL-J",	{find_posix_char_from_posix_name(ascii_posix_map, "NL-LF")},		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::down_one_field, 	FieldIntraNav::na},
+        {"CR_aka_CTL-M", {find_posix_char_from_posix_name(ascii_posix_map, "CR")},        HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::down_one_field, 	FieldIntraNav::na},
+        {"LF_aka_CTL-J", {find_posix_char_from_posix_name(ascii_posix_map, "NL-LF")},     HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::down_one_field, 	FieldIntraNav::na},
 
-        {"kill",		{find_posix_char_from_posix_name(ascii_posix_map, "KILL")},			HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,		 			FieldIntraNav::kill},
-        {"backspace_left_erase", {find_posix_char_from_posix_name(ascii_posix_map, "BS")},	HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na,					FieldIntraNav::backspace_left_erase},
-        {"erase_left",  {find_posix_char_from_posix_name(ascii_posix_map, "ERASE")},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na,					FieldIntraNav::erase_left},  // todo: is this correct for macOS or Linux or PC??
+        {"kill",		  {find_posix_char_from_posix_name(ascii_posix_map, "KILL")},     HotKeyFunctionCat::nav_intra_field,		FieldCompletionNav::na,		 			FieldIntraNav::kill},
+        {"backspace_left_erase", {find_posix_char_from_posix_name(ascii_posix_map, "BS")},HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na,					FieldIntraNav::backspace_left_erase},
+        {"erase_left",    {find_posix_char_from_posix_name(ascii_posix_map, "ERASE")},    HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na,					FieldIntraNav::erase_left},  // todo: is this correct for macOS or Linux or PC??
 
         // Secondly the multicharacter ESC sequences for the XTERM initially and then VT100 or ANSI.SYS? keyboard, which might be different as in "termcap" on some other hardware.
         // todo: Make sure I have ALL keystrokes from USA pc keyboard.  XTERM https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
@@ -586,23 +588,23 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"delete",		{CSI_ESC,'[',    '3','~'}, 		HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na, 			FieldIntraNav::delete_char},
         {"pageup",	  	{CSI_ESC,'[',    '5','~'}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_up,		FieldIntraNav::na},
         {"pagedown",	{CSI_ESC,'[',    '6','~'}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_down,		FieldIntraNav::na},
-        {"f5",			{CSI_ESC,'[','1','5','~'}, 		HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f6",			{CSI_ESC,'[','1','7','~'}, 		HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
-        {"f7",			{CSI_ESC,'[','1','8','~'}, 		HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f8",			{CSI_ESC,'[','1','9','~'}, 		HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f9",			{CSI_ESC,'[','2','0','~'}, 		HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f10",			{CSI_ESC,'[','2','1','~'}, 		HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // todo: is this like ESC or EOF_CHAR?
-        {"f11",			{CSI_ESC,'[','2','3','~'}, 		HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
-        {"f12",			{CSI_ESC,'[','2','4','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f5",			{CSI_ESC,'[','1','5','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f6",			{CSI_ESC,'[','1','7','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
+        {"f7",			{CSI_ESC,'[','1','8','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f8",			{CSI_ESC,'[','1','9','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f9",			{CSI_ESC,'[','2','0','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f10",			{CSI_ESC,'[','2','1','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // todo: is this like ESC or EOF_CHAR?
+        {"f11",			{CSI_ESC,'[','2','3','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
+        {"f12",			{CSI_ESC,'[','2','4','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         // VT100/220, but not on USA PC AT keyboard
-        {"f13",			{CSI_ESC,'[','2','5','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f14",			{CSI_ESC,'[','2','6','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f15",			{CSI_ESC,'[','2','7','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f16",			{CSI_ESC,'[','2','8','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f17",			{CSI_ESC,'[','3','1','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f18",			{CSI_ESC,'[','3','2','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f19",			{CSI_ESC,'[','3','3','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f20",			{CSI_ESC,'[','3','4','~'},  	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f13",			{CSI_ESC,'[','2','5','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f14",			{CSI_ESC,'[','2','6','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f15",			{CSI_ESC,'[','2','7','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f16",			{CSI_ESC,'[','2','8','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f17",			{CSI_ESC,'[','3','1','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f18",			{CSI_ESC,'[','3','2','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f19",			{CSI_ESC,'[','3','3','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f20",			{CSI_ESC,'[','3','4','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         // ;2 is shift aka shf
         //{"shf-insert",	{CSI_ESC,'[','2',	 ';','2','~'}, 	HotKeyFunctionCat::editing_mode,			FieldCompletionNav::na,			 	FieldIntraNav::na},
         {"shf-delete",		{CSI_ESC,'[','3', 	 ';','2','~'},	HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na, 			FieldIntraNav::delete_char},
@@ -613,8 +615,8 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"shf-right_arrow",	{CSI_ESC,'[','1',    ';','2','C'},	HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_right},
         {"shf-left_arrow",	{CSI_ESC,'[','1',    ';','2','D'},	HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_left},
         //{"shf-keypad_5",	{'5'},				 				HotKeyFunctionCat::na,			 		FieldCompletionNav::na, 			FieldIntraNav::na},
-        //???{"shf-home",	{CSI_ESC,'[','1',    ';','2','H'}}, HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
-        //???{"shf-end",	{CSI_ESC,'[','1',    ';','2','F'}}, HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::goto_end},
+        //???{"shf-home",	{CSI_ESC,'[','1',    ';','2','H'}}, HotKeyFunctionCat::nav_intra_field,		FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
+        //???{"shf-end",	{CSI_ESC,'[','1',    ';','2','F'}}, HotKeyFunctionCat::nav_intra_field, 	FieldCompletionNav::na, 			FieldIntraNav::goto_end},
         {"shf-f1",			{CSI_ESC,'[','1',    ';','2','P'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         {"shf-f2",			{CSI_ESC,'[','1',    ';','2','Q'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
         {"shf-f3",			{CSI_ESC,'[','1',    ';','2','R'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
@@ -638,8 +640,8 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"ctl-right_arrow",	{CSI_ESC,'[','1',    ';','5','C'},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_right},
         {"ctl-left_arrow",	{CSI_ESC,'[','1',    ';','5','D'},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_left},
         {"ctl-keypad_5",	{CSI_ESC,'[','1',    ';','5','E'},		HotKeyFunctionCat::na, 						FieldCompletionNav::na, 			FieldIntraNav::na},
-        //???{"ctl-home",	{CSI_ESC,'[','1',    ';','5','H'}}, 					HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
-        //???{"ctl-end",	{CSI_ESC,'[','1',    ';','5','F'}}, 					HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::goto_end},
+        //???{"ctl-home",	{CSI_ESC,'[','1',    ';','5','H'}},		HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
+        //???{"ctl-end",	{CSI_ESC,'[','1',    ';','5','F'}},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::goto_end},
         {"ctl-f1",			{CSI_ESC,'[','1',    ';','5','P'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         {"ctl-f2",			{CSI_ESC,'[','1',    ';','5','Q'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
         {"ctl-f3",			{CSI_ESC,'[','1',    ';','5','R'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
@@ -745,65 +747,11 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     return E_NO_MATCH;
 }
 
-/* Kb_key_a_fstat get_kb_keystroke_old() {  // so complicated I want to keep old version untill I know the other works as well or better.
-    Hot_key_chars hkcs {};
-    for ( Simple_key_char first_skc {} ;
-          first_skc = 0, cin.get( first_skc ), hkcs.push_back( first_skc == CSI_ALT ? CSI_ESC : first_skc ), true ;
-          // No increment. // todo??: is there a better way to note this?  Or not use "for" at all?
-        ) {
-        File_status file_status { File_status::other };
-        if ( cin.eof() || first_skc == 0) {
-            assert( (cin.eof() || first_skc == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
-            file_status = File_status::eof_file_descriptor;
-            return { hkcs, file_status};
-        };
-        if ( first_skc == CSI_ESC ) {
-            Termios const termios_orig { termio_set_timer( VTIME_ESC ) }; // set stdin to return with no char that arrives within timer interval, meaning it is not a multicharacter ESC sequence.  A mulitchar ESC seq will provide characters within the interval.
-            Simple_key_char timed_test_char {} ;
-            cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
-            // if ( cin.eof() ) {  // todo: this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
-                //assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
-                //file_status = File_status::eof_file_descriptor;
-                //termio_restore( termios_orig );
-                //return { hkc, file_status};
-            //};
-            termio_restore( termios_orig );
-            if ( timed_test_char == TIMED_NULL_GET ) {  // todo: magic number // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!
-                hkcs.push_back( NO_MORE_CHARS );  // todo: magic number // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!
-                cin.clear();  // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
-            } else
-                cin.putback( timed_test_char ); 		// part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
-        }
-        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hkcs ) };
-        if ( std::holds_alternative< Hot_key >( hot_key_or_error ))     // We got a hotkey of lenght >= 1;
-            return { std::get< Hot_key >( hot_key_or_error), File_status::other };
-        else {                                                          // We got a partial match on multi-byte sequence, or something else.
-            assert( std::holds_alternative< Lt_errno >( hot_key_or_error ) && "Logic error: the error alternative is broken." );
-            switch ( std::get< Lt_errno >( hot_key_or_error )) {
-            case E_PARTIAL_MATCH:
-                continue;                                               // We got a prefix match, so we get more chars and see what comes.
-            case E_NO_MATCH:
-                if ( hkcs.size() == 1 )                                 // We got a simple_key_char, ie. a simple ASCII char.
-                    return { hkcs[0] , File_status::other };
-                // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
-                // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Simple_key_char i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
-                // hkc.clear();
-                // Hot_key_chars const hot_key_chars_unfound { hkc.begin(), hkc.end() };
-                else
-                    return { hkcs, File_status::unexpected_data };
-                assert(false && "Logic error.");
-                break;
-            }
-        }
-      } // * end loop *
-    assert(false && "We should never get here, because we turned within the infinite loop.");
-} */
-
 Kb_key_a_fstat
 get_kb_keystroke() {
     Hot_key_chars   hkcs {};
     File_status     file_status { File_status::other };
-    Simple_key_char first_skc {0} ;
+    Key_char_singular first_skc {0} ;
     cin.get( first_skc );
     if ( first_skc == CSI_ALT ) hkcs.push_back( CSI_ESC ); else hkcs.push_back( first_skc );
 
@@ -815,7 +763,7 @@ get_kb_keystroke() {
             return { hkcs, file_status};
         };
         if ( first_skc == CSI_ESC ) {  // If all is as expected, we might have one or  more characters from that single keystroke, so let's get another char.
-            Simple_key_char timed_test_char {0};
+            Key_char_singular timed_test_char {0};
             Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
             cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
                                                         // todo??: could I use peek() to improve this code?
@@ -844,7 +792,7 @@ get_kb_keystroke() {
                 if ( hkcs.size() == 1 )
                     return { hkcs[0] , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
                 // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
-                // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Simple_key_char i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
+                // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Key_char_singular i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
                 // hkc.clear();
                 // Hot_key_chars const hot_key_chars_unfound { hkc.begin(), hkc.end() };
                 else
@@ -863,7 +811,7 @@ bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE o
     switch (file_status) {
     case File_status::other : LOGGER_( "File_status is: other."); //
         return false;
-    case File_status::eof_simple_key_char : LOGGER_( "File_status is: keyboard eof, which is a hotkey."); //
+    case File_status::eof_Key_char_singular : LOGGER_( "File_status is: keyboard eof, which is a hotkey."); //
         return false;
     case File_status::timed_out :
         cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
@@ -925,7 +873,7 @@ bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_ch
 }
 
 /// Is true if we disallow the character.
-bool is_ignore_skc( Simple_key_char const skc,
+bool is_ignore_skc( Key_char_singular const skc,
                     bool const is_echo_skc_to_tty,
                     bool const is_allow_control_chars,
                     bool const is_ring_bell )
@@ -971,8 +919,8 @@ get_kb_keys_raw( size_t const length_in_keystrokes,
         file_status_result 		  		= kb_key_a_fstat.second;
         if ( ! (is_ignore_key_fd = is_ignore_key_file_status( file_status_result )) )
         {
-            if      ( std::holds_alternative< Simple_key_char >( kb_key_a_fstat.first )) {
-                Simple_key_char const skc { std::get < Simple_key_char >( kb_key_a_fstat.first ) };
+            if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.first )) {
+                Key_char_singular const skc { std::get < Key_char_singular >( kb_key_a_fstat.first ) };
                 if ( ! ( is_ignore_key_skc = is_ignore_skc( skc, is_echo_skc_to_tty, is_allow_control_chars, true )) )
                     kb_chars_result += skc;
             }
@@ -985,12 +933,12 @@ get_kb_keys_raw( size_t const length_in_keystrokes,
                 //                }
                 is_ignore_key_hk     = is_ignore_hotkey_function_cat( hot_key_function_cat );
             }
-            else  assert( false && "Not sure why we got here, we require that either a Simple_key_char or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
+            else  assert( false && "Not sure why we got here, we require that either a Key_char_singular or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
         }
         if ( !is_ignore_key_fd || !is_ignore_key_skc || !is_ignore_key_hk )
             --additional_skc;
     } while ( additional_skc > 0 &&  // *** end do_while loop ***
-              file_status_result != File_status::eof_simple_key_char &&
+              file_status_result != File_status::eof_Key_char_singular &&
               file_status_result != File_status::eof_file_descriptor &&
               hot_key_function_cat == HotKeyFunctionCat::na );      // todo: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
 

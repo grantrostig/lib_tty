@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
+/* Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  * BOOST 1.0 license
  *
  *  Used to test lib_tty.so

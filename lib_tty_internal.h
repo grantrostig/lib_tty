@@ -197,48 +197,11 @@ constexpr KbFundamentalUnit CSI_ESC = 27;
  *  so this allows manual entry of very special function keys, etc. */
 constexpr KbFundamentalUnit CSI_ALT = '`';
 
-/** A Hotkey OR an ERRNO.
- *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
+/** Variant that returns either a Hotkey OR an ERRNO.
+ *  _o_ === "exclusive or"
+ *  Used only as return value by one function, with only one caller (at several locations) which is internal.
  */
-using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >; /// _o_ == "exclusive or"
-
-/** Gets one single keystroke from user keyboard, which may consist of multiple characters in a key's multi-byte sequence
- *  Relies on cin being in raw mode!
- *  Called by get_kb_keys_raw().
- *  PUBLIC FUNCTION can also? BE CALLED BY END USER, but not used in the client "file_maintenance_*" programs.
- *  Probably needs debugging, if it is to be called directly. */
-Kb_key_a_fstat
-get_kb_keystroke();
-
-/** Seeks to get n simple_key_chars from keyboard in raw stty mode.
- *  PUBLIC FUNCTION TO BE CALLED BY END USER, is used in the client "file_maintenance_*" programs.
- *
- * It returns immediately on n number of simple_key_chars and
- * that is the reason 'raw' mode is used/set by this function.
- * The immediate return is what differentiates it from get_value_raw().
- *
- * It can also return 'early' if an appropriate hot-key is entered,
- * but that is not required for the function to return, as already stated above.
- * It may encounter EOF (which is also a hot-key).
- *
- * This function is generally used with n=1.
- * The user's goal is to just grab one key and take action such as in a menu, where a selection is just one key.
- * However, in case some field would want automatic action on n>1, we have provided that feature.
- *
- * Perhaps some menu takes two keys to select the option?  Probably not, but the feature exists.
- * Note that only the last function key pressed by the user, as part of the sequence of keys will be set in result.
- *
- * This function sets POSIX terminal settings and signals for the time that it is getting characters,
- * and lastly restores the terminal to original configuration
- *
- * todo: probably should rename to: get_kb_keystrokes_raw()
- *
- */
-Kb_value_plus
-get_kb_keys_raw( size_t const length_in_keystrokes,
-                 bool const   is_require_field_completion,
-                 bool const   is_echo_skc_to_tty,           /// skc == Simple_key_char
-                 bool const   is_allow_control_chars );      /// todo: was is_strip_control_chars and now may be a bug?
+using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >;
 
 
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
