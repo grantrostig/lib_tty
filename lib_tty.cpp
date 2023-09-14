@@ -163,44 +163,50 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
 
     // static, but why did I think that was a good idea? or was it needed? or was it needed by sigaction()? todo?:
     static struct sigaction action_prior_SIGINT 	{};
-    if ( sigaction( SIGINT , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) {  // Just doing a get(), do setting next line
+    if ( sigaction( SIGINT  , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) {  // Just doing a get(), do setting next line
             perror( source_loc().data());
             exit(1);
     }
-    if ( reinterpret_cast<void *>(action_prior_SIGINT.sa_handler) != reinterpret_cast<void *>(SIG_IGN)) {  // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
+    if ( reinterpret_cast<void *>( action_prior_SIGINT.sa_handler )
+         != reinterpret_cast<
+                                void *
+                            >(SIG_IGN)) {  // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
         LOGGER_( "SIGINT going to be set.");
         if ( sigaction( SIGINT, &action, nullptr) == POSIX_ERROR ) {
             perror( source_loc().data());
             exit(1);
         }
     }
-
+        // TODO?: the 2nd if should be about the same since I'm checking the same condition!!! Need to check the POSIX C code.
     static struct sigaction action_prior_SIGQUIT 	{};
     if ( sigaction( SIGQUIT , nullptr, /*out*/ &action_prior_SIGQUIT ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
-    if ( action_prior_SIGQUIT.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
+    if (                           action_prior_SIGQUIT.sa_sigaction
+         != reinterpret_cast<
+                                void(*)(int, siginfo_t *, void *)
+                            >(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
         LOGGER_( "SIGQUIT going to be set." );
-        if (sigaction(SIGQUIT, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // todo: Would this only be used if there was a serial line that could generate a HUP signal?
+        if ( sigaction( SIGQUIT, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // todo: Would this only be used if there was a serial line that could generate a HUP signal?
     }
 
     static struct sigaction action_prior_SIGTERM 	{};
     if ( sigaction( SIGTERM , nullptr, /*out*/ &action_prior_SIGTERM ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
     if ( action_prior_SIGTERM.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
         LOGGER_( "SIGTERM going to be set." );
-        if (sigaction(SIGTERM, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // todo: Does not seem to work. BUG: Ctrl-\ causes a immediate dump.
+        if ( sigaction( SIGTERM, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // todo: Does not seem to work. BUG: Ctrl-\ causes a immediate dump.
     }
 
     static struct sigaction action_prior_SIGTSTP 	{};
     if ( sigaction( SIGTSTP , nullptr, /*out*/ &action_prior_SIGTSTP ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
     if ( action_prior_SIGTSTP.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
         LOGGER_("SIGTSTP going to be set.");
-        if (sigaction(SIGTSTP, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
+        if ( sigaction( SIGTSTP, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
     }
 
     static struct sigaction action_prior_SIGHUP 	{};
     if ( sigaction( SIGHUP , nullptr, /*out*/ &action_prior_SIGHUP ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
     if ( action_prior_SIGHUP.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
         LOGGER_( "SIGHUP going to be set." );
-        if (sigaction(SIGHUP, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
+        if ( sigaction( SIGHUP, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
     }
     return { action_prior_SIGINT, action_prior_SIGQUIT, action_prior_SIGTERM, action_prior_SIGTSTP, action_prior_SIGHUP };
 }
@@ -749,20 +755,21 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 
 Kb_key_a_fstat
 get_kb_keystroke_raw() {
-    Hot_key_chars   hkcs {};
-    File_status     file_status { File_status::other };
-    Key_char_singular first_skc {0} ;
-    cin.get( first_skc );
-    if ( first_skc == CSI_ALT ) hkcs.push_back( CSI_ESC ); else hkcs.push_back( first_skc );
+    Hot_key_chars       hot_key_chars   {};
+    File_status         file_status     {File_status::other};
+    Key_char_singular   first_kcs       {0} ;
+    cin.get( first_kcs );
+    if ( first_kcs == CSI_ALT ) hot_key_chars.push_back( CSI_ESC ); else hot_key_chars.push_back( first_kcs );
+    // So far, we have one kb char of some unknown type, but is it more complicated, ie. is it a simple ASCII letter, or a hot_key? which is possibly a singlebyte or multibyte function key like F1, let's continue and see.
 
-    while ( true ) {                 // So far, we have a kb char, but is it more complicated, ie. a hot_key? possibly a multibyte function key like F1, let's continue and see.
+    while ( true ) {
         file_status = File_status::other;
-        if ( cin.eof() || first_skc == 0) {     // does this every happen? todo: 0 == the break character or what else could it mean?
-            assert( (cin.eof() || first_skc == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
+        if ( cin.eof() || first_kcs == 0) {             // does this every happen? todo: 0 == the break character or what else could it mean?
+            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
             file_status = File_status::eof_file_descriptor;
-            return { hkcs, file_status};
+            return { hot_key_chars, file_status};
         };
-        if ( first_skc == CSI_ESC ) {  // If all is as expected, we might have one or  more characters from that single keystroke, so let's get another char.
+        if ( first_kcs == CSI_ESC ) {                   // If all is as expected, we might have one or  more characters from that single keystroke, so let's get another char.
             Key_char_singular timed_test_char {0};
             Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
             cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
@@ -775,28 +782,31 @@ get_kb_keystroke_raw() {
             };
             */
             termio_restore( termios_orig );
-            if ( timed_test_char == TIMED_NULL_GET ) {  // todo: magic number // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!
-                hkcs.push_back( NO_MORE_CHARS );  // todo: magic number // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!
-                cin.clear();                      // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
-            } else
-                //cin.putback( timed_test_char );   // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
-                hkcs.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
+            if ( timed_test_char == TIMED_NULL_GET )
+            {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// todo: MAGIC NUMBER
+                hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!  // todo: MAGIC NUMBER.
+                cin.clear();                              // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
+            }
+            else {
+                //cin.putback( timed_test_char );                                       // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
+                hot_key_chars.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
+            }
         }
-        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hkcs )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. todo: consider using ref for speed?
+        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. todo: consider using ref for speed?
         if ( std::holds_alternative< Hot_key >( hot_key_or_error ) )  // We have a real hot_key, so we are done!
             return { std::get< Hot_key >(hot_key_or_error),         File_status::other };  // todo: file_status is what? might be EOF or other?
         else {
             LOGGERS( "We have an Lt_errno.", std::get< Lt_errno >(hot_key_or_error) );
             switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
             case E_NO_MATCH:
-                if ( hkcs.size() == 1 )
-                    return { hkcs[0] , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
+                if ( hot_key_chars.size() == 1 )
+                    return { first_kcs , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
                 // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
                 // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Key_char_singular i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
                 // hkc.clear();
                 // Hot_key_chars const hot_key_chars_unfound { hkc.begin(), hkc.end() };
                 else
-                    return { hkcs, File_status::unexpected_data };  // we got a CSI, but that followed didn't match any of the subsequent chars of a multi-byte sequence.
+                    return { hot_key_chars, File_status::unexpected_data };  // we got a CSI, but that followed didn't match any of the subsequent chars of a multi-byte sequence.
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get a hotkey.
                 continue;
@@ -821,6 +831,9 @@ bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE o
         break;
     case File_status::eof_file_descriptor :
         assert( false && "File descriptor is at eof.");  // todo: is this correct, or should we not ignore it?
+        break;
+    case File_status::initial_state :
+        assert( false && "File_status should be set by now.");  // todo: is this correct, or should we not ignore it?
         break;
     }
     return true;  // we add back the input character that we have decided to ignore.
@@ -873,7 +886,7 @@ bool is_usable_char( KbFundamentalUnit const kbc, bool const is_allow_control_ch
 }
 
 /// Is true if we disallow the character.
-bool is_ignore_skc( Key_char_singular const skc,
+bool is_ignore_kcs( Key_char_singular const skc,
                     bool const is_echo_skc_to_tty,
                     bool const is_allow_control_chars,
                     bool const is_ring_bell )
@@ -903,7 +916,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     assert(  length_in_keystrokes > 0 && "Length must be greater than 0." );   // todo: must debug n>1 case later.
     Key_char_i18 	    kb_chars_result 	    {};  /// The char(s) in the keystroke.
     Hot_key		 		hot_key_result          {};  /// The hot_key that might have been found.
-    File_status  		file_status_result      {File_status::other};
+    File_status  		file_status_result      {File_status::initial_state};
     size_t 		 		additional_skc 			{length_in_keystrokes};  // todo: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::na};			// reset some variables from prior loop if any, specifically old/prior hot_key.
     //unsigned 			int value_index			{0}; // Note: Points to the character beyond the current character (presuming zero origin), like an STL iterator it.end(), hence 0 == empty field.
@@ -911,7 +924,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     cin.exceptions(std::istream::failbit);      // throw on fail of cin.  todo??: maybe interactions with CIN should include more calls to cin.good() etc., and rdstate/ios_base::badbit etc.
     Termios const termios_orig 	{ termio_set_raw() };
     do {  // *** begin loop *** 	            // Gather char(s) to make a value until we get a "completion" Hot_key, or number of chars, or error.
-        bool is_ignore_key_skc {false}, is_ignore_key_hk {false}, is_ignore_key_fd {false};  // todo: don't seem to need these variables, but think I might.
+        bool is_ignore_key_kcs {false}, is_ignore_key_hk {false}, is_ignore_key_fd {false};  // todo: don't seem to need these variables, but think I might.
         hot_key_result 			            = {};  							// reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat                = HotKeyFunctionCat::na;			// reset some variables from prior loop if any, specifically old/prior hot_key.
 
@@ -920,30 +933,31 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         if ( ! (is_ignore_key_fd = is_ignore_key_file_status( file_status_result )) )
         {
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.kb_key_variant )) {
-                Key_char_singular const skc { std::get < Key_char_singular >( kb_key_a_fstat.kb_key_variant ) };
-                if ( ! ( is_ignore_key_skc = is_ignore_skc( skc, is_echo_skc_to_tty, is_allow_control_chars, true )) )
-                    kb_chars_result += skc;
+                Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_fstat.kb_key_variant ) };
+                if ( not ( is_ignore_key_kcs = is_ignore_kcs( kcs, is_echo_skc_to_tty, is_allow_control_chars, true)))
+                    kb_chars_result += kcs;
             }
             else if ( std::holds_alternative< Hot_key > ( kb_key_a_fstat.kb_key_variant )) {
-                hot_key_result 			 = std::get < Hot_key >( kb_key_a_fstat.kb_key_variant );  // TODO:?? is this a copy?
-                hot_key_function_cat = hot_key_result.function_cat;
+                hot_key_result 			    = std::get < Hot_key >( kb_key_a_fstat.kb_key_variant );  // TODO:?? is this a copy?
+                hot_key_function_cat        = hot_key_result.function_cat;
                 //                if ( ( hot_key_function_cat = hot_key_rv.function_cat ) == HotKeyFunctionCat::editing_mode ) {
                 //                    is_editing_mode_insert 	= ! is_editing_mode_insert;  // todo: Do we use this value here, or down the call stack?
                 //                    cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
                 //                }
-                is_ignore_key_hk     = is_ignore_hotkey_function_cat( hot_key_function_cat );
+                is_ignore_key_hk            = is_ignore_hotkey_function_cat( hot_key_function_cat );
             }
             else  assert( false && "Not sure why we got here, we require that either a Key_char_singular or a Hot_key entered."); // todo:  I think this else clause is not needed. cerr << "\aget_kb_keys_raw(): throwing away this key stroke, trying again to get one." << endl;
         }
-        if ( !is_ignore_key_fd || !is_ignore_key_skc || !is_ignore_key_hk )
+        if ( !is_ignore_key_fd || !is_ignore_key_kcs || !is_ignore_key_hk )
             --additional_skc;
-    } while ( additional_skc > 0 &&  // *** end do_while loop ***
-              file_status_result != File_status::eof_Key_char_singular &&
-              file_status_result != File_status::eof_file_descriptor &&
-              hot_key_function_cat == HotKeyFunctionCat::na );      // todo: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
+    } while ( additional_skc       >  0                                  &&  // *** END DO_WHILE loop ***
+              file_status_result   != File_status::eof_Key_char_singular &&
+              file_status_result   != File_status::eof_file_descriptor   &&
+              hot_key_function_cat == HotKeyFunctionCat::na
+            );      // todo: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
 
-    while ( is_require_field_completion_key &&
-            file_status_result          != File_status::eof_file_descriptor   &&
+    while ( is_require_field_completion_key                                 &&
+            file_status_result          != File_status::eof_file_descriptor &&
             hot_key_result.function_cat != HotKeyFunctionCat::nav_field_completion &&  // todo: may need more cats like intra_field, editing_mode?
             hot_key_result.function_cat != HotKeyFunctionCat::navigation_esc
           )
@@ -954,6 +968,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         file_status_result                  = kb_key_a_fstat.file_status;
     }
     termio_restore( termios_orig );
+    XXXX assert( "logic error" && kb_chars_result.size() == 0 || hot_key_result.characters.size() == 0 && file_status_result != File_status::initial_state );
     return { kb_chars_result, hot_key_result, file_status_result };
 }
 

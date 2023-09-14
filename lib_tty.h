@@ -48,7 +48,8 @@ enum class File_status { /// After reading a char, did we get something good, sh
   eof_file_descriptor, /// get library or OS EOF.
   unexpected_data,     /// got bad data from hardware error, or user error, ie. something we don't expect or support.
   timed_out,           /// we read, but didn't get a value, or status.
-  other                /// probably means got a good value.
+  other,               /// probably means got a good value.
+  initial_state        /// initial state, should not remain this way after any tty read() or get().
 };                     // todo: eof is a hot_key ie. CTRL-D , so should not be here.
 
 /** The user level intent of all "Categories" of HotKeys
@@ -150,9 +151,9 @@ using Hot_keys = std::vector< Hot_key >; /// Stores all known Hot_keys for inter
  *  todo: does this include an EOF character?
  *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  *  todo: only Key_char_singular and File_status are used internally in Lib_tty, so maybe refactor?
+ *  was:  //key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18, Hot_key_chars, Hot_key, File_status >;
  */
-//using Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18, Hot_key_chars, Hot_key, File_status >;
-using   Kb_key_variant = std::variant< std::monostate, Key_char_singular,               Hot_key_chars, Hot_key              >;
+using   Kb_key_variant = std::variant<                 Key_char_singular,               Hot_key_chars, Hot_key              >;
 
 /** Tells us if we got a Kb_key and if we "are at"/"or got?" EOF.
  *  _a_ == "and"

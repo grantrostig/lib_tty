@@ -148,23 +148,23 @@ struct Sigaction_termination_return {
 using Termios = termios;    // Tty terminal IO & speed structure, used for getting and setting them. // Enforcing the C++ struct type name capitalization convention for the POSIX C type.  I like it that way.
 
 /// to get user's tty termial status
-Termios &termio_get();
+Termios& termio_get();
 
 /// to allow capturing one character at a time and gaining control immediately after user presses that key, ie. not buffered.
-Termios &termio_set_raw();
+Termios& termio_set_raw();
 
 /// to assist in finding additional keys after CSI/ESC of a multi-character function key.
-Termios &termio_set_timer( cc_t const time);
+Termios& termio_set_timer( cc_t const time);
 
 /// to normal cooked? condition
 void     termio_restore( Termios const &termios);      	/** restore terminal state to what it was when program was started??? todo: verify my comment here. */
 
 /*****************************************************************************/
-/********************** END   POSIX termial IO level declarations ************************/
+/********************** END   POSIX termial IO level declarations ************/
 /*****************************************************************************/
 /**************** END   POSIX level declarations *****************************/
 /*****************************************************************************/
-/**************** START Application Level Declarations ***********************/
+/**************** START Application level declarations ***********************/
 /*****************************************************************************/
 
 /** todo: the user level handling of subsequent character key presses
@@ -201,8 +201,7 @@ constexpr KbFundamentalUnit CSI_ALT = '`';
  *  _o_ === "exclusive or"
  *  Used only as return value by one function, with only one caller (at several locations) which is internal.
  */
-using  Hotkey_o_errno = std::variant< Hot_key, Lt_errno >;
-
+using Hotkey_o_errno = std::variant< Hot_key, Lt_errno >;
 
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */
