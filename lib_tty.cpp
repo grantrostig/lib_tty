@@ -748,7 +748,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 }
 
 Kb_key_a_fstat
-get_kb_keystroke() {
+get_kb_keystroke_raw() {
     Hot_key_chars   hkcs {};
     File_status     file_status { File_status::other };
     Key_char_singular first_skc {0} ;
@@ -827,7 +827,7 @@ bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE o
 }
 
 bool is_ignore_hotkey_function_cat( HotKeyFunctionCat const hot_key_function_cat ) {
-                                            //LOGGER_( "get_kb_keys_raw(): Got a Hot_key: "<<hot_key_rv.my_name<<endl;
+                                            //LOGGER_( "Got a Hot_key: "<<hot_key_rv.my_name<<endl;
         // **** CASE on hot key Function Category
         switch ( hot_key_function_cat ) {
         case HotKeyFunctionCat::other :
@@ -841,11 +841,11 @@ bool is_ignore_hotkey_function_cat( HotKeyFunctionCat const hot_key_function_cat
             break;
         case HotKeyFunctionCat::editing_mode :
                                             // todo: how do we use this?  do we ignore the character?? is_editing_mode_insert = ! is_editing_mode_insert;
-            LOGGER_("get_kb_keys_raw(): Editing mode toggled.");
+            LOGGER_("Editing mode toggled.");
             break;
         // All subsequent cases appear to be exactly the same except for debugging messages.
         case HotKeyFunctionCat::navigation_esc :
-            LOGGER_("get_kb_keys_raw(): Navigation ESC");
+            LOGGER_("Navigation ESC");
             break;
         case HotKeyFunctionCat::nav_intra_field :
             LOGGER_( "Nav_intra_field mode");
@@ -895,13 +895,13 @@ bool is_ignore_skc( Key_char_singular const skc,
 }
 
 Kb_value_plus
-get_kb_keys_raw( size_t const length_in_keystrokes,
-                 bool const   is_require_field_completion_key,
-                 bool const   is_echo_skc_to_tty,
-                 bool         is_allow_control_chars  // todo: was is_strip_control_chars and now may be a bug?
-               ) {
+get_kb_keystrokes_raw( size_t const length_in_keystrokes,
+                       bool const   is_require_field_completion_key,
+                       bool const   is_echo_skc_to_tty,
+                       bool         is_allow_control_chars  // todo: was is_strip_control_chars and now may be a bug?
+                     ) {
     assert(  length_in_keystrokes > 0 && "Length must be greater than 0." );   // todo: must debug n>1 case later.
-    Kb_regular_value 	kb_chars_result 	    {};  /// The char(s) in the keystroke.
+    Key_char_i18 	    kb_chars_result 	    {};  /// The char(s) in the keystroke.
     Hot_key		 		hot_key_result          {};  /// The hot_key that might have been found.
     File_status  		file_status_result      {File_status::other};
     size_t 		 		additional_skc 			{length_in_keystrokes};  // todo: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
@@ -912,24 +912,24 @@ get_kb_keys_raw( size_t const length_in_keystrokes,
     Termios const termios_orig 	{ termio_set_raw() };
     do {  // *** begin loop *** 	            // Gather char(s) to make a value until we get a "completion" Hot_key, or number of chars, or error.
         bool is_ignore_key_skc {false}, is_ignore_key_hk {false}, is_ignore_key_fd {false};  // todo: don't seem to need these variables, but think I might.
-        hot_key_result 			 = {};  							// reset some variables from prior loop if any, specifically old/prior hot_key.
-        hot_key_function_cat = {HotKeyFunctionCat::na};			// reset some variables from prior loop if any, specifically old/prior hot_key.
+        hot_key_result 			            = {};  							// reset some variables from prior loop if any, specifically old/prior hot_key.
+        hot_key_function_cat                = HotKeyFunctionCat::na;			// reset some variables from prior loop if any, specifically old/prior hot_key.
 
-        Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke() }; //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr //--additional_skc, additional_skc > 0 && static_cast<bool>( ( kb_key_a_fstat = get_kb_key( false ) ).second ) //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr
-        file_status_result 		  		= kb_key_a_fstat.second;
+        Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke_raw() }; //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr //--additional_skc, additional_skc > 0 && static_cast<bool>( ( kb_key_a_fstat = get_kb_key( false ) ).second ) //--additional_skc, additional_skc > 0 ? kb_key_a_fstat = get_kb_key( false ), nullptr : nullptr
+        file_status_result 		  		    = kb_key_a_fstat.file_status;
         if ( ! (is_ignore_key_fd = is_ignore_key_file_status( file_status_result )) )
         {
-            if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.first )) {
-                Key_char_singular const skc { std::get < Key_char_singular >( kb_key_a_fstat.first ) };
+            if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.kb_key_variant )) {
+                Key_char_singular const skc { std::get < Key_char_singular >( kb_key_a_fstat.kb_key_variant ) };
                 if ( ! ( is_ignore_key_skc = is_ignore_skc( skc, is_echo_skc_to_tty, is_allow_control_chars, true )) )
                     kb_chars_result += skc;
             }
-            else if ( std::holds_alternative< Hot_key > ( kb_key_a_fstat.first )) {
-                hot_key_result 			 = std::get < Hot_key >( kb_key_a_fstat.first );  // TODO:?? is this a copy?
+            else if ( std::holds_alternative< Hot_key > ( kb_key_a_fstat.kb_key_variant )) {
+                hot_key_result 			 = std::get < Hot_key >( kb_key_a_fstat.kb_key_variant );  // TODO:?? is this a copy?
                 hot_key_function_cat = hot_key_result.function_cat;
                 //                if ( ( hot_key_function_cat = hot_key_rv.function_cat ) == HotKeyFunctionCat::editing_mode ) {
                 //                    is_editing_mode_insert 	= ! is_editing_mode_insert;  // todo: Do we use this value here, or down the call stack?
-                //                    cerr << "get_kb_keys_raw() function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
+                //                    cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
                 //                }
                 is_ignore_key_hk     = is_ignore_hotkey_function_cat( hot_key_function_cat );
             }
@@ -948,10 +948,10 @@ get_kb_keys_raw( size_t const length_in_keystrokes,
             hot_key_result.function_cat != HotKeyFunctionCat::navigation_esc
           )
     {
-        Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke() };
-        if ( Kb_key_variant const k         { kb_key_a_fstat.first}; std::holds_alternative< Hot_key >( k ))
+        Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke_raw() };
+        if ( Kb_key_variant const k         { kb_key_a_fstat.kb_key_variant }; std::holds_alternative< Hot_key >( k ))
                 hot_key_result = std::get< Hot_key >( k );
-        file_status_result                  = kb_key_a_fstat.second;
+        file_status_result                  = kb_key_a_fstat.file_status;
     }
     termio_restore( termios_orig );
     return { kb_chars_result, hot_key_result, file_status_result };

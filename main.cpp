@@ -3,7 +3,7 @@
  *
  *  Used to test lib_tty.so
  *  Testing should be expanded considerably.
- *  We test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
+ *  We test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keystrokes_raw.
  */
 
 //#include <bits/stdc++>  // todo??: why is .h needed?
@@ -72,42 +72,42 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,ar
     cout << "Prepare for several tests of lib_tty:\n";
     cin.exceptions( std::istream::failbit);  // throw on fail of cin.
     crash_signals_register();
-    Lib_tty::Kb_regular_value   kbrv {};
+    Lib_tty::Key_char_i18       i18 {};
     Lib_tty::Hot_key            hk {};
     Lib_tty::File_status        fs {};
     string                      user_ack {};
     // Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
     do { cout << "Enter a single keyboard key press now! (q or F4 for next test):"; cout.flush();
-        Lib_tty::Kb_value_plus kvp {Lib_tty::get_kb_keys_raw( 1, false, true, true)};
-        kbrv = std::get< Lib_tty::Kb_regular_value >( kvp );
-        hk   = std::get< Lib_tty::Hot_key >         ( kvp );
-        fs   = std::get< Lib_tty::File_status >     ( kvp );
+        Lib_tty::Kb_value_plus kvp {Lib_tty::get_kb_keystrokes_raw( 1, false, true, true)};
+        i18 = kvp.key_char_i18;
+        hk  = kvp.hot_key;
+        fs  = kvp.file_status;
         LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
-        LOGGERS("kb_regular_value:", kbrv); LOGGERS("hot_key:", hk.my_name); LOGGERS("file_status:", (int) fs);
+        LOGGERS("kb_regular_value:", i18); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
         cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
-    } while ( kbrv != "q" && hk.my_name != "f4");
+    } while ( i18 != "q" && hk.my_name != "f4");
 
     do { cout << "Enter a sequence of 3 key strokes, including possibly some function_keys. (qqq or ??F4 for next test):"; cout.flush();
-        Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keys_raw( 3, false, true, true)};
-        kbrv = std::get< Lib_tty::Kb_regular_value >( kvp );
-        hk   = std::get< Lib_tty::Hot_key >         ( kvp );
-        fs   = std::get< Lib_tty::File_status >     ( kvp );
+        Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keystrokes_raw( 3, false, true, true)};
+        i18 = kvp.key_char_i18;
+        hk  = kvp.hot_key;
+        fs  = kvp.file_status;
         LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
-        LOGGERS("kb_regular_value:", kbrv); LOGGERS("hot_key:", hk.my_name); LOGGERS("file_status:", (int) fs);
+        LOGGERS("kb_regular_value:", i18); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
         cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
-    } while ( kbrv != "qqq" && hk.my_name != "f4");
+    } while ( i18 != "qqq" && hk.my_name != "f4");
 
     do { cout << "Enter a sequence of 3 key strokes, including possibly some function_keys, ending with a field_completion key stroke. (qqq or ??F4 for next test):"; cout.flush();
-        Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keys_raw( 3, true, true, true)};
-        kbrv = std::get< Lib_tty::Kb_regular_value >( kvp );
-        hk   = std::get< Lib_tty::Hot_key >         ( kvp );
-        fs   = std::get< Lib_tty::File_status >     ( kvp );
+        Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keystrokes_raw( 3, true, true, true)};
+        i18 = kvp.key_char_i18;
+        hk  = kvp.hot_key;
+        fs  = kvp.file_status;
         LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
-        LOGGERS("kb_regular_value:", kbrv); LOGGERS("hot_key:", hk.my_name); LOGGERS("file_status:", (int) fs);
+        LOGGERS("kb_regular_value:", i18); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
         cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
-    } while ( kbrv != "qqq" && hk.my_name != "f4");
+    } while ( i18 != "qqq" && hk.my_name != "f4");
 
-    // todo: Test other use cases of get_kb_keys_raw().
+    // todo: Test other use cases of get_kb_keystrokes_raw().
     // todo: Test other use cases of the library.
     cout << "All tests have been run.\n";
     cout << "###" << endl;
