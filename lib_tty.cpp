@@ -799,7 +799,7 @@ get_kb_keystroke_raw() {
             LOGGERS( "We have an Lt_errno.", std::get< Lt_errno >(hot_key_or_error) );
             switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
             case E_NO_MATCH:
-                if ( hot_key_chars.size() == 1 )
+                if ( XXXX hot_key_chars.size() == 1 )
                     return { first_kcs , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
                 // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
                 // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Key_char_singular i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
@@ -814,7 +814,7 @@ get_kb_keystroke_raw() {
             }
         }
     } // * end loop *
-    assert(false && "We should never get here.");
+    assert( false && "We should never get here.");
 }
 
 bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE on File Status
