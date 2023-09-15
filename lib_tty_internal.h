@@ -187,6 +187,8 @@ struct Ascii_posix_relation {
 /** a lookup table for user keyboard key presses */
 using Ascii_Posix_map = std::vector< Ascii_posix_relation >; // todo: use proper capitalization.
 
+/** Assume any kb in use here has an ESC key and it does what we expect */
+constexpr KbFundamentalUnit ESC_KEY = 27;
 /** The first char of the POSIX CSI Control Sequence Introducer, the initial ESC character of a series of characters that designates one type of hot_key,
  *  Is the first char in Hot_key_chars. Note there are also hot_keys that are single char such as CTRL-D, or the ESC key on its own.
  *  todo: Could this be implemented as a "termcap" like table. */
@@ -194,7 +196,8 @@ constexpr KbFundamentalUnit CSI_ESC = 27;
 
 /** Is lib_tty's customized manual alternative to the CSI Control Sequence Introducer CSI_ESC, which is the first char in multi-byte sequence Hot_key_chars such as F1.
  *  A cell phone (or other limited/alternate keyboard) user can type this character and follow it by the codes that a full keyboard would.
- *  so this allows manual entry of very special function keys, etc. */
+ *  so this allows manual entry of special function keys, etc.
+ *  todo: Do we handle a single alt character as a plain character if it does not start a defined mulitbyte sequence? */
 constexpr KbFundamentalUnit CSI_ALT = '`';
 
 /** Variant that returns either a Hotkey OR an ERRNO.

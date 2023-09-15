@@ -754,7 +754,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 }
 
 Kb_key_a_fstat
-get_kb_keystroke_raw() {
+get_kb_keystroke_raw_old2() {
     Hot_key_chars       hot_key_chars   {};
     File_status         file_status     {File_status::other};
     Key_char_singular   first_kcs       {0} ;
@@ -799,7 +799,7 @@ get_kb_keystroke_raw() {
             LOGGERS( "We have an Lt_errno.", std::get< Lt_errno >(hot_key_or_error) );
             switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
             case E_NO_MATCH:
-                if ( XXXX hot_key_chars.size() == 1 )
+                if ( /*XXXX*/ hot_key_chars.size() == 1 )
                     return { first_kcs , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
                 // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
                 // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Key_char_singular i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
@@ -817,11 +817,101 @@ get_kb_keystroke_raw() {
     assert( false && "We should never get here.");
 }
 
+Kb_key_a_fstat
+get_kb_keystroke_raw() {
+    assert( cin.good() && "Precondition.");
+    // Return values
+    Key_char_singular   first_kcs       {0} ;
+    File_status         file_status     {File_status::initial_state};
+
+    cin.get( first_kcs );           // todo: first_kcs == 0 // does this ever happen? todo: 0 == the break character or what else could it mean?
+    if ( cin.eof() ) {
+        file_status = File_status::eof_file_descriptor;
+    };
+    if ( cin.bad() ) {
+        file_status = File_status::bad;
+        assert( false && "cin is bad() how did that happen?  We don't handle it." );
+        return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+    }
+    // handle single simple regular ASCII first and return it.
+    if ( first_kcs != ESC_KEY && first_kcs != CSI_ESC && first_kcs != CSI_ALT ) {
+        assert( first_kcs   != 0                          && "Postcondition.");
+        assert( file_status != File_status::initial_state && "Postcondition.");
+        return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+    }
+    //Hot_key_chars     hot_key_chars   {"initial_state"s};  todo??:
+    Hot_key_chars       hot_key_chars   {};     // We are relying on size == 0 to mean initial_state, and it must be >0 to return as result.
+    if ( first_kcs == CSI_ALT )
+        hot_key_chars.push_back( CSI_ESC );
+    else
+        hot_key_chars.push_back( first_kcs );
+
+    // So far, we have one kb char which is not a simple ASCII letter. Is it a hot_key? which is possibly a singlebyte or multibyte function key like F1, let's continue and see.
+    while ( true ) {
+        if ( cin.eof() || first_kcs == 0) {             // does this every happen? todo: 0 == the break character or what else could it mean?
+            assert( false && "logic error or needs more work."); // todo: more eof handling needed
+            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
+            file_status = File_status::eof_file_descriptor;
+            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        };
+
+        // We might have one or more characters from that single keystroke, so let's get another char within a potential multibyte sequence, which would come very quickly before our timer on the get() expires.
+        Key_char_singular timed_test_char {TIMED_NULL_GET};
+        Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
+        cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
+        termio_restore( termios_orig );
+            // todo??: could I use peek() to improve this code?
+        if ( cin.eof() ) {                       // todo: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
+            assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
+            file_status = File_status::eof_file_descriptor;
+            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        }
+        if ( timed_test_char == TIMED_NULL_GET )
+        {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// todo: MAGIC NUMBER
+            file_status = File_status::timed_out;
+            hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!  // todo: MAGIC NUMBER.
+            cin.clear();                              // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
+            file_status = File_status::other;
+        }
+        else {
+            //cin.putback( timed_test_char );                                       // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
+            file_status = File_status::other;
+            hot_key_chars.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
+        }
+
+        // Let's see if we know have a single or multybyte Hot_key and can return, or we need to loop again to finalize our understanding or possible unrecognized key sequence.
+        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. todo: consider using ref for speed?
+        if ( std::holds_alternative< Hot_key >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
+            assert( first_kcs != 0 && "Postcondition.");
+            assert( hot_key_chars.size() >= 1 && "Postcondition.");
+            assert( File_status::initial_state != file_status && "Postcondition.");
+            return { std::get< Hot_key >(hot_key_or_error), File_status::other };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // todo: file_status is what? might be EOF or other?
+        }
+        else {
+            LOGGERS( "We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >(hot_key_or_error) );
+            switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
+            case E_NO_MATCH:                                            // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
+                assert( first_kcs != 0 && "Postcondition.");
+                assert( hot_key_chars.size() >= 1 && "Postcondition.");
+                assert( File_status::initial_state != file_status && "Postcondition.");
+                return { hot_key_chars, File_status::unexpected_data }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                break;
+            case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
+                continue;  // to the top of the while loop.
+                break;
+            }
+        }
+    } // * end loop *
+    assert( false && "We should never get here.");
+}
+
 bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE on File Status
     switch (file_status) {
     case File_status::other : LOGGER_( "File_status is: other."); //
         return false;
     case File_status::eof_Key_char_singular : LOGGER_( "File_status is: keyboard eof, which is a hotkey."); //
+        return false;
+    case File_status::bad : LOGGER_( "File_status is bad."); //
         return false;
     case File_status::timed_out :
         cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
@@ -914,7 +1004,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool         is_allow_control_chars  // todo: was is_strip_control_chars and now may be a bug?
                      ) {
     assert(  length_in_keystrokes > 0 && "Length must be greater than 0." );   // todo: must debug n>1 case later.
-    Key_char_i18 	    kb_chars_result 	    {};  /// The char(s) in the keystroke.
+    Key_char_i18ns 	    kb_chars_result 	    {};  /// The char(s) in the keystroke.
     Hot_key		 		hot_key_result          {};  /// The hot_key that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
     size_t 		 		additional_skc 			{length_in_keystrokes};  // todo: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
@@ -963,12 +1053,14 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
           )
     {
         Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke_raw() };
-        if ( Kb_key_variant const k         { kb_key_a_fstat.kb_key_variant }; std::holds_alternative< Hot_key >( k ))
+        if ( Kb_key_variant const k { kb_key_a_fstat.kb_key_variant }; std::holds_alternative< Hot_key >( k ))
                 hot_key_result = std::get< Hot_key >( k );
         file_status_result                  = kb_key_a_fstat.file_status;
     }
     termio_restore( termios_orig );
-    XXXX assert( "logic error" && kb_chars_result.size() == 0 || hot_key_result.characters.size() == 0 && file_status_result != File_status::initial_state );
+    /*XXXX*/
+    assert( (kb_chars_result.size() == 0 || hot_key_result.characters.size() == 0) && "Postcondition: result not set.");
+    assert( file_status_result != File_status::initial_state && "Postcondition.");
     return { kb_chars_result, hot_key_result, file_status_result };
 }
 
