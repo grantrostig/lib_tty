@@ -44,14 +44,16 @@ using Lt_errno =  int;                    /// The type for lib_tty errnos, simil
  *  todo: refactor these two out since I don't think we need a separate EOFs, since in tty raw mode we recognize ^D as a hot_key.
  */
 enum class File_status { /// After reading a char, did we get something good, should we expect more?
-  eof_Key_char_singular, /// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
-  eof_file_descriptor, /// get library or OS EOF.
-  unexpected_data,     /// got bad data from hardware error, or user error, ie. something we don't expect or support.
-  timed_out,           /// we read, but didn't get a value, or status.
-  bad,                 /// we read, but we got serious unrecoverable error.
-  other,               /// probably means got a good value.
-  initial_state        /// initial state, should not remain this way after any tty read() or get().
-};                     // todo: eof is a hot_key ie. CTRL-D , so should not be here.
+  initial_state,         /// initial state, should not remain this way after any tty read() or get().
+  other,                /// probably means got a good value.
+  unexpected_data,      /// got bad data from hardware error, or user error, ie. something we don't expect or support.
+  eof_Key_char_singular,/// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
+  eof_library,          /// get application library EOF.
+  eof_file_descriptor,  /// get library or OS EOF.
+  timed_out,            /// we read, but didn't get a value, or status.
+  fail,                 /// we read, but we got format/extraction error.
+  bad                   /// we read, but we got serious unrecoverable error.
+};
 
 /** The user level intent of all "Categories" of HotKeys
  */

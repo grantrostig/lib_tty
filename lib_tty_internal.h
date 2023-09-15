@@ -1,6 +1,4 @@
-/*
- * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
- * BOOST 1.0 license
+/* Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  */
 #ifndef LIB_TTY_INTERNAL_H
 #define LIB_TTY_INTERNAL_H
@@ -46,7 +44,8 @@ std::string source_loc();
 inline constexpr   ssize_t     POSIX_ERROR =       -1;  /// yes, believe it or not, it is not zero, which I think is good. :)
 
 using              Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. todo??: better? >using Lt_errno = typeof (errno);
-inline constexpr   ssize_t     TIMED_NULL_GET =    0;  /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  todo: 0 might be bad, especially since above is also 0 and they are used in same function.
+inline constexpr   ssize_t     TIMED_GET_NULL =    0;  /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  todo: 0 might be bad, especially since above is also 0 and they are used in same function.
+inline constexpr   ssize_t     TIMED_GET_NOT_SET = 9;  /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  todo: 0 might be bad, especially since above is also 0 and they are used in same function.
 inline constexpr   ssize_t     NO_MORE_CHARS =     0;  /// Character used like as a "flag", and is concatinated to a singular CSI_ESC read from user, to generate an artificial multi-byte sequence to denote that the CSI_ESC is alone and is not part/start of a multibyte sequence.  But the CSI_ESC alone is important in that it represents the Escape/ESC key, which is a hot_key.
 inline constexpr   Lt_errno    E_NO_MATCH =        1;  /// Designates that a hot_key has not been found after examining all raw characters of a multi-byte sequence of a key stroke. todo: new convention for lib_tey errno-like codes
 inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  /// Designates that we have a partial match on the prefix characters, leading to a possible E_NO_MATCH, of above line. todo: new convention for lib_tey errno-like codes
@@ -203,6 +202,7 @@ constexpr KbFundamentalUnit CSI_ALT = '`';
 /** Variant that returns either a Hotkey OR an ERRNO.
  *  _o_ === "exclusive or"
  *  Used only as return value by one function, with only one caller (at several locations) which is internal.
+ *  todo: consider renaming to Hot_key vs Hotkey.
  */
 using Hotkey_o_errno = std::variant< Hot_key, Lt_errno >;
 

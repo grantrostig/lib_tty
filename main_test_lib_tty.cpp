@@ -1,5 +1,4 @@
 /* Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
- * BOOST 1.0 license
  *
  *  Used to test lib_tty.so
  *  Testing should be expanded considerably.
@@ -35,8 +34,9 @@ string source_loc() {
 #define LOGGERS( msg, x )using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<",{"<<x<<"}.\n";
 
 auto crash_tracer(int const signal_number) ->void {
+    // todo??: set tty to sane mode.
     cout << "CRASH_ERROR: signal#, stack trace:{" << signal_number << "},{" << std::stacktrace::current() << "}<<<END CRASH_ERROR STACK_TRACE.\n"; // We want the user to see this error
-    std::string reply; cout << "q for exit(1) or CR to continue:"; cout.flush(); cin.clear(); getline(cin, reply); if ( reply == "q") exit(1);
+    std::string reply; cout << "CRASH_ERROR: q for exit(1) or CR to continue:"; cout.flush(); cin.clear(); getline(cin, reply); if ( reply == "q") exit(1);
 }
 
 auto crash_signals_register() -> void {    // signals that cause "terminate" and sometimes "core dump"  https://en.wikipedia.org/wiki/Signal_(IPC)
@@ -64,7 +64,7 @@ auto crash_signals_register() -> void {    // signals that cause "terminate" and
     std::signal( SIGVTALRM, crash_tracer );
 }
 
-/**  This main() is used solely to test our linked shared library: lib_tty.so
+/**  This main() is used solely to test our linked shared library: lib_tty.o
  *   WARNING enable this main.cpp file in qmake ONLY if you want to run this test, but to build the libary DON'T enable this file to be linked into the *.so
  */
 int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,argv:"<<argc<<","<<my_arv<<"."<<endl;
@@ -72,40 +72,40 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,ar
     cout << "Prepare for several tests of lib_tty:\n";
     cin.exceptions( std::istream::failbit);  // throw on fail of cin.
     crash_signals_register();
-    Lib_tty::Key_char_i18       i18 {};
+    Lib_tty::Key_char_i18ns     i18ns {};
     Lib_tty::Hot_key            hk {};
     Lib_tty::File_status        fs {};
     string                      user_ack {};
     // Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
     do { cout << "Enter a single keyboard key press now! (q or F4 for next test):"; cout.flush();
         Lib_tty::Kb_value_plus kvp {Lib_tty::get_kb_keystrokes_raw( 1, false, true, true)};
-        i18 = kvp.key_char_i18;
+        i18ns = kvp.key_char_i18ns;
         hk  = kvp.hot_key;
         fs  = kvp.file_status;
-        LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
-        LOGGERS("kb_regular_value:", i18); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
+        LOGGER_("We got this in 3 variables below:" );
+        LOGGERS("kb_regular_value:", i18ns); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
         cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
-    } while ( i18 != "q" && hk.my_name != "f4");
+    } while ( i18ns != "q" && hk.my_name != "f4");
 
     do { cout << "Enter a sequence of 3 key strokes, including possibly some function_keys. (qqq or ??F4 for next test):"; cout.flush();
         Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keystrokes_raw( 3, false, true, true)};
-        i18 = kvp.key_char_i18;
+        i18ns = kvp.key_char_i18ns;
         hk  = kvp.hot_key;
         fs  = kvp.file_status;
         LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
-        LOGGERS("kb_regular_value:", i18); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
+        LOGGERS("kb_regular_value:", i18ns); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
         cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
-    } while ( i18 != "qqq" && hk.my_name != "f4");
+    } while ( i18ns != "qqq" && hk.my_name != "f4");
 
     do { cout << "Enter a sequence of 3 key strokes, including possibly some function_keys, ending with a field_completion key stroke. (qqq or ??F4 for next test):"; cout.flush();
         Lib_tty::Kb_value_plus kvp { Lib_tty::get_kb_keystrokes_raw( 3, true, true, true)};
-        i18 = kvp.key_char_i18;
+        i18ns = kvp.key_char_i18ns;
         hk  = kvp.hot_key;
         fs  = kvp.file_status;
         LOGGER_("~~~" ); LOGGER_("We got this in 3 variables below:" );
-        LOGGERS("kb_regular_value:", i18); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
+        LOGGERS("kb_regular_value:", i18ns); LOGGERS("hot_key:", kvp.hot_key.my_name); LOGGERS("file_status:", (int) fs);
         cout << "Press return to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
-    } while ( i18 != "qqq" && hk.my_name != "f4");
+    } while ( i18ns != "qqq" && hk.my_name != "f4");
 
     // todo: Test other use cases of get_kb_keystrokes_raw().
     // todo: Test other use cases of the library.

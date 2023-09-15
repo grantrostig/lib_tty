@@ -1,6 +1,4 @@
-/*
- * Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
- * BOOST 1.0 license
+/*  Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  */
 
 #include <cstring>
@@ -119,7 +117,7 @@ void print_signal(int const signal) {
         LOGGER_("Above is a typical POSIX signal");
         break;
     default:
-        LOGGER_( "Non-typical POSIX signal");
+        LOGGER_("Above is a non-typical POSIX signal");
     }
     /* also note: SIGRTMIN,SIGRTMAX
      * non signals
@@ -151,7 +149,7 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
 
 Sigaction_termination_return
 set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TODO why does const have no effect here?
-    LOGGER_ ("Starting.");
+    //LOGGER_ ("Starting.");
     struct sigaction action 		{};    			 // todo:  TODO?? why is struct required by compiler.  TODO?? does this initialize deeply in c++ case?
     sigemptyset( &action.sa_mask );  				 // Isn't this already empty because of declaration? We do it just to be safe.
     action.sa_flags 				|= ~SA_SIGINFO;  // Invoke signal-catching function with three arguments instead of one.
@@ -163,26 +161,21 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
 
     // static, but why did I think that was a good idea? or was it needed? or was it needed by sigaction()? todo?:
     static struct sigaction action_prior_SIGINT 	{};
-    if ( sigaction( SIGINT  , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) {  // Just doing a get(), do setting next line
-            perror( source_loc().data());
-            exit(1);
-    }
+    if ( sigaction( SIGINT  , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) {  perror( source_loc().data()); exit(1); } // Just doing a get(), do setting next line
     if ( reinterpret_cast<void *>( action_prior_SIGINT.sa_handler )
          != reinterpret_cast<
-                                void *
+                            void *
                             >(SIG_IGN)) {  // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
         LOGGER_( "SIGINT going to be set.");
-        if ( sigaction( SIGINT, &action, nullptr) == POSIX_ERROR ) {
-            perror( source_loc().data());
-            exit(1);
-        }
+        if ( sigaction( SIGINT, &action, nullptr) == POSIX_ERROR ) { perror( source_loc().data()); exit(1); }
     }
-        // TODO?: the 2nd if should be about the same since I'm checking the same condition!!! Need to check the POSIX C code.
+    // ******* Repeat for other Signals.
+        // TODO?: the "2nd if" should be about the same since I'm checking the same condition!!! Need to check the POSIX C code.
     static struct sigaction action_prior_SIGQUIT 	{};
     if ( sigaction( SIGQUIT , nullptr, /*out*/ &action_prior_SIGQUIT ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
-    if (                           action_prior_SIGQUIT.sa_sigaction
+    if (                           action_prior_SIGQUIT.sa_sigaction  // ************ action, not sa_handler todo debug/refactor
          != reinterpret_cast<
-                                void(*)(int, siginfo_t *, void *)
+                            void(*) (int, siginfo_t *, void *)
                             >(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
         LOGGER_( "SIGQUIT going to be set." );
         if ( sigaction( SIGQUIT, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // todo: Would this only be used if there was a serial line that could generate a HUP signal?
@@ -471,6 +464,55 @@ Hot_key::to_string() const {  // found in lib_tty.h
 }
 /********** END   Hot_key Class specific code ********************************/
 
+File_status
+get_iostate_cin() {
+    File_status file_status {File_status::initial_state};
+    if ( cin.eof() ) {
+        file_status = File_status::eof_file_descriptor;
+    } else {
+        if ( cin.fail() ) {
+            file_status = File_status::fail;
+            assert( false && "cin is bad() how did that happen?  We don't handle it." );
+        } else {
+            if ( cin.bad() ) {
+                file_status = File_status::bad;
+                assert( false && "cin is bad() how did that happen?  We don't handle it." );
+            } else {
+                file_status = File_status::other;
+            }
+        }
+    }
+    return file_status;
+}
+
+bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE on File Status
+    switch (file_status) {
+    case File_status::other : LOGGER_( "File_status is: other."); //
+        return false;
+    case File_status::eof_Key_char_singular : LOGGER_( "File_status is: keyboard eof, which is a hotkey."); //
+        return false;
+    case File_status::eof_library : LOGGER_( "File_status is: keyboard eof, which is a hotkey."); //
+        return false;
+    case File_status::bad : LOGGER_( "File_status is bad."); //
+        return false;
+    case File_status::fail : LOGGER_( "File_status is bad."); //
+        return false;
+    case File_status::timed_out :
+        cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
+        break;
+    case File_status::unexpected_data :
+        cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // todo: handle scrolling and dialog
+        break;
+    case File_status::eof_file_descriptor :
+        assert( false && "File descriptor is at eof.");  // todo: is this correct, or should we not ignore it?
+        break;
+    case File_status::initial_state :
+        assert( false && "File_status should be set by now.");  // todo: is this correct, or should we not ignore it?
+        break;
+    }
+    return true;  // we add back the input character that we have decided to ignore.
+}
+
 /// give it the string "EOF" and you get back 4 or ^D */
 char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::string name) {
     for (auto & ch : vec) {
@@ -726,7 +768,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         }
 #ifdef GR_DEBUG
         // todo??: make it accept operator<< : LOGGERS( "Run once only now, here are the hot_keys,characters:",hot_keys)
-        LOGGER_( "Run once only now, here are the hot_keys,characters:")
+        //LOGGER_( "Run once only now, here are the hot_keys,characters:")
         for (auto & i : hot_keys) {
             LOGGERS( "hot_key:   ", i.my_name);
             //print_vec(i.characters);
@@ -734,9 +776,10 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         }
 #endif
     }
-    LOGGERS( "Candidate_hk_chars:", candidate_hk_chars);
+    //LOGGERS( "Candidate_hk_chars:", candidate_hk_chars);
     Hot_key const candidate_hk 		{ {}, candidate_hk_chars };
-    auto    const lower_bound_itr   { std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk)};  LOGGERS( "Lower_bount_itr:", lower_bound_itr->my_name); LOGGERS( "Characters within above", lower_bound_itr->characters); //prior line probably replaces this line: print_vec(lower_bound_itr->characters); cerr << "." << endl;
+    auto    const lower_bound_itr   { std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk)};
+    //LOGGERS( "Lower_bount_itr:", lower_bound_itr->my_name); LOGGERS( "Characters within above", lower_bound_itr->characters); //prior line probably replaces this line: print_vec(lower_bound_itr->characters); cerr << "." << endl;
     bool    const no_match_end  	{ lower_bound_itr == hot_keys.end() }; // due to the fact we skipped all values, we have one, of several reasons for not having a match.
     bool    const partial_match 	{ !no_match_end &&
                                       std::equal( candidate_hk_chars.begin(),	// not the same as == since length of candidate is not length of hot_key
@@ -782,7 +825,7 @@ get_kb_keystroke_raw_old2() {
             };
             */
             termio_restore( termios_orig );
-            if ( timed_test_char == TIMED_NULL_GET )
+            if ( timed_test_char == TIMED_GET_NULL )
             {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// todo: MAGIC NUMBER
                 hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!  // todo: MAGIC NUMBER.
                 cin.clear();                              // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
@@ -822,66 +865,76 @@ get_kb_keystroke_raw() {
     assert( cin.good() && "Precondition.");
     // Return values
     Key_char_singular   first_kcs       {0} ;
+    //Hot_key_chars     hot_key_chars   {"initial_state"s};  todo??:
+    Hot_key_chars       hot_key_chars   {};     // We are relying on size == 0 to mean initial_state, and it must be >0 to return as result.
     File_status         file_status     {File_status::initial_state};
 
     cin.get( first_kcs );           // todo: first_kcs == 0 // does this ever happen? todo: 0 == the break character or what else could it mean?
-    if ( cin.eof() ) {
-        file_status = File_status::eof_file_descriptor;
-    };
-    if ( cin.bad() ) {
-        file_status = File_status::bad;
-        assert( false && "cin is bad() how did that happen?  We don't handle it." );
-        return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-    }
-    // handle single simple regular ASCII first and return it.
-    if ( first_kcs != ESC_KEY && first_kcs != CSI_ESC && first_kcs != CSI_ALT ) {
-        assert( first_kcs   != 0                          && "Postcondition.");
-        assert( file_status != File_status::initial_state && "Postcondition.");
-        return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-    }
-    //Hot_key_chars     hot_key_chars   {"initial_state"s};  todo??:
-    Hot_key_chars       hot_key_chars   {};     // We are relying on size == 0 to mean initial_state, and it must be >0 to return as result.
+    assert( first_kcs != 0 && "Logic error: Got a zero from cin.get().");
+    file_status = get_iostate_cin();
+
     if ( first_kcs == CSI_ALT )
         hot_key_chars.push_back( CSI_ESC );
     else
         hot_key_chars.push_back( first_kcs );
 
-    // So far, we have one kb char which is not a simple ASCII letter. Is it a hot_key? which is possibly a singlebyte or multibyte function key like F1, let's continue and see.
-    while ( true ) {
-        if ( cin.eof() || first_kcs == 0) {             // does this every happen? todo: 0 == the break character or what else could it mean?
-            assert( false && "logic error or needs more work."); // todo: more eof handling needed
-            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
-            file_status = File_status::eof_file_descriptor;
-            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-        };
-
-        // We might have one or more characters from that single keystroke, so let's get another char within a potential multibyte sequence, which would come very quickly before our timer on the get() expires.
-        Key_char_singular timed_test_char {TIMED_NULL_GET};
-        Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
-        cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
-        termio_restore( termios_orig );
-            // todo??: could I use peek() to improve this code?
-        if ( cin.eof() ) {                       // todo: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
-            assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
-            file_status = File_status::eof_file_descriptor;
-            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+    // ******* Handle single char first and return it, it could be simple ASCII or a single char hotkey such as CR/RETURN.
+    if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
+        Hotkey_o_errno h = consider_hot_key( hot_key_chars);
+        if ( std::holds_alternative< Hot_key >(h) ) {
+            // ******* Handle single ASCII hot_key first and return it.
+            Hot_key_chars hkc {std::get< Hot_key >(h).characters};
+            assert( hkc.size()  != 0                          && "Postcondition.");
+            assert( file_status != File_status::initial_state && "Postcondition.");
+            return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        } else {
+            // ******* Handle single simple regular ASCII first and return it.
+            assert( first_kcs   != 0                          && "Postcondition.");
+            assert( file_status != File_status::initial_state && "Postcondition.");
+            return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        if ( timed_test_char == TIMED_NULL_GET )
+    }
+    //assert( false );  // for debugging runs.
+    // ******* So far, we have one kb char. Is it a hot_key? which is possibly a singlebyte or multibyte function key like F1, let's continue and see.
+    while ( true ) {
+//        if ( cin.eof() || first_kcs == 0) {             // ????????????????????? does this evern happen? todo: 0 == the break character or what else could it mean?
+//            assert( false && "logic error or needs more work."); // todo: more eof handling needed
+//            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
+//            file_status = File_status::eof_file_descriptor;
+//            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+//        };
+
+        // ******* We might have one or more characters from that single keystroke,
+        // ******* so let's get another char within a potential multibyte sequence, which would come very quickly before our timer on the get() expires.
+        Key_char_singular   timed_kcs {TIMED_GET_NOT_SET};
+        Termios const       termios_orig    {termio_set_timer( VTIME_ESC)}; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
+        cin.get( timed_kcs );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
+        file_status = get_iostate_cin();
+        assert( ! is_ignore_key_file_status( file_status));
+        termio_restore( termios_orig );
+//            // todo??: could I use peek() to improve this code?
+//        if ( cin.eof() ) {                       // todo: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
+//            assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
+//            file_status = File_status::eof_file_descriptor;
+//            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+//        }
+        if ( timed_kcs == TIMED_GET_NULL )
         {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// todo: MAGIC NUMBER
             file_status = File_status::timed_out;
             hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!  // todo: MAGIC NUMBER.
             cin.clear();                              // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
-            file_status = File_status::other;
+            //file_status = File_status::other;
         }
         else {
             //cin.putback( timed_test_char );                                       // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
             file_status = File_status::other;
-            hot_key_chars.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
+            hot_key_chars.push_back( timed_kcs );   // We got another char, and it may be part of a multi-byte sequence.
         }
 
-        // Let's see if we know have a single or multybyte Hot_key and can return, or we need to loop again to finalize our understanding or possible unrecognized key sequence.
+        // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
         Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. todo: consider using ref for speed?
         if ( std::holds_alternative< Hot_key >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
+            // ******* Hot_key
             assert( first_kcs != 0 && "Postcondition.");
             assert( hot_key_chars.size() >= 1 && "Postcondition.");
             assert( File_status::initial_state != file_status && "Postcondition.");
@@ -903,30 +956,6 @@ get_kb_keystroke_raw() {
         }
     } // * end loop *
     assert( false && "We should never get here.");
-}
-
-bool is_ignore_key_file_status( File_status const file_status ) { // **** CASE on File Status
-    switch (file_status) {
-    case File_status::other : LOGGER_( "File_status is: other."); //
-        return false;
-    case File_status::eof_Key_char_singular : LOGGER_( "File_status is: keyboard eof, which is a hotkey."); //
-        return false;
-    case File_status::bad : LOGGER_( "File_status is bad."); //
-        return false;
-    case File_status::timed_out :
-        cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
-        break;
-    case File_status::unexpected_data :
-        cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // todo: handle scrolling and dialog
-        break;
-    case File_status::eof_file_descriptor :
-        assert( false && "File descriptor is at eof.");  // todo: is this correct, or should we not ignore it?
-        break;
-    case File_status::initial_state :
-        assert( false && "File_status should be set by now.");  // todo: is this correct, or should we not ignore it?
-        break;
-    }
-    return true;  // we add back the input character that we have decided to ignore.
 }
 
 bool is_ignore_hotkey_function_cat( HotKeyFunctionCat const hot_key_function_cat ) {
