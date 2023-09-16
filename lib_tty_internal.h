@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <deque>
 #include <functional>
 #include <ios>
 #include <iostream>
@@ -17,6 +18,7 @@
 #include <thread>
 #include <variant>
 #include <vector>
+#include <type_traits>
 // C lang API via C++ provided compatible functions.
 #include <cassert>
 #include <csignal>
@@ -24,15 +26,46 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <iterator>
 // POSIX headers
 #include <termios.h>
 // #include <uistd.h>  // I thought I needed it, but apparently not.
-
 //#define NDEBUG   // define if asserts are NOT to be checked.
+
+/// Requires that a type has insertion operator
+/// Concept definition - used by a template below.
+template <typename Container>
+concept Insertable = requires( std::ostream & out ) {
+    requires not std::same_as<std::string, Container>; // OR >std::is_same  <std::string, Container>::value OR std::is_same_v<std::string, Container>;
+    { out << typename Container::value_type {} } -> std::convertible_to<std::ostream & >;  // OR just >{ out << typename Container::value_type {} };
+};
+
+///// Prints contents of a container such as a vector of int's.
+///// Concept used by Templated Function definition
+template<typename Container>                        //template<insertable Container>        // OR these 2 lines currently being used.
+    requires Insertable<Container>
+std::ostream&
+operator<<( std::ostream & out, Container const & c) {
+    if ( not c.empty()) {
+        out << "[";   //out.width(9);  // todo??: neither work, only space out first element. //out << std::setw(9);  // todo??: neither work, only space out first element.
+        std::copy(c.begin(), c.end(), std::ostream_iterator< typename Container::value_type >(out, ","));
+        out << "\b]"; out.width(); out << std::setw(0);
+    } else out << "[CONTAINTER IS EMPTY]";
+    return out;
+}
+
+/////  Concept using Function Explicit instantiations that are required to generate code for linker.
+/////  todo??: is the only used if definition is in *.cpp file?
+/////  https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
+/////  https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
+//template std::ostream & operator<<( std::ostream & , std::vector<std::string> const & );
+///// Concept using Function Explicit instantiations that are required to generate code for linker.
+//template std::ostream & operator<<( std::ostream & , std::deque<int>          const & );
 
 namespace Lib_tty {
 using std::string;
 using namespace std::chrono_literals; // for wait().  todo??: is there a better way? Marc may know.
+using namespace std::string_literals;
 
 /// provides string with location in source code. Used for debugging.
 std::string source_loc();
@@ -174,17 +207,17 @@ enum class Input_mode { /// todo: not implemented yet.  // clashes with the bool
 
 /** each row of this struct, documents a potential user key press, and places them within various nameing conventions, mostly ASCII and POSIX */
 struct Ascii_posix_relation {
-  string ascii_id{};
-  string ascii_name{};
-  string posix_name{};
-  char   ascii_ctrl_char{}; // note: lowercase and uppercase: for example Ctrl-j and J.
-  char   c_char{};          // note: \n for LF
-  char   ascii_char{};      // ascii_char and posix_char appear to be the same.  Don't remember why I have both separately, probably some sort of flexibility...?
-  char   posix_char{};
+  string const ascii_id;
+  string const ascii_name;
+  string const posix_name;
+  char   const ascii_ctrl_char; // note: lowercase and uppercase: for example Ctrl-j and J.
+  char   const c_char;          // note: \n for LF
+  char   const ascii_char;      // ascii_char and posix_char appear to be the same.  Don't remember why I have both separately, probably some sort of flexibility...?
+  char   const posix_char;
 };
 
 /** a lookup table for user keyboard key presses */
-using Ascii_Posix_map = std::vector< Ascii_posix_relation >; // todo: use proper capitalization.
+using Ascii_Posix_map = const std::vector< Ascii_posix_relation >; // todo: use proper capitalization.
 
 /** Assume any kb in use here has an ESC key and it does what we expect */
 constexpr KbFundamentalUnit ESC_KEY = 27;

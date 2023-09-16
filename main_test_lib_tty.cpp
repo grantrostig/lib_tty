@@ -13,6 +13,8 @@
 #include <source_location>
 #include <iostream>
 
+#include <deque>
+
 using std::cin; using std::cout; using std::cerr; using std::clog; using std::endl; using std::string;  // using namespace std;
 using namespace std::string_literals;;
 
@@ -22,6 +24,24 @@ string source_loc() {
     std::string result {"\n"s+loc::current().file_name() +":"s +std::to_string(loc::current().line()) +std::to_string(loc::current().column())+"]`"s +loc::current().function_name()+"`."s};
     return result;
 }
+
+//template<typename Container>            // utility f() to print vectors
+//    requires Insertable<Container>
+//std::ostream&
+//operator<<( std::ostream & out, Container const & c) {
+//    if ( not c.empty()) {
+//        out << "[";   // todo??: add std::setw(3)
+//        //out.width(9);
+//        //out << std::setw(9);
+//        std::copy(c.begin(), c.end(), std::ostream_iterator< typename Container::value_type >(out, ","));
+//        //out.width();
+//        //out << std::setw();
+//        out << "\b]";
+//    } else {
+//        out << "[CONTAINTER IS EMPTY]";
+//    }
+//    return out;
+//}
 
 /// define if asserts are NOT to be checked.  Put in *.h file not *.CPP
 //#define 	NDEBUG
@@ -68,6 +88,12 @@ auto crash_signals_register() -> void {    // signals that cause "terminate" and
  *   WARNING enable this main.cpp file in qmake ONLY if you want to run this test, but to build the libary DON'T enable this file to be linked into the *.so
  */
 int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,argv:"<<argc<<","<<my_arv<<"."<<endl;
+
+    std::deque<int>     my_d { 3, 2, 1 };
+    std::vector<string> my_v { "a", "e"};
+    cout << "my_d: " << my_d << endl;
+    cout << "my_v: " << my_v << endl;
+
     // Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
     cout << "Prepare for several tests of lib_tty:\n";
     cin.exceptions( std::istream::failbit);  // throw on fail of cin.

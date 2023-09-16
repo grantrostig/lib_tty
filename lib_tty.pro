@@ -30,6 +30,7 @@ LIBS += \
 
 SOURCES += \
     lib_tty.cpp                 \
+    lib_tty_internal.cpp \
     main.cpp                    \  # main.cpp # comment out main.cpp to make the library for linker use, and at top turn on "+=console"
 
 HEADERS += \

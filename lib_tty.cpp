@@ -1,8 +1,11 @@
 /*  Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  */
 
+// todo: rename .h to .hpp
+
 #include <cstring>
 #include <cstdio>
+#include <deque>
 #include <iomanip>
 #include <iterator>
 #include <variant>
@@ -43,39 +46,33 @@ source_loc( ) {  // give more detail on error location, used by perror()
     string result {"\n"s+loc::current().file_name() +":"s +std::to_string(loc::current().line()) +std::to_string(loc::current().column())+"]`"s +loc::current().function_name()+"`."s};
     return result;
 }
-
-//  *** START of C++20 illustration ***
-/** print_vec replacement
- * Debugging only.
- * todo??: Illustration of how to print vectors and some other containers with various types of members/structs.
- * todo??: What forward declartions would I have to do to move this to bottom of this file, to get it out of the way?
- */
-template <typename T>
-concept can_insert = requires( std::ostream & out, T my_t ) {
-    // todo??: is this the same, or just more clear to me? $ { out << my_t; } -> is_convertable <std::ostream & >;
-    // todo??: does my_t have std::ostream_iterator<T>?  how related, or needed, or my misunderstanding
-    { out << my_t };
-};
-
-/// print_vec replacement
-template<typename T>            // utility f() to print vectors
-std::ostream&
-operator<<( std::ostream & out, const std::vector<T> & v) requires can_insert<T> {
-    if (!v.empty()) {
-        std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, ","));
-    }
-    return out;
-}
-
-void print_vec( const std::vector<char> & v) {  /// Debugging only. Obsolete if above works?
-    LOGGER_("Elements:[")
-    for (auto const i: v) {
-        cerr << std::setw(3) << (int)i << "&";
-    }
-    cerr << "\b]";
-}
-// 	*** END   of C++20 illustration ***
-
+/*****************************************************************************/
+/********************** START of C++20 illustration **************************/
+/*****************************************************************************/
+///// Prints contents of a container such as a vector of int's.
+///// Concept used by Templated Function definition
+//template<typename Container>                        //template<insertable Container>        // OR these 2 lines currently being used.
+//    requires Insertable<Container>
+//std::ostream&
+//operator<<( std::ostream & out, Container const & c) {
+//    if ( not c.empty()) {
+//        out << "[";   //out.width(9);  // todo??: neither work, only space out first element. //out << std::setw(9);  // todo??: neither work, only space out first element.
+//        std::copy(c.begin(), c.end(), std::ostream_iterator< typename Container::value_type >(out, ","));
+//        out << "\b]"; out.width(); out << std::setw(0);
+//    } else out << "[CONTAINTER IS EMPTY]";
+//    return out;
+//}
+/////  Concept using Function Explicit instantiations that are required to generate code for linker.
+/////  todo??: is the only used if definition is in *.cpp file?
+/////  https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
+/////  https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
+//template std::ostream & operator<<( std::ostream & , std::vector<std::string> const & );
+///// Concept using Function Explicit instantiations that are required to generate code for linker.
+//template std::ostream & operator<<( std::ostream & , std::deque<int>          const & );
+/*****************************************************************************/
+/********************** END   of C++20 illustration **************************/
+/*****************************************************************************/
+///  Debugging use only at this time.
 void print_signal(int const signal) {
     LOGGERS( "Signal is:", signal);
     switch (signal) {
@@ -138,9 +135,7 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
     return {};
 }
 /*****************************************************************************/
-/***************** END   Debugging only section ******************************/
-/*****************************************************************************/
-
+/**************** END   Debugging only section ******************************/
 /*****************************************************************************/
 /**************** START POSIX level declarations *****************************/
 /*****************************************************************************/
@@ -557,13 +552,13 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
      */
     static const Ascii_Posix_map ascii_posix_map {                            // TODO??: why is constexpr allowed, is it the vector?
     //ascii_id, ascii_name,          posix_id, ascii_ctrl+, \+,  ascii_char, posix_char
-        {"NUL", "Null",					"EOL", 		'@',	{},		0,	0},   // [ctl-spacebar does this!] (typically, ASCII NUL) is an additional line delimiter, like the NL character. EOL is not normally used. // If ICANON is set, the EOL character is recognized and acts as a special character on input (see ``Local modes and line disciplines'' in termio(M)).  probably of not used or even available as a char from a PC or any type of keyboard?!
-        {"SOH",	"start_of_heading",		"???", 	    'a',	{},		1,	1},   //
-        {"STX",	"start_of_text",		"???",	 	'b',	{},		2,	2},   //
-        {"ETX",	"end_of_text",			"INTR", 	'c',	{},		3,	3},   // interrupt/stop the program / paste (from copy-paste)?/-SIGINT
-        {"EOT",	"end_of_transmission",	"EOF",		'd',  	{}, 	4,	4},   // I perfer to call this "end of file", apparently this is a ascii character char when in POSIX raw mode tty.
-        {"ENQ",	"Enquiry",				"???",		'e',  	{}, 	5,	5},   //
-        {"ACK",	"Acknowledgement",		"???",		'f',  	{}, 	6,	6},   //
+        {"NUL", "Null",					"EOL", 		'@',	0,		0,	0},   // [ctl-spacebar does this!] (typically, ASCII NUL) is an additional line delimiter, like the NL character. EOL is not normally used. // If ICANON is set, the EOL character is recognized and acts as a special character on input (see ``Local modes and line disciplines'' in termio(M)).  probably of not used or even available as a char from a PC or any type of keyboard?!
+        {"SOH",	"start_of_heading",		"???", 	    'a',	0,		1,	1},   //
+        {"STX",	"start_of_text",		"???",	 	'b',	0,		2,	2},   //
+        {"ETX",	"end_of_text",			"INTR", 	'c',	0,		3,	3},   // interrupt/stop the program / paste (from copy-paste)?/-SIGINT
+        {"EOT",	"end_of_transmission",	"EOF",		'd',  	0, 	4,	4},   // I perfer to call this "end of file", apparently this is a ascii character char when in POSIX raw mode tty.
+        {"ENQ",	"Enquiry",				"???",		'e',  	0, 	5,	5},   //
+        {"ACK",	"Acknowledgement",		"???",		'f',  	0, 	6,	6},   //
         {"BEL",	"bell",					"BELL?",	'g', 	'a',	7,	7},   // todo: NOT IMPLEMENTED in hot_keys // Ctrl-g = \a  alert?
         {"BS",	"backspace",		 	"BS",		'h',	'b',	8,	8},   // BS alternative, how related to tty erase? todo: NOT IMPLEMENTED in hot_keys // character erase character works on linux and DOS? Backspace on MacOS use DEL for ERASE?
         {"HT",	"horizontal_tab",		"TAB",		'i',	't',	9,	9},
@@ -573,32 +568,33 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
                                                                               // OR kill-line (C-k): Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.
         {"FF",	"form_feed",			"FF?",		'l',	'f',	12,	12},  // todo: NOT IMPLEMENTED in hot_keys // redisplay page.
         {"CR",	"carriage_return",		"CR",		'm',	'r',	13,	13},  // CR note the 'r', end the line. DOS style LF/NL, but is two characters: \n\r?
-        {"SO",	"shift_out",			"???",		'n',	{},		14,	14},  //
-        {"SI",	"shift_in",				"DISCARD",	'o',	{},		15,	15},  //
-        {"DLE",	"data link escape",		"???",		'p',	{},		16,	16},  //
-        {"DC1",	"device_control_1/XON",	"START",	'q',	{},		17,	17},  // not usable, todo: NOT IMPLEMENTED in hot_keys // resume tty output  IXON is a tty setting not a character!
-        {"DC2",	"device_control_2",		"REPRINT",	'r',	{},		18,	18},  // todo: NOT IMPLEMENTED in hot_keys // redraw the current line.
-        {"DC3", "device_control_3/XOFF","STOP",		's',	{},		19,	19},  // not usable, todo: NOT IMPLEMENTED in hot_keys // suspend tty output IXOFF is a tty setting not a character!
-        {"DC4", "device_control_4",		"STATUS",	't',	{},		20,	20},  // todo: NOT IMPLEMENTED in hot_keys // on macOS and BSD.
+        {"SO",	"shift_out",			"???",		'n',	0,		14,	14},  //
+        {"SI",	"shift_in",				"DISCARD",	'o',	0,		15,	15},  //
+        {"DLE",	"data link escape",		"???",		'p',	0,		16,	16},  //
+        {"DC1",	"device_control_1/XON",	"START",	'q',	0,		17,	17},  // not usable, todo: NOT IMPLEMENTED in hot_keys // resume tty output  IXON is a tty setting not a character!
+        {"DC2",	"device_control_2",		"REPRINT",	'r',	0,		18,	18},  // todo: NOT IMPLEMENTED in hot_keys // redraw the current line.
+        {"DC3", "device_control_3/XOFF","STOP",		's',	0,		19,	19},  // not usable, todo: NOT IMPLEMENTED in hot_keys // suspend tty output IXOFF is a tty setting not a character!
+        {"DC4", "device_control_4",		"STATUS",	't',	0,		20,	20},  // todo: NOT IMPLEMENTED in hot_keys // on macOS and BSD.
         {"NAK",	"neg. acknowledge OR line_erase",
-                                        "KILL",		'u',	{},		21,	21},  // todo: NOT IMPLEMENTED in hot_keys // deletes entire line being typed. todo: "line erase character" kills the current input line when using the POSIX shell?
+                                        "KILL",		'u',	0,		21,	21},  // todo: NOT IMPLEMENTED in hot_keys // deletes entire line being typed. todo: "line erase character" kills the current input line when using the POSIX shell?
                                                                               // OR todo? C-x??: backward-kill-line (C-x Rubout): Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
-        {"SYNC","synchronous_idle",		"LNEXT",	'v',	{},		22,	22},  // todo: NOT IMPLEMENTED in hot_keys // paste (from copy-paste)?/
+        {"SYNC","synchronous_idle",		"LNEXT",	'v',	0,		22,	22},  // todo: NOT IMPLEMENTED in hot_keys // paste (from copy-paste)?/
         {"ETB",	"end_of_tranmission_block",
-                                        "WERASE",   'w',	{},		23,	23},  // todo: NOT IMPLEMENTED in hot_keys // erase the last word typed.
+                                        "WERASE",   'w',	0,		23,	23},  // todo: NOT IMPLEMENTED in hot_keys // erase the last word typed.
                                                                               // OR unix-word-rubout (C-w): Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.
-        {"CAN",	"cancel",				"CANCEL?",	'x',	{},		24,	24},  // todo?: C-u??? todo: NOT IMPLEMENTED in hot_keys // cancel the input line? / cut (from copy-paste)? /
-        {"EM",	"end_of_medium",		"???",		'y',	{},		25,	25},  // todo: NOT IMPLEMENTED? in hot_keys // OR yank (C-y): Yank the top of the kill ring into the buffer at point.
-        {"SUB",	"substitute",			"SUSP",		'z',	{},		26,	26},  // todo: NOT IMPLEMENTED in hot_keys //send a terminal stop signal. posix job-control: suspend process.  note: use "fg" to bring to foreground, "bg" to make it run in background.  AKA SIGSTOP?-SIGTSTP
+        {"CAN",	"cancel",				"CANCEL?",	'x',	0,		24,	24},  // todo?: C-u??? todo: NOT IMPLEMENTED in hot_keys // cancel the input line? / cut (from copy-paste)? /
+        {"EM",	"end_of_medium",		"???",		'y',	0,		25,	25},  // todo: NOT IMPLEMENTED? in hot_keys // OR yank (C-y): Yank the top of the kill ring into the buffer at point.
+        {"SUB",	"substitute",			"SUSP",		'z',	0,		26,	26},  // todo: NOT IMPLEMENTED in hot_keys //send a terminal stop signal. posix job-control: suspend process.  note: use "fg" to bring to foreground, "bg" to make it run in background.  AKA SIGSTOP?-SIGTSTP
         {"ESC",	"escape",				"ESC",		'[',	'e',	27,	27},  // ESC key, the first char of POSIX CSI Control Sequence Introducer
-        {"FS",	"file_separator",		"QUIT",		'\\',	{},		28,	28},  // posix - nothing!?!, unix job-control: quit process and create a "core file". todo: TODO WARNING: may include current contents of memory??-SIGQUIT
-        {"GS",	"group_separator",		"???",		']',	{},		29,	29},  //
-        {"RS",	"record_separator",		"???",		'^',	{},		30,	30},  //
-        {"US",	"unit_separator",		"???",		'_',	{},		31,	31},  //
-        {"DEL",	"delete",				"ERASE",	'?',	{},	   127,127},  // BS alternative, how related to tty erase?. erase the last character typed. similar to "BS" // todo: NOT IMPLEMENTED in hot_keys //  BS/ERASE on MacOS?
-        {" ",	"space",				"???",	    {},		' ',    32, 32},  // simple space character or blank
-        {"\\",	"backslash",			"???",		{},		0x5C,   92, 92}, // simple
+        {"FS",	"file_separator",		"QUIT",		'\\',	0,		28,	28},  // posix - nothing!?!, unix job-control: quit process and create a "core file". todo: TODO WARNING: may include current contents of memory??-SIGQUIT
+        {"GS",	"group_separator",		"???",		']',	0,		29,	29},  //
+        {"RS",	"record_separator",		"???",		'^',	0,		30,	30},  //
+        {"US",	"unit_separator",		"???",		'_',	0,		31,	31},  //
+        {"DEL",	"delete",				"ERASE",	'?',	0,	   127,127},  // BS alternative, how related to tty erase?. erase the last character typed. similar to "BS" // todo: NOT IMPLEMENTED in hot_keys //  BS/ERASE on MacOS?
+        {" ",	"space",				"???",	    0,		' ',    32, 32},  // simple space character or blank
+        {"\\",	"backslash",			"???",		0,		0x5C,   92, 92}, // simple
     };
+    //static_assert( ascii_posix_map.size() > 0);
     static       Hot_keys 		 hot_keys {
         // my_name,     char sequence AKA characters,                                                   Cat,                                        Nav,                                    IntraNav
         // first the single key char action keys that are the good old Unix shell standard.
@@ -758,7 +754,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
             Ctrl+Y				Redoes the last undone operation.
         */
     };
-    if ( static bool once {false}; !once) {
+    if ( static bool once {false}; ! once) {
         once = true;
         assert ( !hot_keys.empty() && "We don't allow empty hotkeys set.");
         std::sort( hot_keys.begin(), hot_keys.end() );
