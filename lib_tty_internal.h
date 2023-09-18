@@ -203,6 +203,7 @@ void     termio_restore( Termios const &termios);      	/** restore terminal sta
 enum class Input_mode { /// todo: not implemented yet.  // clashes with the boolean I toggle in  HotKeyFunctionCat????, that is partially implemented.
   insert,
   overwrite
+    //initial_state         // todo:
 }; */
 
 /** each row of this struct, documents a potential user key press, and places them within various nameing conventions, mostly ASCII and POSIX */

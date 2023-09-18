@@ -35,7 +35,7 @@ namespace Lib_tty {
 /**************** START Lib_tty     Level Declarations ***********************/
 /*****************************************************************************/
 using Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. todo??: better? >using Lt_errno = typeof (errno);
-inline constexpr std::string STRING_NULL {"NULL"};
+inline constexpr std::string STRING_NULL {"NULL"};  // SQL DB show an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
 
 /** There are two semantic EOFs:
  *  1) eof_Key_char_singular is a "We probably don't handle eof well."); // todo: more eof handling needed
@@ -69,6 +69,7 @@ enum class HotKeyFunctionCat {
   editing_mode,             // <Insert> (or possibly other) HotKey toggles this.
   na,						// todo:
   other                     // todo:, used as ::na filler designation, probably means none.
+    //initial_state         // todo:
 };
 
 /** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
@@ -98,6 +99,7 @@ enum class FieldCompletionNav { ///the intent of the user as demonstrated by the
   kill_signal, // WARNING: this may be invalid since it also appears in FieldIntraNav, however I guess I was thinking that it might have a different meaning if we are not dealing
                // with a input field, but in another contect where we could interpret it as follows: exit program immediately like CTRL-C or posix kill KILL Ctrl-U command? todo:
   na
+    //initial_state         // todo:
 };
 
 /** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
@@ -112,6 +114,7 @@ enum class FieldIntraNav {
   goto_end,
   kill, // remove content of entire line.
   na
+    //initial_state         // todo:
 };
 
 /** Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char"
@@ -153,33 +156,32 @@ using Hot_keys = std::vector< Hot_key >; /// Stores all known Hot_keys for inter
  *  or EOF.
  *  Yes, this is everything but the kitchen sink.  Probaly excessive and need refactoring.
  *  todo: does this include an EOF character?
- *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
- *  todo: only Key_char_singular and File_status are used internally in Lib_tty, so maybe refactor?
- *  was:  //key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18, Hot_key_chars, Hot_key, File_status >;
+ *  was: //key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18ns, Hot_key_chars, Hot_key, File_status >;
  */
-using   Kb_key_variant = std::variant<                 Key_char_singular,               Hot_key_chars, Hot_key              >;
+using   Kb_key_variant = std::variant< std::monostate, Key_char_singular,               Hot_key_chars, Hot_key              >;
 
 /** Tells us if we got a Kb_key and if we "are at"/"or got?" EOF.
  *  _a_ == "and"
  *  todo: we have a problem with File_status, also in Kb_key_variant - we don't need it twice!  This one IS currenlty used.
  *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  *  was //using Kb_key_a_fstat = std::pair< Kb_key_variant, File_status >;
+    // We return either regular char(s), or a Hot_key
 */
 struct Kb_key_a_fstat {
-  Kb_key_variant    kb_key_variant;  /// some datatype form of the key
-  File_status       file_status;     /// what is happening with cin EOF
+  Kb_key_variant    kb_key_variant  {};                             /// some datatype form of the key
+  File_status       file_status     {File_status::initial_state};   /// holds what is happening with cin EOF
 };
 
 /** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. todo?:
  *  Heavily used everywhere!
  *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  *  todo: consider replacing std::tuple/std::pair with struct!
- *  was: //using Kb_value_plus = std::tuple< Key_char_i18, Hot_key, File_status >;
+ *  was: //using Kb_value_plus = std::tuple< Key_char_i18ns, Hot_key, File_status >;
  */
 struct Kb_value_plus {
-  Key_char_i18ns    key_char_i18ns;
-  Hot_key           hot_key;
-  File_status       file_status;
+  Key_char_i18ns    key_char_i18ns  {STRING_NULL};
+  Hot_key           hot_key         {};
+  File_status       file_status     {File_status::initial_state};
 };
 
 /** Gets one single keystroke from user keyboard, which may consist of multiple characters in a key's multi-byte sequence
@@ -242,12 +244,13 @@ get_kb_keystroke_raw();
  * To get one ASCII char which may represent some part of a keystroke in UNIX, POSIX, or Linux,
  * the tty is set to a special mode called CBREAK or RAW.  Normally a tty attached to terminal is set to COOKED mode.
  *
+    // We return either regular char(s), or a Hot_key
  */
 Kb_value_plus
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                  bool const   is_require_field_completion,
                  bool const   is_echo_skc_to_tty,           /// skc == Key_char_singular
-                 bool const   is_allow_control_chars );      /// todo: was is_strip_control_chars and now may be a bug?
+                 bool const   is_allow_control_chars );
 
 /*****************************************************************************/
 /**************** END   Lib_tty     Level Declarations ***********************/

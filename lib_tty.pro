@@ -1,8 +1,8 @@
-TEMPLATE = app                  # comment out main.cpp to make the library for linker use, and at top turn on "+=console"
-CONFIG += console
+#TEMPLATE = app                  # comment out main.cpp to make the library for linker use, and at top turn on "+=console"
+#CONFIG += console
 
-#TEMPLATE = lib                 # comment out main.cpp to make the library for linker use, and at top turn on "+=console"
-#CONFIG += staticlib
+TEMPLATE = lib                 # comment out main.cpp to make the library for linker use, and at top turn on "+=console"
+CONFIG += staticlib
 
 CONFIG -= app_bundle
 CONFIG -= qt
@@ -31,7 +31,7 @@ LIBS += \
 SOURCES += \
     lib_tty.cpp                 \
     lib_tty_internal.cpp \
-    main.cpp                    \  # main.cpp # comment out main.cpp to make the library for linker use, and at top turn on "+=console"
+#    main.cpp                    \  # main.cpp # comment out main.cpp to make the library for linker use, and at top turn on "+=console"
 
 HEADERS += \
     lib_tty.h \
