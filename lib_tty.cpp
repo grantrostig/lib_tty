@@ -1091,6 +1091,9 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         assert( (key_char_i18ns_result.size() != 0 && hot_key_result.my_name == STRING_NULL ) && "Postcondition6: result not set.");
         return { key_char_i18ns_result, {},             file_status_result };
     } else {
+        assert( (key_char_i18ns_result.size() == 0) && "Postcondition7: result not set.");
+        cout << "my_name:" << hot_key_result.my_name << endl;
+        assert( (hot_key_result.my_name != STRING_NULL ) && "Postcondition7: result not set.");
         assert( (key_char_i18ns_result.size() == 0 && hot_key_result.my_name != STRING_NULL ) && "Postcondition7: result not set.");
         return { {}                   , hot_key_result, file_status_result };
     }
