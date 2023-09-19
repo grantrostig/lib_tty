@@ -141,14 +141,21 @@ using Hot_key_chars     = std::vector< KbFundamentalUnit >;   /// A sequence of 
  */
 class Hot_key {
 public:
-  std::string        my_name            {STRING_NULL};              /// Name given by Lib_tty
-  Hot_key_chars      characters         {STRING_NULL.cbegin(),STRING_NULL.cend()}; /// See the type's documentation.
-  HotKeyFunctionCat  function_cat       {HotKeyFunctionCat::na};    /// Depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
-  FieldCompletionNav f_completion_nav   {FieldCompletionNav::na};   /// gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
-  FieldIntraNav      intra_f_nav        {FieldIntraNav::na};        /// gets a value if HotKeyFunctionCat::nav_intra_field
+  /// Name given by Lib_tty
+  std::string        my_name            {STRING_NULL};
+  /// See the type's documentation.
+  Hot_key_chars      characters         {STRING_NULL.cbegin(),STRING_NULL.cend()};
+  /// Depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
+  HotKeyFunctionCat  function_cat       {HotKeyFunctionCat::na};
+  /// gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
+  FieldCompletionNav f_completion_nav   {FieldCompletionNav::na};
+  /// gets a value if HotKeyFunctionCat::nav_intra_field
+  FieldIntraNav      intra_f_nav        {FieldIntraNav::na};
 
-  bool               operator<( Hot_key const &) const;             /// Used to sort the members of a table to enable easy algorithmic lookup by characters within the table.
-  std::string        to_string()                 const;             /// Used for debugging only.
+  /// Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
+  bool               operator<( Hot_key const &) const;
+  /// Used for debugging only.
+  std::string        to_string()                 const;
 };
 using Hot_keys = std::vector< Hot_key >; /// Stores all known Hot_keys for internal library use.
 
@@ -187,8 +194,8 @@ struct Kb_value_plus {
 /** Gets one single keystroke from user keyboard, which may consist of multiple characters in a key's multi-byte sequence
  *  Relies on cin being in raw mode!
  *  Called by get_kb_keystrokes_raw().
- *  PUBLIC FUNCTION can also? BE CALLED BY END USER, but not used in the client "file_maintenance_*" programs.
- *  Probably needs debugging, if it is to be called directly. */
+ *  PUBLIC FUNCTION could it be that also? Can be called by end user, but not used in the client "file_maintenance_*" programs.
+ *  Probably needs much more debugging, if it is to be called directly. */
 Kb_key_a_fstat
 get_kb_keystroke_raw();
 
