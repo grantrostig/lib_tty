@@ -345,7 +345,7 @@ Lib_tty::Termios & termio_get() { // uses POSIX  // TODO TODO: what are advantag
 /// with a call to tcgetattr() and compare then appropriate field values.
 /// We do the check after this call within the caller.  TODO consider doing it in here.
 /// TODO not called yet, refactor for 3 uses.
-void termio_set( Termios const & termios_new, Termios const & termios_prior ) { // uses POSIX
+void termio_set( Termios const & termios_new ) { // uses POSIX
     if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
         result == POSIX_ERROR ) {
         int errno_save = errno;
@@ -354,9 +354,8 @@ void termio_set( Termios const & termios_new, Termios const & termios_prior ) { 
         perror( source_loc().data() );
         exit(1);
     }
-    if ( not check_equality( termios_new, termios_prior) ) {
-    // FAILED EXIT.
-    }
+    Termios const termios_current { termio_get() };
+    assert( check_equality( termios_new, termios_current ) && "Tcsetattr failed at least partially." );
 };
 
 Lib_tty::Termios & termio_set_raw() { // uses POSIX
