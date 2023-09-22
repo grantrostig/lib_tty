@@ -406,29 +406,11 @@ Lib_tty::Termios & termio_set_raw() { // uses POSIX
         // not sure what to call these c? cc? what are they?
     termios_new.c_cc[VTIME] 	= 0; 								// wait forever to get the next char.  //NOTE: there are about 15 more that are not touched, decided not to list them in comments, since I don't thinkn they are needed.
     termios_new.c_cc[VMIN]  	= 1;  								// get minimun one char
-//    if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
-//         result == POSIX_ERROR) {    // TODO: Applications that need all of the requested changes made to work properly should follow tcsetattr() with a call to tcgetattr() and compare the appropriate field values.
-//        int errno_save = errno;
-//        LOGGERS("Standard in is not a tty keyboard??",errno_save);
-//        errno = errno_save;
-//        perror( source_loc().data() );
-//        exit(1);
-//    }
-//    Termios termios_actual { termio_get() };
-//    assert( check_equality( termios_actual, termios_new) && "Tcsetattr apparently failed.");
     termio_set( termios_new );
     return termios_orig;
 }
 
 void termio_restore( Lib_tty::Termios const &termios_orig) { // uses POSIX  // TODO: do you like my const 2x, what is effect calling POSIX?
-//    if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_orig );
-//         result == POSIX_ERROR) { // restore prior status
-//            int errno_save = errno;
-//            LOGGERS("Standard in is not a tty keyboard??", errno_save);
-//            errno = errno_save;
-//            perror( source_loc().data() );
-//            exit(1);
-//    }
     termio_set( termios_orig );
     cin.sync_with_stdio(true);  // TODO:  iostreams bug?  This is required for timer time-out bug occurs.
     return;
@@ -441,16 +423,6 @@ termio_set_timer( cc_t const time) {  // uses POSIX
     cin.sync_with_stdio(false);  // TODO:  iostreams bug?  This is required for timer time-out bug occurs.
     termios_new.c_cc[VTIME] = time;  // wait some time to get that char
     termios_new.c_cc[VMIN]  = 0;  // no minimum char to get
-//    if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
-//         result == POSIX_ERROR ) {
-//            int errno_save = errno;
-//            LOGGERS("Standard in is not a tty keyboard??",errno_save);
-//            errno = errno_save;
-//            perror( source_loc().data() );
-//            exit(1);
-//    }
-//    Termios termios_actual { termio_get() };
-//    assert( check_equality( termios_actual, termios_new) && "Tcsetattr apparently failed.");
     termio_set( termios_new );
     return termios_orig;
 }
