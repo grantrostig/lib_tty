@@ -296,7 +296,7 @@ void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_us
 /********************** END   POSIX OS signals level definitions *************/
 /********************** START POSIX OS termios level definitions *************/
 /*****************************************************************************/
-/// to show what is happening on standard-in/cin. Used for debugging. TODO: how do I pass in cin or cout to this?
+/// to show what is happening on standard-in/cin. Used for debugging. TODO??: how do I pass in cin or cout to this?
 void print_iostate(const std::istream &stream) {
     LOGGER_("Is:");
     if (stream.rdstate() == std::ios_base::goodbit) {LOGGER_("goodbit only, ")};
@@ -307,7 +307,7 @@ void print_iostate(const std::istream &stream) {
 }
 
 /// created as a "hack" since operator== doesn't work reliably? on structs.
-bool check_equality(const Lib_tty::Termios &termios, const Lib_tty::Termios &termios2){  // Used for debugging using assert().
+bool check_equality(Lib_tty::Termios const &termios, Lib_tty::Termios const &termios2){  // Used for debugging using assert().
     /* https://embeddedgurus.com/stack-overflow/2009/12/effective-c-tip-8-structure-comparison/
      * https://isocpp.org/blog/2016/02/a-bit-of-background-for-the-default-comparison-proposal-bjarne-stroustrup
      * https://stackoverflow.com/questions/141720/how-do-you-compare-structs-for-equality-in-c
@@ -339,6 +339,25 @@ Lib_tty::Termios & termio_get() { // uses POSIX  // TODO TODO: what are advantag
     }
     return termios;  // copy of POD?
 }
+
+/// We set POSIX terminal with Termios control attributes.
+/// Applications that need ALL of the requested changes to work properly should follow tcsetattr()
+/// with a call to tcgetattr() and compare then appropriate field values.
+/// We do the check after this call within the caller.  TODO consider doing it in here.
+/// TODO not called yet, refactor for 3 uses.
+void termio_set( Termios const & termios_new, Termios const & termios_prior ) { // uses POSIX
+    if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
+        result == POSIX_ERROR ) {
+        int errno_save = errno;
+        LOGGERS("Standard in is not a tty keyboard with errno of:", errno_save);
+        errno = errno_save;
+        perror( source_loc().data() );
+        exit(1);
+    }
+    if ( not check_equality( termios_new, termios_prior) ) {
+    // FAILED EXIT.
+    }
+};
 
 Lib_tty::Termios & termio_set_raw() { // uses POSIX
     cin.sync_with_stdio( false );  									// TODO:  iostreams bug?  This is required for timer time-out else a bug occurs.
@@ -402,7 +421,7 @@ Lib_tty::Termios & termio_set_raw() { // uses POSIX
 }
 
 void termio_restore( Lib_tty::Termios const &termios_orig) { // uses POSIX  // TODO: do you like my const 2x, what is effect calling POSIX?
-    if ( auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &termios_orig );
+    if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_orig );
          result == POSIX_ERROR) { // restore prior status
             int errno_save = errno;
             LOGGERS("Standard in is not a tty keyboard??", errno_save);
@@ -421,7 +440,7 @@ termio_set_timer( cc_t const time) {  // uses POSIX
     cin.sync_with_stdio(false);  // TODO:  iostreams bug?  This is required for timer time-out bug occurs.
     termios_new.c_cc[VTIME] = time;  // wait some time to get that char
     termios_new.c_cc[VMIN]  = 0;  // no minimum char to get
-    if ( auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
+    if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
          result == POSIX_ERROR ) {
             int errno_save = errno;
             LOGGERS("Standard in is not a tty keyboard??",errno_save);
@@ -430,7 +449,7 @@ termio_set_timer( cc_t const time) {  // uses POSIX
             exit(1);
     }
     Termios termios_actual { termio_get() };
-    assert( check_equality( termios_actual, termios_new) && "Tcsetattr apprently failed.");
+    assert( check_equality( termios_actual, termios_new) && "Tcsetattr apparently failed.");
     return termios_orig;
 }
 
@@ -1075,9 +1094,9 @@ bool is_ignore_kcs( Key_char_singular const skc,
 
 Kb_value_plus
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
-                       bool const   is_require_field_completion_key,
-                       bool const   is_echo_skc_to_tty,
-                       bool const   is_allow_control_chars
+                       bool   const is_require_field_completion_key,
+                       bool   const is_echo_skc_to_tty,
+                       bool   const is_allow_control_chars
                      ) {
     assert( cin.good() && "Precondition.");
     assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
@@ -1159,19 +1178,25 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     }   //******* END   while *****************************************************************************************************************
     termio_restore( termios_orig );
     /*XXXXX */
-    // We return either regular char(s), or a Hot_key
+    // We RETURN either N regular char(s), OR both the N regular char(s) and the latest Hot_key, OR just a Hot_key
     assert( file_status_result != File_status::initial_state && "Postcondition5.");
     if ( not key_char_i18ns_result.empty() ) {
         LOGGERS("My character(s) are/is:", key_char_i18ns_result);
         LOGGERS("My character(s) length is:", key_char_i18ns_result.size());
-        assert( hot_key_result.my_name == STRING_NULL && "Postcondition6: result not set.");
-        assert( not key_char_i18ns_result.empty() && "Postcondition6: result not set.");
-        return { key_char_i18ns_result, {},             file_status_result };
+        if (        hot_key_result.my_name == STRING_NULL ) {
+            assert( hot_key_result.my_name == STRING_NULL && "Postcondition6: result not set.");
+            assert( not key_char_i18ns_result.empty() && "Postcondition16: result not set.");
+            return { key_char_i18ns_result, {},             file_status_result };
+        } else {
+            assert( hot_key_result.my_name != STRING_NULL && "Postcondition6: result not set.");
+            assert( not key_char_i18ns_result.empty() && "Postcondition16: result not set.");
+            return { key_char_i18ns_result, hot_key_result, file_status_result };
+        }
     } else {
         LOGGERS("Hot_key name is:", hot_key_result.my_name );
-        assert( (hot_key_result.my_name != STRING_NULL ) && "Postcondition7: result not set.");
-        assert( (key_char_i18ns_result.empty() ) && "Postcondition7: result not set.");
-        return { {}                   , hot_key_result, file_status_result };
+        assert(     hot_key_result.my_name != STRING_NULL  && "Postcondition7: result not set.");
+        assert(         key_char_i18ns_result.empty() && "Postcondition7: result not set.");
+        return     { {}                   , hot_key_result, file_status_result };
     }
     assert( false && "We never get here.");
 }

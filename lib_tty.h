@@ -252,7 +252,7 @@ get_kb_keystroke_raw();
  * To get one ASCII char which may represent some part of a keystroke in UNIX, POSIX, or Linux,
  * the tty is set to a special mode called CBREAK or RAW.  Normally a tty attached to terminal is set to COOKED mode.
  *
-    // We return either regular char(s), or a Hot_key
+    // We RETURN either N regular char(s), OR both the N regular char(s) and the latest Hot_key, OR just a Hot_key
  */
 Kb_value_plus
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
