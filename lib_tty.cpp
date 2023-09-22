@@ -912,12 +912,12 @@ get_kb_keystroke_raw() {
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
         assert( hot_key_chars.size() == 1 && "Logic error.");
         Hotkey_o_errno hot_key_candidate = consider_hot_key( hot_key_chars );
-        if ( std::holds_alternative< Hot_key >(hot_key_candidate) ) {
-            // ******* Handle single ASCII hot_key first and return it.
-            Hot_key_chars hkc   {std::get< Hot_key >(hot_key_candidate).characters};
+        if ( std::holds_alternative< Hot_key >( hot_key_candidate ) ) {
+            // ******* Handle hot_key that is a single ASCII char first and return it.
+            Hot_key_chars hkc   { std::get< Hot_key >( hot_key_candidate ).characters };
             assert( not hkc.empty()                           && "Postcondition9.");
             assert( file_status != File_status::initial_state && "Postcondition1.");
-            return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::get< Hot_key >( hot_key_candidate ), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
             // ******* Handle single simple regular ASCII first and return it.
             assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
@@ -1052,9 +1052,9 @@ bool is_usable_char( Key_char_singular const skc, bool const is_allow_control_ch
 /// TODO: mixing logic and user output may not be good here.
 /// Only used once as a helper function, internally to lib_tty
 bool is_ignore_kcs( Key_char_singular const skc,
-                    bool const              is_allow_control_chars,
-                    bool const              is_ring_bell_on_ignore,
-                    bool const              is_echo_skc_to_tty )
+                    bool              const is_allow_control_chars,
+                    bool              const is_ring_bell_on_ignore,
+                    bool              const is_echo_skc_to_tty )
 {
     assert( skc != '\0' && "Precondition: Did not expect char of 0, but maybe it is acceptable and this assert needs to change." );
     LOGGERS("Char is:", static_cast< int >( skc ));
@@ -1163,11 +1163,12 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     assert( file_status_result != File_status::initial_state && "Postcondition5.");
     if ( not key_char_i18ns_result.empty() ) {
         LOGGERS("My character(s) are/is:", key_char_i18ns_result);
+        LOGGERS("My character(s) length is:", key_char_i18ns_result.size());
         assert( hot_key_result.my_name == STRING_NULL && "Postcondition6: result not set.");
         assert( not key_char_i18ns_result.empty() && "Postcondition6: result not set.");
         return { key_char_i18ns_result, {},             file_status_result };
     } else {
-        LOGGERS("My_name is:", hot_key_result.my_name );
+        LOGGERS("Hot_key name is:", hot_key_result.my_name );
         assert( (hot_key_result.my_name != STRING_NULL ) && "Postcondition7: result not set.");
         assert( (key_char_i18ns_result.empty() ) && "Postcondition7: result not set.");
         return { {}                   , hot_key_result, file_status_result };
