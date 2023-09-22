@@ -158,7 +158,7 @@ public:
         /// Used for debugging only.
   std::string        to_string()                 const;
 };
-using Hot_keys = std::vector< Hot_key >; /// Stores all known Hot_keys for internal library use.
+using Hot_key_table = std::vector< Hot_key >; /// Stores all known Hot_keys for internal library use.
 
 /** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not.
  *  or EOF.

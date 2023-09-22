@@ -215,7 +215,7 @@ enum class Input_mode { /// TODO: not implemented yet.  // clashes with the bool
 struct Ascii_posix_relation {
   string const ascii_id;
   string const ascii_name;
-  string const posix_name;
+  string const posix_id;
   char   const ascii_ctrl_char; // note: lowercase and uppercase: for example Ctrl-j and J.
   char   const c_char;          // note: \n for LF
   char   const ascii_char;      // ascii_char and posix_char appear to be the same.  Don't remember why I have both separately, probably some sort of flexibility...?
@@ -223,7 +223,7 @@ struct Ascii_posix_relation {
 };
 
 /** a lookup table for user keyboard key presses */
-using Ascii_Posix_map = const std::vector< Ascii_posix_relation >; // TODO: use proper capitalization.
+using Ascii_Posix_table = const std::vector< Ascii_posix_relation >; // TODO: use proper capitalization.
 
 /** Assume any kb in use here has an ESC key and it does what we expect */
 constexpr KbFundamentalUnit ESC_KEY = 27;
@@ -248,7 +248,7 @@ using Hotkey_o_errno = std::variant< Hot_key, Lt_errno >;
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */
 std::optional<Hot_key>
-find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key);
+find_hot_key(const Hot_key_table &hot_key_table, const Hot_key_chars this_key);
 
 /*****************************************************************************/
 /**************** END   Application Level Declarations ***********************/

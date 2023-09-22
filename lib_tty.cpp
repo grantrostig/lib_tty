@@ -126,8 +126,8 @@ void print_signal(int const signal) {
 
 ///  Debugging use only at this time.
 std::optional<Hot_key>
-find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
-    for (auto & hk : hot_keys)
+find_hot_key(const Hot_key_table &hot_key_table, const Hot_key_chars this_key) {
+    for (auto & hk : hot_key_table)
         if ( hk.characters == this_key )
             return hk;
     return {};
@@ -518,9 +518,9 @@ bool is_kb_key_bad_dt_file_status( File_status const file_status )  { // **** CA
 }
 
 /// give it the string "EOF" and you get back 4 or ^D */
-char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::string name) {
+char find_posix_char_from_posix_name(const Ascii_Posix_table &vec, const std::string name) {
     for (auto & ch : vec) {
-        if ( ch.posix_name == name )
+        if ( ch.posix_id == name )
             return ch.posix_char;
     }
     std::string err_message {"Bad name for a keyboard key, it being:"+name+"."};
@@ -562,7 +562,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         turns out that Ctrl could only reliably be used with twenty of the forty
         basic keys (A, B, C, D, E, F, G, K, L, N, O, P, R, T, U, V, W, X, Y, Z).
      */
-    static const Ascii_Posix_map ascii_posix_map {                            // TODO??: why is constexpr allowed, is it the vector?
+    static const Ascii_Posix_table ascii_posix_map {                            // TODO??: why is constexpr allowed, is it the vector?
     //ascii_id, ascii_name,          posix_id, ascii_ctrl+, \+,  ascii_char, posix_char
         {"NUL", "Null",					"EOL", 		'@',	0,		0,	0},   // [ctl-spacebar does this!] (typically, ASCII NUL) is an additional line delimiter, like the NL character. EOL is not normally used. // If ICANON is set, the EOL character is recognized and acts as a special character on input (see ``Local modes and line disciplines'' in termio(M)).  probably of not used or even available as a char from a PC or any type of keyboard?!
         {"SOH",	"start_of_heading",		"???", 	    'a',	0,		1,	1},   //
@@ -571,43 +571,43 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"EOT",	"end_of_transmission",	"EOF",		'd',  	0, 	4,	4},   // I perfer to call this "end of file", apparently this is a ascii character char when in POSIX raw mode tty.
         {"ENQ",	"Enquiry",				"???",		'e',  	0, 	5,	5},   //
         {"ACK",	"Acknowledgement",		"???",		'f',  	0, 	6,	6},   //
-        {"BEL",	"bell",					"BELL?",	'g', 	'a',	7,	7},   // TODO: NOT IMPLEMENTED in hot_keys // Ctrl-g = \a  alert?
-        {"BS",	"backspace",		 	"BS",		'h',	'b',	8,	8},   // BS alternative, how related to tty erase? TODO: NOT IMPLEMENTED in hot_keys // character erase character works on linux and DOS? Backspace on MacOS use DEL for ERASE?
+        {"BEL",	"bell",					"BELL?",	'g', 	'a',	7,	7},   // TODO: NOT IMPLEMENTED in hot_key_table // Ctrl-g = \a  alert?
+        {"BS",	"backspace",		 	"BS",		'h',	'b',	8,	8},   // BS alternative, how related to tty erase? TODO: NOT IMPLEMENTED in hot_key_table // character erase character works on linux and DOS? Backspace on MacOS use DEL for ERASE?
         {"HT",	"horizontal_tab",		"TAB",		'i',	't',	9,	9},
         {"LF",	"line_feed",			"NL-LF",	'j',	'n',	10,	10},  // end the line. newline. NL posix normal line delimiter. On linux with ANSI keyboard this is "Enter" key, was "Return" on typewriters and old PCs? What about "CR"
                                                                               // EOL/EOL2 from stty is \r\n or 13, 10, or CR,LF  https://www.ni.com/en-us/support/documentation/supplemental/21/labview-termination-characters.html
-        {"VT",	"vertical_tab",			"VT?",		'k',	'v',	11,	11},  // TODO: NOT IMPLEMENTED in hot_keys  // cursor down one line, like what one would call LF Line feed.
+        {"VT",	"vertical_tab",			"VT?",		'k',	'v',	11,	11},  // TODO: NOT IMPLEMENTED in hot_key_table  // cursor down one line, like what one would call LF Line feed.
                                                                               // OR kill-line (C-k): Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.
-        {"FF",	"form_feed",			"FF?",		'l',	'f',	12,	12},  // TODO: NOT IMPLEMENTED in hot_keys // redisplay page.
+        {"FF",	"form_feed",			"FF?",		'l',	'f',	12,	12},  // TODO: NOT IMPLEMENTED in hot_key_table // redisplay page.
         {"CR",	"carriage_return",		"CR",		'm',	'r',	13,	13},  // CR note the 'r', end the line. DOS style LF/NL, but is two characters: \n\r?
         {"SO",	"shift_out",			"???",		'n',	0,		14,	14},  //
         {"SI",	"shift_in",				"DISCARD",	'o',	0,		15,	15},  //
         {"DLE",	"data link escape",		"???",		'p',	0,		16,	16},  //
-        {"DC1",	"device_control_1/XON",	"START",	'q',	0,		17,	17},  // not usable, TODO: NOT IMPLEMENTED in hot_keys // resume tty output  IXON is a tty setting not a character!
-        {"DC2",	"device_control_2",		"REPRINT",	'r',	0,		18,	18},  // TODO: NOT IMPLEMENTED in hot_keys // redraw the current line.
-        {"DC3", "device_control_3/XOFF","STOP",		's',	0,		19,	19},  // not usable, TODO: NOT IMPLEMENTED in hot_keys // suspend tty output IXOFF is a tty setting not a character!
-        {"DC4", "device_control_4",		"STATUS",	't',	0,		20,	20},  // TODO: NOT IMPLEMENTED in hot_keys // on macOS and BSD.
+        {"DC1",	"device_control_1/XON",	"START",	'q',	0,		17,	17},  // not usable, TODO: NOT IMPLEMENTED in hot_key_table // resume tty output  IXON is a tty setting not a character!
+        {"DC2",	"device_control_2",		"REPRINT",	'r',	0,		18,	18},  // TODO: NOT IMPLEMENTED in hot_key_table // redraw the current line.
+        {"DC3", "device_control_3/XOFF","STOP",		's',	0,		19,	19},  // not usable, TODO: NOT IMPLEMENTED in hot_key_table // suspend tty output IXOFF is a tty setting not a character!
+        {"DC4", "device_control_4",		"STATUS",	't',	0,		20,	20},  // TODO: NOT IMPLEMENTED in hot_key_table // on macOS and BSD.
         {"NAK",	"neg. acknowledge OR line_erase",
-                                        "KILL",		'u',	0,		21,	21},  // TODO: NOT IMPLEMENTED in hot_keys // deletes entire line being typed. TODO: "line erase character" kills the current input line when using the POSIX shell?
+                                        "KILL",		'u',	0,		21,	21},  // TODO: NOT IMPLEMENTED in hot_key_table // deletes entire line being typed. TODO: "line erase character" kills the current input line when using the POSIX shell?
                                                                               // OR TODO? C-x??: backward-kill-line (C-x Rubout): Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
-        {"SYNC","synchronous_idle",		"LNEXT",	'v',	0,		22,	22},  // TODO: NOT IMPLEMENTED in hot_keys // paste (from copy-paste)?/
+        {"SYNC","synchronous_idle",		"LNEXT",	'v',	0,		22,	22},  // TODO: NOT IMPLEMENTED in hot_key_table // paste (from copy-paste)?/
         {"ETB",	"end_of_tranmission_block",
-                                        "WERASE",   'w',	0,		23,	23},  // TODO: NOT IMPLEMENTED in hot_keys // erase the last word typed.
+                                        "WERASE",   'w',	0,		23,	23},  // TODO: NOT IMPLEMENTED in hot_key_table // erase the last word typed.
                                                                               // OR unix-word-rubout (C-w): Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.
-        {"CAN",	"cancel",				"CANCEL?",	'x',	0,		24,	24},  // TODO?: C-u??? TODO: NOT IMPLEMENTED in hot_keys // cancel the input line? / cut (from copy-paste)? /
-        {"EM",	"end_of_medium",		"???",		'y',	0,		25,	25},  // TODO: NOT IMPLEMENTED? in hot_keys // OR yank (C-y): Yank the top of the kill ring into the buffer at point.
-        {"SUB",	"substitute",			"SUSP",		'z',	0,		26,	26},  // TODO: NOT IMPLEMENTED in hot_keys //send a terminal stop signal. posix job-control: suspend process.  note: use "fg" to bring to foreground, "bg" to make it run in background.  AKA SIGSTOP?-SIGTSTP
+        {"CAN",	"cancel",				"CANCEL?",	'x',	0,		24,	24},  // TODO?: C-u??? TODO: NOT IMPLEMENTED in hot_key_table // cancel the input line? / cut (from copy-paste)? /
+        {"EM",	"end_of_medium",		"???",		'y',	0,		25,	25},  // TODO: NOT IMPLEMENTED? in hot_key_table // OR yank (C-y): Yank the top of the kill ring into the buffer at point.
+        {"SUB",	"substitute",			"SUSP",		'z',	0,		26,	26},  // TODO: NOT IMPLEMENTED in hot_key_table //send a terminal stop signal. posix job-control: suspend process.  note: use "fg" to bring to foreground, "bg" to make it run in background.  AKA SIGSTOP?-SIGTSTP
         {"ESC",	"escape",				"ESC",		'[',	'e',	27,	27},  // ESC key, the first char of POSIX CSI Control Sequence Introducer
         {"FS",	"file_separator",		"QUIT",		'\\',	0,		28,	28},  // posix - nothing!?!, unix job-control: quit process and create a "core file". TODO: WARNING: may include current contents of memory??-SIGQUIT
         {"GS",	"group_separator",		"???",		']',	0,		29,	29},  //
         {"RS",	"record_separator",		"???",		'^',	0,		30,	30},  //
         {"US",	"unit_separator",		"???",		'_',	0,		31,	31},  //
-        {"DEL",	"delete",				"ERASE",	'?',	0,	   127,127},  // BS alternative, how related to tty erase?. erase the last character typed. similar to "BS" // TODO: NOT IMPLEMENTED in hot_keys //  BS/ERASE on MacOS?
+        {"DEL",	"delete",				"ERASE",	'?',	0,	   127,127},  // BS alternative, how related to tty erase?. erase the last character typed. similar to "BS" // TODO: NOT IMPLEMENTED in hot_key_table //  BS/ERASE on MacOS?
         {" ",	"space",				"???",	    0,		' ',    32, 32},  // simple space character or blank
         {"\\",	"backslash",			"???",		0,		0x5C,   92, 92}, // simple
     };
-    //static_assert( not ascii_posix_map.empty() );
-    static       Hot_keys 		 hot_keys {
+    //static_assert( not ascii_posix_map.empty() );  TODO??: how to make this consexpr, and would it benefit size or speed of program?
+    static       Hot_key_table 		 hot_key_table {
         // my_name,     char sequence AKA characters,                                                   Cat,                                        Nav,                                    IntraNav
         // first the single key char action keys that are the good old Unix shell standard.
         {"escape",		{find_posix_char_from_posix_name(ascii_posix_map, "ESC"),
@@ -767,19 +767,19 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         */
     };
     assert( not ascii_posix_map.empty() && "Logic error.");
-    assert( not hot_keys.empty()        && "Logic error.");
+    assert( not hot_key_table.empty()        && "Logic error.");
     if ( static bool once {false}; ! once) {
         once = true;
-        assert ( !hot_keys.empty() && "We don't allow empty hotkeys set.");
-        std::sort( hot_keys.begin(), hot_keys.end() );
-        if ( auto dup = std::adjacent_find( hot_keys.begin(), hot_keys.end(), is_hk_chars_equal ); dup != hot_keys.end() ) {
+        assert ( !hot_key_table.empty() && "We don't allow empty hotkeys set.");
+        std::sort( hot_key_table.begin(), hot_key_table.end() );
+        if ( auto dup = std::adjacent_find( hot_key_table.begin(), hot_key_table.end(), is_hk_chars_equal ); dup != hot_key_table.end() ) {
             LOGGERS("Duplicate hot_key:", dup->my_name);
             assert( false && "We don't allow duplicate hotkey character sequences.");
         }
 #ifndef GR_DEBUG
-        // TODO??: make it accept operator<< : LOGGERS("Run once only now, here are the hot_keys,characters:",hot_keys)
-        //LOGGER_("Run once only now, here are the hot_keys,characters:")
-        for (auto & i : hot_keys) {
+        // TODO??: make it accept operator<< : LOGGERS("Run once only now, here are the hot_key_table,characters:",hot_key_table)
+        //LOGGER_("Run once only now, here are the hot_key_table,characters:")
+        for (auto & i : hot_key_table) {
             LOGGERS("hot_key:   ", i.my_name);
             LOGGERS("it's chars:", i.characters);
         }
@@ -787,12 +787,12 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     }
     LOGGERS("Candidate_hk_chars:", candidate_hk_chars);
     Hot_key const candidate_hk_search_target { {}, candidate_hk_chars };
-    auto    const firstmatch_o_prior_itr            { std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk_search_target )};  // first that matches, or the prior value (ie before the next too big number).
-    if ( firstmatch_o_prior_itr != hot_keys.end() ) {
-        LOGGERS("First match or prior hot_keys entry:",   firstmatch_o_prior_itr->my_name);
-        LOGGERS("Characters within that hot_keys entry:", firstmatch_o_prior_itr->characters);
+    auto    const firstmatch_o_prior_itr            { std::lower_bound( hot_key_table.begin(), hot_key_table.end(), candidate_hk_search_target )};  // first that matches, or the prior value (ie before the next too big number).
+    if ( firstmatch_o_prior_itr != hot_key_table.end() ) {
+        LOGGERS("First match or prior hot_key_table entry:",   firstmatch_o_prior_itr->my_name);
+        LOGGERS("Characters within that hot_key_table entry:", firstmatch_o_prior_itr->characters);
     }
-    if ( firstmatch_o_prior_itr == hot_keys.end() ) {
+    if ( firstmatch_o_prior_itr == hot_key_table.end() ) {
         LOGGER_("Return:No match")
         return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
     }
@@ -800,7 +800,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     if ( std::equal( candidate_hk_chars.begin(),	// not the same as == since length of candidate is not length of hot_key
                      candidate_hk_chars.end(),
                      firstmatch_o_prior_itr->characters.begin(),
-                     std::next( firstmatch_o_prior_itr->characters.begin(), candidate_hk_chars.size() )  // Points to character beyond (ie. end()) of the entry in hot_keys.  Note we check this a the function is called for each subsequent character, so we should not run off the end of the hot_keys entry.
+                     std::next( firstmatch_o_prior_itr->characters.begin(), candidate_hk_chars.size() )  // Points to character beyond (ie. end()) of the entry in hot_key_table.  Note we check this a the function is called for each subsequent character, so we should not run off the end of the hot_key_table entry.
                    ) ) { // We checked at most the minimum number of characters (ie. size) of the lengths of either.  See above line and comment.
         is_full_or_partial_match = true;
         LOGGER_("Is_full_or_partial_match, but is it a full?");
@@ -1044,7 +1044,7 @@ bool is_usable_char( Key_char_singular const skc, bool const is_allow_control_ch
     int const i	{ static_cast<int>(skc) };
     return is_allow_control_chars ? ( isprint(i) || iscntrl(i) ) && // allowing control chars, in for example in a password ;)
                                       not( i==17 || i==19 ) 	    // except not: XON & XOFF,  TODO: what about SCROLL LOCK? is that even a character??
-                                                                    // but note some may have been parsed out as hot_keys prior to this test.
+                                                                    // but note some may have been parsed out as hot_key_table prior to this test.
                                   :   isprint(i);
 }
 
