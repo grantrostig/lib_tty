@@ -1,7 +1,7 @@
 /*  Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  */
 
-// todo: rename .h to .hpp
+// TODO: rename .h to .hpp
 
 #include <cstring>
 #include <cstdio>
@@ -24,7 +24,7 @@
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
 
-/// todo??: better alternative? >using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
+/// TODO??: better alternative? >using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
 namespace Lib_tty {
 /*****************************************************************************/
 /***************** START Debugging only section ******************************/
@@ -40,7 +40,7 @@ namespace Lib_tty {
 string
 source_loc( ) {  // give more detail on error location, used by perror()
     using loc = std::source_location;
-    //using ts = std::to_string;  // todo??: why not?  alternative approach?
+    //using ts = std::to_string;  // TODO??: why not?  alternative approach?
     string result {"\n"s+loc::current().file_name() +":"s +std::to_string(loc::current().line()) +std::to_string(loc::current().column())+"]`"s +loc::current().function_name()+"`."s};
     return result;
 }
@@ -54,14 +54,14 @@ source_loc( ) {  // give more detail on error location, used by perror()
 //std::ostream&
 //operator<<( std::ostream & out, Container const & c) {
 //    if ( not c.empty()) {
-//        out << "[";   //out.width(9);  // todo??: neither work, only space out first element. //out << std::setw(9);  // todo??: neither work, only space out first element.
+//        out << "[";   //out.width(9);  // TODO??: neither work, only space out first element. //out << std::setw(9);  // TODO??: neither work, only space out first element.
 //        std::copy(c.begin(), c.end(), std::ostream_iterator< typename Container::value_type >(out, ","));
 //        out << "\b]"; out.width(); out << std::setw(0);
 //    } else out << "[CONTAINTER IS EMPTY]";
 //    return out;
 //}
 /////  Concept using Function Explicit instantiations that are required to generate code for linker.
-/////  todo??: is the only used if definition is in *.cpp file?
+/////  TODO??: is the only used if definition is in *.cpp file?
 /////  https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
 /////  https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
 //template std::ostream & operator<<( std::ostream & , std::vector<std::string> const & );
@@ -141,24 +141,24 @@ find_hot_key(const Hot_keys &hot_keys, const Hot_key_chars this_key) {
 /*****************************************************************************/
 
 Sigaction_termination_return
-set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TODO why does const have no effect here?
+set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // TODO: why does const have no effect here?
     //LOGGER_ ("Starting.");
-    struct sigaction action 		{};    			 // todo:  TODO?? why is struct required by compiler.  TODO?? does this initialize deeply in c++ case?
+    struct sigaction action 		{};    			 // TODO:  TODO??: why is struct required by compiler.  TODO??: does this initialize deeply in c++ case?
     sigemptyset( &action.sa_mask );  				 // Isn't this already empty because of declaration? We do it just to be safe.
     action.sa_flags 				|= ~SA_SIGINFO;  // Invoke signal-catching function with three arguments instead of one.
-    action.sa_flags 				|= ~SA_RESTART;  // Restart syscall on signal return.  todo: not sure this is needed.
+    action.sa_flags 				|= ~SA_RESTART;  // Restart syscall on signal return.  TODO: not sure this is needed.
     action.sa_sigaction 			=  handler_in;
 
     // we could block certain signals here, but we choose not to in the case where we prompt the end-user for the password.
     // 		sigset_t block_mask; sigaddset(&block_mask, SIGINT and SIGQUIT); action.sa_mask = block_mask;  // SS 24.7.5 GNU libc manual
 
-    // static, but why did I think that was a good idea? or was it needed? or was it needed by sigaction()? todo?:
+    // static, but why did I think that was a good idea? or was it needed? or was it needed by sigaction()? TODO?:
     static struct sigaction action_prior_SIGINT 	{};
     if ( sigaction( SIGINT  , nullptr, /*out*/ &action_prior_SIGINT ) == POSIX_ERROR) {  perror( source_loc().data()); exit(1); } // Just doing a get(), do setting next line
     if ( reinterpret_cast<void *>( action_prior_SIGINT.sa_handler )
          != reinterpret_cast<
                             void *
-                            >(SIG_IGN)) {  // we avoid setting a signal on those that are already ignored. todo: TODO why is this different from My_sighandler_t?
+                            >(SIG_IGN)) {  // we avoid setting a signal on those that are already ignored. TODO: why is this different from My_sighandler_t?
         LOGGER_("SIGINT going to be set");
         if ( sigaction( SIGINT, &action, nullptr) == POSIX_ERROR ) { perror( source_loc().data()); exit(1); }
     }
@@ -166,19 +166,19 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // todo: TO
         // TODO?: the "2nd if" should be about the same since I'm checking the same condition!!! Need to check the POSIX C code.
     static struct sigaction action_prior_SIGQUIT 	{};
     if ( sigaction( SIGQUIT , nullptr, /*out*/ &action_prior_SIGQUIT ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
-    if (                           action_prior_SIGQUIT.sa_sigaction  // ************ action, not sa_handler todo debug/refactor
+    if (                           action_prior_SIGQUIT.sa_sigaction  // ************ action, not sa_handler TODO debug/refactor
          != reinterpret_cast<
                             void(*) (int, siginfo_t *, void *)
                             >(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
         LOGGER_("SIGQUIT going to be set");
-        if ( sigaction( SIGQUIT, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // todo: Would this only be used if there was a serial line that could generate a HUP signal?
+        if ( sigaction( SIGQUIT, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // TODO: Would this only be used if there was a serial line that could generate a HUP signal?
     }
 
     static struct sigaction action_prior_SIGTERM 	{};
     if ( sigaction( SIGTERM , nullptr, /*out*/ &action_prior_SIGTERM ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
     if ( action_prior_SIGTERM.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
         LOGGER_("SIGTERM going to be set");
-        if ( sigaction( SIGTERM, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // todo: Does not seem to work. BUG: Ctrl-\ causes a immediate dump.
+        if ( sigaction( SIGTERM, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // TODO: Does not seem to work. BUG: Ctrl-\ causes a immediate dump.
     }
 
     static struct sigaction action_prior_SIGTSTP 	{};
@@ -202,21 +202,21 @@ Lib_tty::Sigaction_return
 set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in );
 
 /// signal handler function to be called when a timeout alarm goes off via a user defined signal is received
-void handler_inactivity(int const sig, Siginfo_t *, void *) {  // todo: TODO why can't I add const here without compiler error?
+void handler_inactivity(int const sig, Siginfo_t *, void *) {  // TODO: why can't I add const here without compiler error?
     LOGGERS("This signal got us here:", sig);
     print_signal( sig );
-    set_sigaction_for_inactivity( handler_inactivity );  //  re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
-    // todo: ?? raise (sig);
-    // todo: ?? signal(sig, SIG_IGN);
+    set_sigaction_for_inactivity( handler_inactivity );  //  re-create the handler we are in so we can get here again when handling is called for!?!? // TODO: WHY, since it seems to have been used-up/invalidated somehow?
+    // TODO: ?? raise (sig);
+    // TODO: ?? signal(sig, SIG_IGN);
 }
 
 void handler_termination(int const sig, Siginfo_t *, void *) {
     LOGGERS("This signal # got us here:", sig);
     print_signal( sig );
-    set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // todo: WHY, since it seems to have been used-up/invalidated somehow?
+    set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // TODO: WHY, since it seems to have been used-up/invalidated somehow?
 }
 
-/// put signal handling back? todo:
+/// put signal handling back? TODO:
 void sigaction_restore_for_termination( Sigaction_termination_return const & actions_prior ) {
     if (sigaction( SIGINT,  &actions_prior.action_prior1, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
     else {LOGGER_("SIGINT set to original state" )};
@@ -238,7 +238,7 @@ set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
     sigemptyset( &action.sa_mask );
     action.sa_flags 	|= ~SA_SIGINFO;  // Invoke signal-catching function with three arguments instead of one.
     action.sa_flags 	|= ~SA_RESTART;  // Restart syscall on signal return.
-    action.sa_sigaction	=   handler_in;  // todo:  TODO recursive macro is disabled by compiler?
+    action.sa_sigaction	=   handler_in;  // TODO:  TODO: recursive macro is disabled by compiler?
 
     // we could block certain signals here, but we choose not to in the case where we prompt the use for the password.
     // sigset_t block_mask; sigaddset(&block_mask, SIGINT and SIGQUIT); action.sa_mask = block_mask;  // SS 24.7.5 GNU libc manual
@@ -259,44 +259,44 @@ set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
  *  Initially and every time the timer interval needs to be reset to wait for the full time,
  *  even if it had not expired.
  *  In other words after we get a character, we start waiting all over again.
-void set_a_run_inactivity_timer(const timer_t & inactivity_timer, const int seconds) {  // todo: is timer_t a pointer or NOT or struct or int?!?
+void set_a_run_inactivity_timer(const timer_t & inactivity_timer, const int seconds) {  // TODO: is timer_t a pointer or NOT or struct or int?!?
     int settime_flags 						{};				// TIMER_ABSTIME is only flag noted. Not used here.
-    static itimerspec timer_specification 	{};				// todo: does this need to be static, ie. what does timer_settime() do with it?
+    static itimerspec timer_specification 	{};				// TODO: does this need to be static, ie. what does timer_settime() do with it?
     timer_specification.it_value.tv_sec 	= seconds;
-    timer_specification.it_interval.tv_sec 	= timer_specification.it_value.tv_sec;  // interval is same value. todo: BUG: buggy behaviour when interval is very short ie. 1000 or long 1000000.
+    timer_specification.it_interval.tv_sec 	= timer_specification.it_value.tv_sec;  // interval is same value. TODO: BUG: buggy behaviour when interval is very short ie. 1000 or long 1000000.
     if ( timer_settime( inactivity_timer, settime_flags, &timer_specification, / out / nullptr) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }
     return;
 }
 /// Configures and sets timer and runs timer which waits for additional user kb characters.  Timer needs to be deleted when no longer wanted.
 /// Not used in file_manager, so not sure it has any use beyond test program called: ../cpp_by_example/lib_tty_posix_signal_timer_settime_periodic/main.cpp:35:
-/// todo: consider replacing std::tuple/std::pair with struct!
+/// TODO: consider replacing std::tuple/std::pair with struct!
 std::tuple<timer_t &, int, struct sigaction>
 enable_inactivity_handler(const int seconds) {
     static sigevent inactivity_event  {};
     inactivity_event.sigev_notify	= SIGEV_SIGNAL;  // Notify via signal.
     inactivity_event.sigev_signo  	= SIGRTMIN;	   // Return number of available real-time signal with highest priority.
-    // grostig todo bug? auto [sig_user, action_prior] 	= set_sigaction_for_inactivity( handler_inactivity );
+    // grostig TODO bug? auto [sig_user, action_prior] 	= set_sigaction_for_inactivity( handler_inactivity );
     Sigaction_return result = set_sigaction_for_inactivity( handler_inactivity );
 
     static timer_t inactivity_timer   {};
-    if ( timer_create( CLOCK_REALTIME, &inactivity_event, / out / &inactivity_timer) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // todo:  TODO address of a pointer? seriously ptr to ptr?
+    if ( timer_create( CLOCK_REALTIME, &inactivity_event, / out / &inactivity_timer) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // TODO: address of a pointer? seriously ptr to ptr?
     set_a_run_inactivity_timer( inactivity_timer, seconds );
-    // grostig todo bug? return { inactivity_timer, sig_user, action_prior };
+    // grostig TODO bug? return { inactivity_timer, sig_user, action_prior };
     return { inactivity_timer, result.signal_for_user, result.action_prior };
 } */
 
-/// todo:verify> stop waiting for additional keyboard characters from the user? delete the CSI/ESC timer
+/// TODO:verify> stop waiting for additional keyboard characters from the user? delete the CSI/ESC timer
 void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_user, const struct sigaction old_action) {
     LOGGERS("disable inactivity handler on signal: ", sig_user);
-    if ( timer_delete( inactivity_timer) 			    == POSIX_ERROR) { perror( source_loc().data()); exit(1); } // should print out message based on ERRNO // todo: fix this up. TODO this throws in c lang???
-    if ( sigaction(    sig_user, &old_action, nullptr) 	== POSIX_ERROR) { perror( source_loc().data()); exit(1); } // should print out message based on ERRNO // todo: fix this up.  TODO __THROW ???
+    if ( timer_delete( inactivity_timer) 			    == POSIX_ERROR) { perror( source_loc().data()); exit(1); } // should print out message based on ERRNO // TODO: fix this up. TODO: this throws in c lang???
+    if ( sigaction(    sig_user, &old_action, nullptr) 	== POSIX_ERROR) { perror( source_loc().data()); exit(1); } // should print out message based on ERRNO // TODO: fix this up.  TODO: __THROW ???
 }
 
 /*****************************************************************************/
 /********************** END   POSIX OS signals level definitions *************/
 /********************** START POSIX OS termios level definitions *************/
 /*****************************************************************************/
-/// to show what is happening on standard-in/cin. Used for debugging. todo: TODO how do I pass in cin or cout to this?
+/// to show what is happening on standard-in/cin. Used for debugging. TODO: how do I pass in cin or cout to this?
 void print_iostate(const std::istream &stream) {
     LOGGER_("Is:");
     if (stream.rdstate() == std::ios_base::goodbit) {LOGGER_("goodbit only, ")};
@@ -323,13 +323,13 @@ bool check_equality(const Lib_tty::Termios &termios, const Lib_tty::Termios &ter
     for (int i=0; i< NCCS; ++i)
         if (termios.c_cc[i] != termios2.c_cc[i]) return false; */
     // Apparently this is inreliable, but perhaps with this simple datastructure it will work on most/all machines?
-    if ( std::memcmp( &termios, &termios2, sizeof termios) != 0) return false;  // does not set ERRNO.  todo:?? Are Termios structures initialized, including the possible padding when defined as below?  How does c++ know the padding that the Linux kernel expects in a system call?
+    if ( std::memcmp( &termios, &termios2, sizeof termios) != 0) return false;  // does not set ERRNO.  TODO:?? Are Termios structures initialized, including the possible padding when defined as below?  How does c++ know the padding that the Linux kernel expects in a system call?
     return true;
 }
 
-Lib_tty::Termios & termio_get() { // uses POSIX  // todo TODO what are advantages of other version of this function?
+Lib_tty::Termios & termio_get() { // uses POSIX  // TODO TODO: what are advantages of other version of this function?
     static Termios termios;
-    if (auto result = tcgetattr( fileno(stdin), &termios); result == POSIX_ERROR) { // todo: TODO throw() in signature?
+    if (auto result = tcgetattr( fileno(stdin), &termios); result == POSIX_ERROR) { // TODO: throw() in signature?
         int errno_save = errno;
         LOGGERS("Standard-in is not a tty keyboard??",errno_save);
         errno = errno_save;
@@ -341,45 +341,45 @@ Lib_tty::Termios & termio_get() { // uses POSIX  // todo TODO what are advantage
 }
 
 Lib_tty::Termios & termio_set_raw() { // uses POSIX
-    cin.sync_with_stdio( false );  									// todo:  iostreams bug?  This is required for timer time-out else a bug occurs.
+    cin.sync_with_stdio( false );  									// TODO:  iostreams bug?  This is required for timer time-out else a bug occurs.
     static Termios termios_orig { termio_get() };
     Termios 	   termios_new 	{ termios_orig };                   // https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Data-Types
         // /usr/include/sys/ttydefaults.h
         // /usr/include/bits/termios-c_lflag.h
         // local modes
-    termios_new.c_lflag 		&= static_cast<tcflag_t>(~ISIG);    // todo?: turn off ???  // want this bit ON for cbreak mode.
+    termios_new.c_lflag 		&= static_cast<tcflag_t>(~ISIG);    // TODO?: turn off ???  // want this bit ON for cbreak mode.
     termios_new.c_lflag 		&= static_cast<tcflag_t>(~ICANON);  // turn off "canonical" or "cooked" mode and go to "non-canonical" or "raw" mode, ie. don't wait for <Enter>. // want this bit OFF for cbreak mode.
     termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHO);    // turn off "echo" mode, ie. don't automatically show the characters being typed. // want this bit OFF for cbreak mode.
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOE);     // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOK);     // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHONL);    // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOCTL);   // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOPRT);   // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOKE);    // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~FLUSHO);    // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~NOFLSH);    // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~PENDIN);    // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~TOSTOP);    // todo?: not touched?
-    termios_new.c_lflag 		&= static_cast<tcflag_t>(~IEXTEN);  // todo?: turn off ??? maybe not!
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~EXTPROC);   // todo?: not touched?
-    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~XCASE);     // todo?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOE);     // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOK);     // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHONL);    // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOCTL);   // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOPRT);   // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~ECHOKE);    // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~FLUSHO);    // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~NOFLSH);    // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~PENDIN);    // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~TOSTOP);    // TODO?: not touched?
+    termios_new.c_lflag 		&= static_cast<tcflag_t>(~IEXTEN);  // TODO?: turn off ??? maybe not!
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~EXTPROC);   // TODO?: not touched?
+    //termios_new.c_lflag 		&= static_cast<tcflag_t>(~XCASE);     // TODO?: not touched?
         // /usr/include/bits/termios-c_iflag.h
         // local modes
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNBRK);  // todo?: turn off ???
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~BRKINT);  // todo?: turn off ???
-    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNPAR);    // todo?: not touched?
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~PARMRK);  // todo?: turn off ???
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~INPCK);   // todo?: turn off ???
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~ISTRIP);  // todo?: turn off ???
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~INLCR);   // todo?: turn off ???
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNCR);   // todo?: turn off ???
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~ICRNL);   // todo?: turn off ???  // want this bit OFF for cbreak mode.
-    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IUCLC);     // todo?: not touched?
-    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IXON);    // todo?: turn off ???
-    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IXANY);     // todo?: not touched?
-    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IXOFF);     // todo?: not touched?
-    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IMAXBEL);   // todo?: not touched?
-    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IUTF8);     // todo?: not touched?
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNBRK);  // TODO?: turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~BRKINT);  // TODO?: turn off ???
+    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNPAR);    // TODO?: not touched?
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~PARMRK);  // TODO?: turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~INPCK);   // TODO?: turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~ISTRIP);  // TODO?: turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~INLCR);   // TODO?: turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IGNCR);   // TODO?: turn off ???
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~ICRNL);   // TODO?: turn off ???  // want this bit OFF for cbreak mode.
+    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IUCLC);     // TODO?: not touched?
+    termios_new.c_iflag 		&= static_cast<tcflag_t>(~IXON);    // TODO?: turn off ???
+    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IXANY);     // TODO?: not touched?
+    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IXOFF);     // TODO?: not touched?
+    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IMAXBEL);   // TODO?: not touched?
+    //termios_new.c_iflag 		&= static_cast<tcflag_t>(~IUTF8);     // TODO?: not touched?
         // /usr/include/bits/termios-c_oflag.h
         // output modes
     termios_new.c_oflag 		&= static_cast<tcflag_t>(~OPOST);   // turn off all post-process output processing. NOTE: there are about 20 more that are not touched, decided not to list them in comments, since I don't thinkn they are needed.
@@ -389,7 +389,7 @@ Lib_tty::Termios & termio_set_raw() { // uses POSIX
     termios_new.c_cc[VTIME] 	= 0; 								// wait forever to get the next char.  //NOTE: there are about 15 more that are not touched, decided not to list them in comments, since I don't thinkn they are needed.
     termios_new.c_cc[VMIN]  	= 1;  								// get minimun one char
     if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
-         result == POSIX_ERROR) {    // todo: Applications that need all of the requested changes made to work properly should follow tcsetattr() with a call to tcgetattr() and compare the appropriate field values.
+         result == POSIX_ERROR) {    // TODO: Applications that need all of the requested changes made to work properly should follow tcsetattr() with a call to tcgetattr() and compare the appropriate field values.
         int errno_save = errno;
         LOGGERS("Standard in is not a tty keyboard??",errno_save);
         errno = errno_save;
@@ -401,7 +401,7 @@ Lib_tty::Termios & termio_set_raw() { // uses POSIX
     return termios_orig;
 }
 
-void termio_restore( Lib_tty::Termios const &termios_orig) { // uses POSIX  // todo: TODO do you like my const 2x, what is effect calling POSIX?
+void termio_restore( Lib_tty::Termios const &termios_orig) { // uses POSIX  // TODO: do you like my const 2x, what is effect calling POSIX?
     if ( auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &termios_orig );
          result == POSIX_ERROR) { // restore prior status
             int errno_save = errno;
@@ -410,19 +410,19 @@ void termio_restore( Lib_tty::Termios const &termios_orig) { // uses POSIX  // t
             perror( source_loc().data() );
             exit(1);
     }
-    cin.sync_with_stdio(true);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
+    cin.sync_with_stdio(true);  // TODO:  iostreams bug?  This is required for timer time-out bug occurs.
     return;
 }
 
 Lib_tty::Termios &
 termio_set_timer( cc_t const time) {  // uses POSIX
-    static Termios termios_orig { termio_get() }; // todo: TODO why does this compile with termios and &termios?
+    static Termios termios_orig { termio_get() }; // TODO: why does this compile with termios and &termios?
     Termios termios_new = termios_orig;
-    cin.sync_with_stdio(false);  // todo:  iostreams bug?  This is required for timer time-out bug occurs.
+    cin.sync_with_stdio(false);  // TODO:  iostreams bug?  This is required for timer time-out bug occurs.
     termios_new.c_cc[VTIME] = time;  // wait some time to get that char
     termios_new.c_cc[VMIN]  = 0;  // no minimum char to get
     if ( auto result = tcsetattr(fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
-         result == POSIX_ERROR) {
+         result == POSIX_ERROR ) {
             int errno_save = errno;
             LOGGERS("Standard in is not a tty keyboard??",errno_save);
             errno = errno_save;
@@ -442,7 +442,7 @@ termio_set_timer( cc_t const time) {  // uses POSIX
 /*****************************************************************************/
 
 /********** START Hot_key Class specific code ********************************/
-/// Free function.  //todo??: or should this be a member function? Why?
+/// Free function.  //TODO??: or should this be a member function? Why?
 bool is_hk_chars_equal( Hot_key const & left, Hot_key const & right ) {
     return ( left.characters == right.characters );
 }
@@ -453,17 +453,19 @@ bool Hot_key::operator< ( Hot_key const  & in ) const {
 
 std::string
 Hot_key::to_string() const {  // found in lib_tty.h
-    std::string s {my_name};  // todo: finish this
+    std::string s {my_name};  // TODO: finish this
     return s;
 }
 /********** END   Hot_key Class specific code ********************************/
 
-/// Utility function called only twice within lib_tty
+/// Allows eof on fd, but aborts on all other stati.
+/// Utility function called only twice within lib_tty.
 File_status
-get_iostate_cin() {
+get_successfull_iostate_cin() {
     File_status file_status {File_status::initial_state};
     if ( cin.eof() ) {
         file_status = File_status::eof_file_descriptor;
+        LOGGER_("CIN is eof")
     } else {
         if ( cin.fail() ) {
             file_status = File_status::fail;
@@ -473,7 +475,9 @@ get_iostate_cin() {
                 file_status = File_status::bad;
                 assert( false && "cin is bad() how did that happen?  We don't handle it." );
             } else {
-                file_status = File_status::other;
+                file_status = File_status::other_user_kb_char_data_HACK;
+                LOGGER_("Cin is good.")
+                assert( cin.good() && "Logic error:Should be good by exclusion.");
             }
         }
     }
@@ -481,9 +485,13 @@ get_iostate_cin() {
     return file_status;
 }
 
-bool is_ignore_key_file_status( File_status const file_status )  { // **** CASE on File Status
+/// File_status is not acceptable for the Kb_key_a_fstat we got, so result is an error.
+/// The question is can we recover?
+bool is_kb_key_bad_dt_file_status( File_status const file_status )  { // **** CASE on File Status
     switch (file_status) {
-    case File_status::other : LOGGER_("File_status is: other"); //
+    case File_status::good : LOGGER_("File_status is: other"); // TODO fix relationship to "other"
+        return false;
+    case File_status::other_user_kb_char_data_HACK : LOGGER_("File_status is: other"); //
         return false;
     case File_status::eof_Key_char_singular : LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
         return false;
@@ -493,20 +501,20 @@ bool is_ignore_key_file_status( File_status const file_status )  { // **** CASE 
         return false;
     case File_status::fail : LOGGER_("File_status is bad"); //
         return false;
-    case File_status::timed_out :
+    case File_status::timed_out :       // handles case where the user is hand typing in the CSI hot_key.
         cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
         break;
-    case File_status::unexpected_data :
-        cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // todo: handle scrolling and dialog
+    case File_status::unexpected_user_kb_char_data_HACK :
+        cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // TODO: handle scrolling and dialog
         break;
     case File_status::eof_file_descriptor :
-        assert( false && "File descriptor is at eof.");  // todo: is this correct, or should we not ignore it?
+        assert( false && "File descriptor is at eof.");  // TODO: is this correct, or should we not ignore it?
         break;
     case File_status::initial_state :
-        assert( false && "File_status should be set by now.");  // todo: is this correct, or should we not ignore it?
+        assert( false && "File_status should be set by now.");  // TODO: is this correct, or should we not ignore it?
         break;
     }
-    return true;  // we add back the input character that we have decided to ignore.
+    return true;  // we will add back the input character that we have decided to ignore.
 }
 
 /// give it the string "EOF" and you get back 4 or ^D */
@@ -520,7 +528,9 @@ char find_posix_char_from_posix_name(const Ascii_Posix_map &vec, const std::stri
     // we never get here.
 }
 
-/** Incrementally retrieves keystroke information based on the passed char(s) being a single character or multi-byte sequence of characters.
+/** Determines if the parameter is a hot_key, or contains the initial characters of a hot_key.
+ *  Is called repetitively by caller to incrementally check the accumulated chars that are input from a single keystroke of the user.
+ *  Handles both single char hot_keys and multi-byte sequence hot_keys.
  *  Only used internally to lib_tty. */
 Hotkey_o_errno
 consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
@@ -561,38 +571,38 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"EOT",	"end_of_transmission",	"EOF",		'd',  	0, 	4,	4},   // I perfer to call this "end of file", apparently this is a ascii character char when in POSIX raw mode tty.
         {"ENQ",	"Enquiry",				"???",		'e',  	0, 	5,	5},   //
         {"ACK",	"Acknowledgement",		"???",		'f',  	0, 	6,	6},   //
-        {"BEL",	"bell",					"BELL?",	'g', 	'a',	7,	7},   // todo: NOT IMPLEMENTED in hot_keys // Ctrl-g = \a  alert?
-        {"BS",	"backspace",		 	"BS",		'h',	'b',	8,	8},   // BS alternative, how related to tty erase? todo: NOT IMPLEMENTED in hot_keys // character erase character works on linux and DOS? Backspace on MacOS use DEL for ERASE?
+        {"BEL",	"bell",					"BELL?",	'g', 	'a',	7,	7},   // TODO: NOT IMPLEMENTED in hot_keys // Ctrl-g = \a  alert?
+        {"BS",	"backspace",		 	"BS",		'h',	'b',	8,	8},   // BS alternative, how related to tty erase? TODO: NOT IMPLEMENTED in hot_keys // character erase character works on linux and DOS? Backspace on MacOS use DEL for ERASE?
         {"HT",	"horizontal_tab",		"TAB",		'i',	't',	9,	9},
         {"LF",	"line_feed",			"NL-LF",	'j',	'n',	10,	10},  // end the line. newline. NL posix normal line delimiter. On linux with ANSI keyboard this is "Enter" key, was "Return" on typewriters and old PCs? What about "CR"
                                                                               // EOL/EOL2 from stty is \r\n or 13, 10, or CR,LF  https://www.ni.com/en-us/support/documentation/supplemental/21/labview-termination-characters.html
-        {"VT",	"vertical_tab",			"VT?",		'k',	'v',	11,	11},  // todo: NOT IMPLEMENTED in hot_keys  // cursor down one line, like what one would call LF Line feed.
+        {"VT",	"vertical_tab",			"VT?",		'k',	'v',	11,	11},  // TODO: NOT IMPLEMENTED in hot_keys  // cursor down one line, like what one would call LF Line feed.
                                                                               // OR kill-line (C-k): Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.
-        {"FF",	"form_feed",			"FF?",		'l',	'f',	12,	12},  // todo: NOT IMPLEMENTED in hot_keys // redisplay page.
+        {"FF",	"form_feed",			"FF?",		'l',	'f',	12,	12},  // TODO: NOT IMPLEMENTED in hot_keys // redisplay page.
         {"CR",	"carriage_return",		"CR",		'm',	'r',	13,	13},  // CR note the 'r', end the line. DOS style LF/NL, but is two characters: \n\r?
         {"SO",	"shift_out",			"???",		'n',	0,		14,	14},  //
         {"SI",	"shift_in",				"DISCARD",	'o',	0,		15,	15},  //
         {"DLE",	"data link escape",		"???",		'p',	0,		16,	16},  //
-        {"DC1",	"device_control_1/XON",	"START",	'q',	0,		17,	17},  // not usable, todo: NOT IMPLEMENTED in hot_keys // resume tty output  IXON is a tty setting not a character!
-        {"DC2",	"device_control_2",		"REPRINT",	'r',	0,		18,	18},  // todo: NOT IMPLEMENTED in hot_keys // redraw the current line.
-        {"DC3", "device_control_3/XOFF","STOP",		's',	0,		19,	19},  // not usable, todo: NOT IMPLEMENTED in hot_keys // suspend tty output IXOFF is a tty setting not a character!
-        {"DC4", "device_control_4",		"STATUS",	't',	0,		20,	20},  // todo: NOT IMPLEMENTED in hot_keys // on macOS and BSD.
+        {"DC1",	"device_control_1/XON",	"START",	'q',	0,		17,	17},  // not usable, TODO: NOT IMPLEMENTED in hot_keys // resume tty output  IXON is a tty setting not a character!
+        {"DC2",	"device_control_2",		"REPRINT",	'r',	0,		18,	18},  // TODO: NOT IMPLEMENTED in hot_keys // redraw the current line.
+        {"DC3", "device_control_3/XOFF","STOP",		's',	0,		19,	19},  // not usable, TODO: NOT IMPLEMENTED in hot_keys // suspend tty output IXOFF is a tty setting not a character!
+        {"DC4", "device_control_4",		"STATUS",	't',	0,		20,	20},  // TODO: NOT IMPLEMENTED in hot_keys // on macOS and BSD.
         {"NAK",	"neg. acknowledge OR line_erase",
-                                        "KILL",		'u',	0,		21,	21},  // todo: NOT IMPLEMENTED in hot_keys // deletes entire line being typed. todo: "line erase character" kills the current input line when using the POSIX shell?
-                                                                              // OR todo? C-x??: backward-kill-line (C-x Rubout): Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
-        {"SYNC","synchronous_idle",		"LNEXT",	'v',	0,		22,	22},  // todo: NOT IMPLEMENTED in hot_keys // paste (from copy-paste)?/
+                                        "KILL",		'u',	0,		21,	21},  // TODO: NOT IMPLEMENTED in hot_keys // deletes entire line being typed. TODO: "line erase character" kills the current input line when using the POSIX shell?
+                                                                              // OR TODO? C-x??: backward-kill-line (C-x Rubout): Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
+        {"SYNC","synchronous_idle",		"LNEXT",	'v',	0,		22,	22},  // TODO: NOT IMPLEMENTED in hot_keys // paste (from copy-paste)?/
         {"ETB",	"end_of_tranmission_block",
-                                        "WERASE",   'w',	0,		23,	23},  // todo: NOT IMPLEMENTED in hot_keys // erase the last word typed.
+                                        "WERASE",   'w',	0,		23,	23},  // TODO: NOT IMPLEMENTED in hot_keys // erase the last word typed.
                                                                               // OR unix-word-rubout (C-w): Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.
-        {"CAN",	"cancel",				"CANCEL?",	'x',	0,		24,	24},  // todo?: C-u??? todo: NOT IMPLEMENTED in hot_keys // cancel the input line? / cut (from copy-paste)? /
-        {"EM",	"end_of_medium",		"???",		'y',	0,		25,	25},  // todo: NOT IMPLEMENTED? in hot_keys // OR yank (C-y): Yank the top of the kill ring into the buffer at point.
-        {"SUB",	"substitute",			"SUSP",		'z',	0,		26,	26},  // todo: NOT IMPLEMENTED in hot_keys //send a terminal stop signal. posix job-control: suspend process.  note: use "fg" to bring to foreground, "bg" to make it run in background.  AKA SIGSTOP?-SIGTSTP
+        {"CAN",	"cancel",				"CANCEL?",	'x',	0,		24,	24},  // TODO?: C-u??? TODO: NOT IMPLEMENTED in hot_keys // cancel the input line? / cut (from copy-paste)? /
+        {"EM",	"end_of_medium",		"???",		'y',	0,		25,	25},  // TODO: NOT IMPLEMENTED? in hot_keys // OR yank (C-y): Yank the top of the kill ring into the buffer at point.
+        {"SUB",	"substitute",			"SUSP",		'z',	0,		26,	26},  // TODO: NOT IMPLEMENTED in hot_keys //send a terminal stop signal. posix job-control: suspend process.  note: use "fg" to bring to foreground, "bg" to make it run in background.  AKA SIGSTOP?-SIGTSTP
         {"ESC",	"escape",				"ESC",		'[',	'e',	27,	27},  // ESC key, the first char of POSIX CSI Control Sequence Introducer
-        {"FS",	"file_separator",		"QUIT",		'\\',	0,		28,	28},  // posix - nothing!?!, unix job-control: quit process and create a "core file". todo: TODO WARNING: may include current contents of memory??-SIGQUIT
+        {"FS",	"file_separator",		"QUIT",		'\\',	0,		28,	28},  // posix - nothing!?!, unix job-control: quit process and create a "core file". TODO: WARNING: may include current contents of memory??-SIGQUIT
         {"GS",	"group_separator",		"???",		']',	0,		29,	29},  //
         {"RS",	"record_separator",		"???",		'^',	0,		30,	30},  //
         {"US",	"unit_separator",		"???",		'_',	0,		31,	31},  //
-        {"DEL",	"delete",				"ERASE",	'?',	0,	   127,127},  // BS alternative, how related to tty erase?. erase the last character typed. similar to "BS" // todo: NOT IMPLEMENTED in hot_keys //  BS/ERASE on MacOS?
+        {"DEL",	"delete",				"ERASE",	'?',	0,	   127,127},  // BS alternative, how related to tty erase?. erase the last character typed. similar to "BS" // TODO: NOT IMPLEMENTED in hot_keys //  BS/ERASE on MacOS?
         {" ",	"space",				"???",	    0,		' ',    32, 32},  // simple space character or blank
         {"\\",	"backslash",			"???",		0,		0x5C,   92, 92}, // simple
     };
@@ -613,10 +623,10 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 
         {"kill",		  {find_posix_char_from_posix_name(ascii_posix_map, "KILL")},     HotKeyFunctionCat::nav_intra_field,		FieldCompletionNav::na,		 			FieldIntraNav::kill},
         {"backspace_left_erase", {find_posix_char_from_posix_name(ascii_posix_map, "BS")},HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na,					FieldIntraNav::backspace_left_erase},
-        {"erase_left",    {find_posix_char_from_posix_name(ascii_posix_map, "ERASE")},    HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na,					FieldIntraNav::erase_left},  // todo: is this correct for macOS or Linux or PC??
+        {"erase_left",    {find_posix_char_from_posix_name(ascii_posix_map, "ERASE")},    HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na,					FieldIntraNav::erase_left},  // TODO: is this correct for macOS or Linux or PC??
 
         // Secondly the multicharacter ESC sequences for the XTERM initially and then VT100 or ANSI.SYS? keyboard, which might be different as in "termcap" on some other hardware.
-        // todo: Make sure I have ALL keystrokes from USA pc keyboard.  XTERM https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
+        // TODO: Make sure I have ALL keystrokes from USA pc keyboard.  XTERM https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
         {"f1",			{CSI_ESC,'O','P'}, 				HotKeyFunctionCat::help_popup, 				FieldCompletionNav::na, 			FieldIntraNav::na},
         {"f2",			{CSI_ESC,'O','Q'}, 				HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         {"f3",			{CSI_ESC,'O','R'}, 				HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
@@ -639,7 +649,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"f7",			{CSI_ESC,'[','1','8','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         {"f8",			{CSI_ESC,'[','1','9','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         {"f9",			{CSI_ESC,'[','2','0','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f10",			{CSI_ESC,'[','2','1','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // todo: is this like ESC or EOF_CHAR?
+        {"f10",			{CSI_ESC,'[','2','1','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
         {"f11",			{CSI_ESC,'[','2','3','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
         {"f12",			{CSI_ESC,'[','2','4','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         // VT100/220, but not on USA PC AT keyboard
@@ -672,7 +682,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"shf-f7",			{CSI_ESC,'[','1','8',';','2','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         {"shf-f8",			{CSI_ESC,'[','1','9',';','2','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         {"shf-f9",			{CSI_ESC,'[','2','0',';','2','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        //???{"shf-f10",	{CSI_ESC,'[','2','1',';','2','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // todo: is this like ESC or EOF_CHAR?
+        //???{"shf-f10",	{CSI_ESC,'[','2','1',';','2','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
         {"shf-f11",			{CSI_ESC,'[','2','3',';','2','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
         {"shf-f12",			{CSI_ESC,'[','2','4',';','2','~'},  HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         // shift-keypad_key's is just like "NumLock", you get the numbers, not the arrows etc., ie. like shift for the keypad. This may be false!
@@ -697,7 +707,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"ctl-f7",			{CSI_ESC,'[','1','8',';','5','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         {"ctl-f8",			{CSI_ESC,'[','1','9',';','5','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         {"ctl-f9",			{CSI_ESC,'[','2','0',';','5','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        //{"ctl-f10",		{CSI_ESC,'[','2','1',';','5','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // todo: is this like ESC or EOF_CHAR?
+        //{"ctl-f10",		{CSI_ESC,'[','2','1',';','5','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
         {"ctl-f11",			{CSI_ESC,'[','2','3',';','5','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
         {"ctl-f12",			{CSI_ESC,'[','2','4',';','5','~'},  HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
 
@@ -722,13 +732,13 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         //{"alt-f7",			{CSI_ESC,'[','1','8',';','3','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         //{"alt-f8",			{CSI_ESC,'[','1','9',';','3','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         //{"alt-f9",			{CSI_ESC,'[','2','0',';','3','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        //{"alt-f10",			{CSI_ESC,'[','2','1',';','3','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // todo: is this like ESC or EOF_CHAR?
+        //{"alt-f10",			{CSI_ESC,'[','2','1',';','3','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
         //{"alt-f11",			{CSI_ESC,'[','2','3',';','3','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
         //{"alt-f12",			{CSI_ESC,'[','2','4',';','3','~'},  HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
         // ;6 is ctl-shf
         // ?? is ctl-alt
         // ?? is shf-alt
-         *  todo: where did I get the idea of these next 4?  Not consistent with what I have above.
+         *  TODO: where did I get the idea of these next 4?  Not consistent with what I have above.
             * Shift-f1		{ESC,LSB,'2',   59,80}
             * Shift-f2		{ESC,LSB,'2',   59,81}
             * CTRL-f1		{ESC,LSB,FIVE,  59,80}
@@ -757,7 +767,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         */
     };
     assert( not ascii_posix_map.empty() && "Logic error.");
-    assert( not hot_keys.empty() && "Logic error.");
+    assert( not hot_keys.empty()        && "Logic error.");
     if ( static bool once {false}; ! once) {
         once = true;
         assert ( !hot_keys.empty() && "We don't allow empty hotkeys set.");
@@ -767,7 +777,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
             assert( false && "We don't allow duplicate hotkey character sequences.");
         }
 #ifndef GR_DEBUG
-        // todo??: make it accept operator<< : LOGGERS("Run once only now, here are the hot_keys,characters:",hot_keys)
+        // TODO??: make it accept operator<< : LOGGERS("Run once only now, here are the hot_keys,characters:",hot_keys)
         //LOGGER_("Run once only now, here are the hot_keys,characters:")
         for (auto & i : hot_keys) {
             LOGGERS("hot_key:   ", i.my_name);
@@ -777,36 +787,36 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     }
     LOGGERS("Candidate_hk_chars:", candidate_hk_chars);
     Hot_key const candidate_hk_search_target { {}, candidate_hk_chars };
-    auto    const lower_bound_itr   { std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk_search_target)};
-    if ( lower_bound_itr != hot_keys.end() ) {
-        LOGGERS("Lower_bount_itr:", lower_bound_itr->my_name);
-        LOGGERS("Characters within above", lower_bound_itr->characters);
+    auto    const firstmatch_o_prior_itr            { std::lower_bound( hot_keys.begin(), hot_keys.end(), candidate_hk_search_target )};  // first that matches, or the prior value (ie before the next too big number).
+    if ( firstmatch_o_prior_itr != hot_keys.end() ) {
+        LOGGERS("First match or prior hot_keys entry:",   firstmatch_o_prior_itr->my_name);
+        LOGGERS("Characters within that hot_keys entry:", firstmatch_o_prior_itr->characters);
     }
-    bool    is_no_match_end  	       {false};
-    bool    is_partial_match 	       {false};
-    bool    is_full_match		       {false};
-    bool    is_no_match_elsewhere      {false};
-    if ( lower_bound_itr == hot_keys.end() )
-                is_no_match_end       = true;           // the search skipped all sorted values, which is one of several reasons for not having a match, in this case not_found is final.
-    else if ( std::equal( candidate_hk_chars.begin(),	// not the same as == since length of candidate is not length of hot_key
-                          candidate_hk_chars.end(),
-                          lower_bound_itr->characters.begin(),
-                          std::next( lower_bound_itr->characters.begin(), candidate_hk_chars.size() )
-                        ) )                             // check at most the minimum number of characters of the lengths of both.
-                is_partial_match      = true;
-    else if ( lower_bound_itr->characters.size() == candidate_hk_chars.size() )
-                is_full_match         = true;
-    else        is_no_match_elsewhere = true;
-
-    assert( (is_full_match || is_partial_match || is_no_match_end || is_no_match_elsewhere) && "Logic error.");
-    // *** NOTE: we still might not have a match.  The if below determines final determination of no_match.
-    if      ( is_full_match )    {
-        return *lower_bound_itr;
+    if ( firstmatch_o_prior_itr == hot_keys.end() ) {
+        LOGGER_("Return:No match")
+        return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
     }
-    else if ( is_partial_match ) {
-        return E_PARTIAL_MATCH;
+    bool is_full_or_partial_match {false};
+    if ( std::equal( candidate_hk_chars.begin(),	// not the same as == since length of candidate is not length of hot_key
+                     candidate_hk_chars.end(),
+                     firstmatch_o_prior_itr->characters.begin(),
+                     std::next( firstmatch_o_prior_itr->characters.begin(), candidate_hk_chars.size() )  // Points to character beyond (ie. end()) of the entry in hot_keys.  Note we check this a the function is called for each subsequent character, so we should not run off the end of the hot_keys entry.
+                   ) ) { // We checked at most the minimum number of characters (ie. size) of the lengths of either.  See above line and comment.
+        is_full_or_partial_match = true;
+        LOGGER_("Is_full_or_partial_match, but is it a full?");
     }
-    return E_NO_MATCH;
+    if ( is_full_or_partial_match ) {
+        if ( firstmatch_o_prior_itr->characters.size() == candidate_hk_chars.size() ) {
+            LOGGER_("Return:A match!")
+            return *firstmatch_o_prior_itr;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        }
+        else {
+            LOGGER_("Return:Partial match, must check for next input character");
+            return E_PARTIAL_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        }
+    }
+    LOGGER_("Return:No match");
+    return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 }
 
 /* Kb_key_a_fstat get_kb_keystroke_raw_old2() {
@@ -819,8 +829,8 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 
 //    while ( true ) {
 //        file_status = File_status::other;
-//        if ( cin.eof() || first_kcs == 0) {             // does this every happen? todo: 0 == the break character or what else could it mean?
-//            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
+//        if ( cin.eof() || first_kcs == 0) {             // does this every happen? TODO: 0 == the break character or what else could it mean?
+//            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // TODO: more eof handling needed
 //            file_status = File_status::eof_file_descriptor;
 //            return { hot_key_chars, file_status};
 //        };
@@ -828,35 +838,35 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 //            Key_char_singular timed_test_char {0};
 //            Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
 //            cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
-//                                                        // todo??: could I use peek() to improve this code?
-//            // if ( cin.eof() ) {                       // todo: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
-//             //   assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
+//                                                        // TODO??: could I use peek() to improve this code?
+//            // if ( cin.eof() ) {                       // TODO: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
+//             //   assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // TODO: more eof handling needed
 //              //  file_status = File_status::eof_file_descriptor;
 //               // termio_restore( termios_orig );
 //               // return { hkc, file_status};
 //            //};
 //            termio_restore( termios_orig );
 //            if ( timed_test_char == TIMED_GET_NULL )
-//            {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// todo: MAGIC NUMBER
-//                hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!  // todo: MAGIC NUMBER.
-//                cin.clear();                              // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
+//            {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
+//                hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC TODO: is this needed?? in superficial testing is seems not!  // TODO: MAGIC NUMBER.
+//                cin.clear();                              // TODO: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
 //            }
 //            else {
 //                //cin.putback( timed_test_char );                                       // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
 //                hot_key_chars.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
 //            }
 //        }
-//        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. todo: consider using ref for speed?
+//        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. TODO: consider using ref for speed?
 //        if ( std::holds_alternative< Hot_key >( hot_key_or_error ) )  // We have a real hot_key, so we are done!
-//            return { std::get< Hot_key >(hot_key_or_error),         File_status::other };  // todo: file_status is what? might be EOF or other?
+//            return { std::get< Hot_key >(hot_key_or_error),         File_status::other };  // TODO: file_status is what? might be EOF or other?
 //        else {
 //            LOGGERS("We have an Lt_errno.", std::get< Lt_errno >(hot_key_or_error) );
 //            switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
 //            case E_NO_MATCH:
 //                if ( XXXX hot_key_chars.size() == 1 )
 //                    return { first_kcs , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
-//                // **** this is the Hot_key_chars case of the variant return value  // todo: should we throw away or putback?
-//                // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Key_char_singular i){cin.putback(i);});  // all except first one.  todo: how many can I putback in this implementation?  Is it even a good idea?
+//                // **** this is the Hot_key_chars case of the variant return value  // TODO: should we throw away or putback?
+//                // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Key_char_singular i){cin.putback(i);});  // all except first one.  TODO: how many can I putback in this implementation?  Is it even a good idea?
 //                // hkc.clear();
 //                // Hot_key_chars const hot_key_chars_unfound { hkc.begin(), hkc.end() };
 //                else
@@ -875,28 +885,33 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
 Kb_key_a_fstat
 get_kb_keystroke_raw() {
     assert( cin.good() && "Precondition.");
-    // Return values
+    // @return values
     // THIS
-    Key_char_singular   first_kcs       {'\0'} ;
+    Key_char_singular   first_kcs       {CHAR_NULL} ;
     // OR
     Hot_key_chars       hot_key_chars   {STRING_NULL.cbegin(),STRING_NULL.cend()};
     // AND
     File_status         file_status     {File_status::initial_state};
+    LOGGER_("Pre  cin.get():");
+    cin.get( first_kcs );           // TODO: first_kcs == 0 // does this ever happen? TODO: 0 == the break character or what else could it mean?
+    LOGGER_("Post cin.get():");
+    assert( cin && "Logic error: cin is not good.");
+    assert( first_kcs != 0 && "Logic error: Got a zero from cin.get().");  // Note: here we consider a zero as a failed cin.get(), below on a timed get we start with a magic number and we expect to get a zero 0 if the timer expires. TODO verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
+    file_status = get_successfull_iostate_cin();
 
-    cin.get( first_kcs );           // todo: first_kcs == 0 // does this ever happen? todo: 0 == the break character or what else could it mean?
-    assert( cin && "Logic error: not cin.");
-    assert( first_kcs != 0 && "Logic error: Got a zero from cin.get().");
-    file_status = get_iostate_cin();
-
+    bool is_potential_CSI_ALT   {false};
     hot_key_chars.clear();
-    if ( first_kcs == CSI_ALT )
+    if ( first_kcs == CSI_ALT ) {
         hot_key_chars.push_back( CSI_ESC );
+        is_potential_CSI_ALT = true;
+    }
     else
         hot_key_chars.push_back( first_kcs );
 
-    // ******* Handle single char case first and return it, it could be simple single ASCII or a more meaningfull single char hotkey such as CR/RETURN.
+    // ******* Handle the single simple regular char case first and return it.
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
-        Hotkey_o_errno hot_key_candidate = consider_hot_key( hot_key_chars);
+        assert( hot_key_chars.size() == 1 && "Logic error.");
+        Hotkey_o_errno hot_key_candidate = consider_hot_key( hot_key_chars );
         if ( std::holds_alternative< Hot_key >(hot_key_candidate) ) {
             // ******* Handle single ASCII hot_key first and return it.
             Hot_key_chars hkc   {std::get< Hot_key >(hot_key_candidate).characters};
@@ -905,67 +920,73 @@ get_kb_keystroke_raw() {
             return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
             // ******* Handle single simple regular ASCII first and return it.
+            assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
             assert( first_kcs   != 0                          && "Postcondition10.");
             assert( file_status != File_status::initial_state && "Postcondition2.");
             return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     }
-    // ******* So far, we have one kb char. Is it a hot_key? which is possibly a singlebyte or multibyte function key like F1, let's continue and see.
+    LOGGER_("We have a CSI, so we'll loop to get the whole multi-byte sequence");
+    // ******* So far, we have one kb char. Is it a hot_key? Which is could be a singlebyte (CR TAB or ESC) or a multibyte function key like F1.
     while ( true ) {
-//        if ( cin.eof() || first_kcs == 0) {             // ????????????????????? does this evern happen? todo: 0 == the break character or what else could it mean?
-//            assert( false && "logic error or needs more work."); // todo: more eof handling needed
-//            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // todo: more eof handling needed
+//        if ( cin.eof() || first_kcs == 0) {             // ????????????????????? does this evern happen? TODO: 0 == the break character or what else could it mean?
+//            assert( false && "logic error or needs more work."); // TODO: more eof handling needed
+//            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // TODO: more eof handling needed
 //            file_status = File_status::eof_file_descriptor;
 //            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 //        };
 
         // ******* We might have one or more characters from that single keystroke,
         // ******* so let's get another char within a potential multibyte sequence, which would come very quickly before our timer on the get() expires.
-        Key_char_singular   timed_kcs {TIMED_GET_NOT_SET};
-        Termios const       termios_orig    {termio_set_timer( VTIME_ESC )}; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
+        Key_char_singular   timed_kcs       {TIMED_GET_NOT_SET};  // TODO: verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
+        Termios const       termios_orig    { termio_set_timer( VTIME_ESC )}; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
+        LOGGER_("Pre  cin.get():");
         cin.get( timed_kcs );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
-        file_status = get_iostate_cin();
-        assert( ! is_ignore_key_file_status( file_status));
+        LOGGER_("Post cin.get():");
+        file_status = get_successfull_iostate_cin();
+        //assert( not is_kb_key_bad_dt_file_status( file_status )); TODO:
         termio_restore( termios_orig );
-//            // todo??: could I use peek() to improve this code?
-//        if ( cin.eof() ) {                       // todo: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
-//            assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // todo: more eof handling needed
+//            // TODO??: could I use peek() to improve this code?
+//        if ( cin.eof() ) {                       // TODO: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
+//            assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // TODO: more eof handling needed
 //            file_status = File_status::eof_file_descriptor;
 //            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 //        }
         if ( timed_kcs == TIMED_GET_NULL )
-        {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// todo: MAGIC NUMBER
+        {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
+            LOGGER_("Got a timed NULL.");
             file_status = File_status::timed_out;
-            hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC todo: is this needed?? in superficial testing is seems not!  // todo: MAGIC NUMBER.
-            cin.clear();                              // todo: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
+            hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC TODO: is this needed?? in superficial testing is seems not!  // TODO: MAGIC NUMBER.
+            cin.clear();                              // TODO: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
             //file_status = File_status::other;
         }
         else {
+            LOGGERS("Got a timed char.", timed_kcs);
             //cin.putback( timed_test_char );                                       // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
-            file_status = File_status::other;
+            file_status = File_status::other_user_kb_char_data_HACK;
             hot_key_chars.push_back( timed_kcs );   // We got another char, and it may be part of a multi-byte sequence.
         }
 
         // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
-        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. todo: consider using ref for speed?
+        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. TODO: consider using ref for speed?
         if ( std::holds_alternative< Hot_key >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* Hot_key
             assert( first_kcs != 0 && "Postcondition11.");
             assert( not hot_key_chars.empty() && "Postcondition12.");
             assert( File_status::initial_state != file_status && "Postcondition3.");
-            return { std::get< Hot_key >(hot_key_or_error), File_status::other };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // todo: file_status is what? might be EOF or other?
+            return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
-            LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >(hot_key_or_error) );
+            LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
             switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
-            case E_NO_MATCH:                                            // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
-                assert( first_kcs != 0 && "Postcondition13.");
-                assert( hot_key_chars.empty() && "Postcondition14.");
-                assert( File_status::initial_state != file_status && "Postcondition4.");
-                return { hot_key_chars, File_status::unexpected_data }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            case E_NO_MATCH:                                                // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
+                assert( is_potential_CSI_ALT && "Postcondition13.");
+                assert( not hot_key_chars.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
+                assert( file_status != File_status::initial_state && "Postcondition4.");
+                return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
-                continue;  // to the top of the while loop.
+                continue;          // to the top of the while loop.
                 break;
             }
         }
@@ -973,7 +994,8 @@ get_kb_keystroke_raw() {
     assert( false && "We should never get here.");
 }
 
-/// Is true if category is not a HotKeyFunctionCat::nav_field_completion OR SIMILAR HK.
+/// Is true/ignore hot_key, if category isn't a HotKeyFunctionCat::nav_field_completion OR SIMILAR HK.
+/// Doesn't ignore TODO:
 /// Only used once as a helper function, internally to lib_tty
 bool is_ignore_hotkey( HotKeyFunctionCat const hot_key_function_cat ) {
     LOGGERS("hot_key_function_cat: ", (int)hot_key_function_cat);
@@ -982,14 +1004,14 @@ bool is_ignore_hotkey( HotKeyFunctionCat const hot_key_function_cat ) {
     case HotKeyFunctionCat::other :
         LOGGER_("HotKeyFunctionCat::other");
         cout << "\aLast key press not handled here, so ignored.\n";
-        assert(false && "\aHotKeyFunctionCat::other sounds bad like a bad type, not sure about what cases are and how to handle." );  // todo:
+        assert(false && "\aHotKeyFunctionCat::other sounds bad like a bad type, not sure about what cases are and how to handle." );  // TODO:
         return false;
         break;
     case HotKeyFunctionCat::nav_field_completion :
         LOGGER_("Navigation completion");
         break;
     case HotKeyFunctionCat::editing_mode :
-        // todo: how do we use this?  do we ignore the character?? is_editing_mode_insert = ! is_editing_mode_insert;
+        // TODO: how do we use this?  do we ignore the character?? is_editing_mode_insert = ! is_editing_mode_insert;
         LOGGER_("Editing mode toggled");
         break;
     // All subsequent cases appear to be exactly the same except for debugging messages.
@@ -998,7 +1020,7 @@ bool is_ignore_hotkey( HotKeyFunctionCat const hot_key_function_cat ) {
         break;
     case HotKeyFunctionCat::nav_intra_field :
         LOGGER_("Nav_intra_field mode");
-        // todo:  clarify comment: only done for get_value_raw() above, here we let the caller do it: nav_intra_field( hot_key, value, value_index, echo_skc_to_tty);
+        // TODO:  clarify comment: only done for get_value_raw() above, here we let the caller do it: nav_intra_field( hot_key, value, value_index, echo_skc_to_tty);
         break;
     case HotKeyFunctionCat::job_control :
         LOGGER_("Job control");
@@ -1021,13 +1043,13 @@ bool is_usable_char( Key_char_singular const skc, bool const is_allow_control_ch
     LOGGERS("Char is:", static_cast< int >( skc ));
     int const i	{ static_cast<int>(skc) };
     return is_allow_control_chars ? ( isprint(i) || iscntrl(i) ) && // allowing control chars, in for example in a password ;)
-                                      not( i==17 || i==19 ) 	    // except not: XON & XOFF,  todo: what about SCROLL LOCK? is that even a character??
+                                      not( i==17 || i==19 ) 	    // except not: XON & XOFF,  TODO: what about SCROLL LOCK? is that even a character??
                                                                     // but note some may have been parsed out as hot_keys prior to this test.
                                   :   isprint(i);
 }
 
 /// Is true if we disallow the character.
-/// todo: mixing logic and user output may not be good here.
+/// TODO: mixing logic and user output may not be good here.
 /// Only used once as a helper function, internally to lib_tty
 bool is_ignore_kcs( Key_char_singular const skc,
                     bool const              is_allow_control_chars,
@@ -1039,7 +1061,7 @@ bool is_ignore_kcs( Key_char_singular const skc,
     if ( is_usable_char( skc, is_allow_control_chars )) {
         if ( is_echo_skc_to_tty )
             cout << skc <<endl;
-        //value_rv += skc; //value_index++; // todo: index would have to be used if value is not a string, but instead an vector<KbFundamentalUnit>
+        //value_rv += skc; //value_index++; // TODO: index would have to be used if value is not a string, but instead an vector<KbFundamentalUnit>
         return false;
     }
     else {
@@ -1058,15 +1080,15 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool const   is_allow_control_chars
                      ) {
     assert( cin.good() && "Precondition.");
-    assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // todo: must debug n>1 case later.
+    assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     Key_char_i18ns 	    key_char_i18ns_result 	{STRING_NULL};  /// The char(s) in the keystroke.
     Hot_key		 		hot_key_result          {};  /// The hot_key that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
-    size_t 		 		additional_skc 			{length_in_keystrokes};  // todo: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
+    size_t 		 		additional_skc 			{length_in_keystrokes};  // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::na};			// reset some variables from prior loop if any, specifically old/prior hot_key.
     //unsigned 			int value_index			{0}; // Note: Points to the character beyond the current character (presuming zero origin), like an STL iterator it.end(), hence 0 == empty field.
     //bool 		 		is_editing_mode_insert  {true};
-    cin.exceptions( std::istream::failbit );            // Throw on fail of cin.  todo??: maybe interactions with CIN should include more calls to cin.good() etc., and rdstate/ios_base::badbit etc.
+    cin.exceptions( std::istream::failbit );            // Throw on fail of cin.  TODO??: maybe interactions with CIN should include more calls to cin.good() etc., and rdstate/ios_base::badbit etc.
     Termios const termios_orig 	{ termio_set_raw() };   /// Used to restore our keyboard to COOKED.
     key_char_i18ns_result.clear();                      // for this loop, we will consider size == 0 to be STRING_NULL.
     do {  // ******* BEGIN do_while to Gather char(s) to make a n-length value or until we get a "completion" Hot_key, or number of chars, or error.**************************
@@ -1079,13 +1101,13 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         Kb_key_a_fstat const    kb_key_a_fstat  { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         file_status_result 		  		        = kb_key_a_fstat.file_status;
         LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_fstat.file_status);
-        if ( not (is_ignore_key_fd = is_ignore_key_file_status( file_status_result )) )  // file_status is OK
+        if ( not (is_ignore_key_fd = is_kb_key_bad_dt_file_status( file_status_result )) )  // file_status is OK
         {
             LOGGERS("is_ignore_key_fd:", is_ignore_key_fd);
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.kb_key_variant )) {
                 Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_fstat.kb_key_variant ) };
                 LOGGERS("is kcs:", kcs);
-                if ( not ( is_ignore_key_kcs = is_ignore_kcs( kcs, is_allow_control_chars, true, is_echo_skc_to_tty))) {  // todo: parameterize is_ring_bell_on_ignore, just true here.
+                if ( not ( is_ignore_key_kcs = is_ignore_kcs( kcs, is_allow_control_chars, true, is_echo_skc_to_tty))) {  // TODO: parameterize is_ring_bell_on_ignore, just true here.
                     LOGGERS("is kcs:", kcs);
                     key_char_i18ns_result += kcs;
                 }
@@ -1096,10 +1118,10 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 LOGGERS("is hk:", hot_key_result.my_name);
                 LOGGERS("is hot_key_function_cat:", (int)hot_key_result.function_cat);
                 //                if ( ( hot_key_function_cat = hot_key_rv.function_cat ) == HotKeyFunctionCat::editing_mode ) {
-                //                    is_editing_mode_insert 	= ! is_editing_mode_insert;  // todo: Do we use this value here, or down the call stack?
+                //                    is_editing_mode_insert 	= ! is_editing_mode_insert;  // TODO: Do we use this value here, or down the call stack?
                 //                    cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
                 //                }
-                is_ignore_hot_key            = is_ignore_hotkey( hot_key_function_cat );    // todo: refactor to use within applicable tests and while 123.
+                is_ignore_hot_key            = is_ignore_hotkey( hot_key_function_cat );    // TODO: refactor to use within applicable tests and while 123.
             }
             else {
                 LOGGER_("Throwing away this key stroke, trying again to get one" )
@@ -1113,15 +1135,15 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         if ( !is_ignore_key_fd || !is_ignore_key_kcs || !is_ignore_hot_key )
             --additional_skc;
     } while (   additional_skc              >  0                                        &&
-                hot_key_function_cat        == HotKeyFunctionCat::na                    && // todo: refactor to use within applicable tests and while 123.
+                hot_key_function_cat        == HotKeyFunctionCat::na                    && // TODO: refactor to use within applicable tests and while 123.
                 file_status_result          != File_status::eof_Key_char_singular       &&
                 file_status_result          != File_status::eof_library                 &&
                 file_status_result          != File_status::eof_file_descriptor
-            );      // todo: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
+            );      // TODO: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
     //******* END   do_while ****************************************************************************************************************
     //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now throwing away other keystrokes.
     while (     is_require_field_completion_key                                         &&
-                hot_key_result.function_cat != HotKeyFunctionCat::nav_field_completion  &&  // todo: may need more cats like intra_field, editing_mode?
+                hot_key_result.function_cat != HotKeyFunctionCat::nav_field_completion  &&  // TODO: may need more cats like intra_field, editing_mode?
                 hot_key_result.function_cat != HotKeyFunctionCat::navigation_esc        &&
                 file_status_result          != File_status::eof_Key_char_singular       &&
                 file_status_result          != File_status::eof_library                 &&
@@ -1136,7 +1158,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
             cout<< "\aError: expecting a CR or other special completion key, try again."<<endl;
     }   //******* END   while *****************************************************************************************************************
     termio_restore( termios_orig );
-    /*XXXX*/
+    /*XXXXX */
     // We return either regular char(s), or a Hot_key
     assert( file_status_result != File_status::initial_state && "Postcondition5.");
     if ( not key_char_i18ns_result.empty() ) {

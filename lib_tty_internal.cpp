@@ -9,7 +9,7 @@
 //std::ostream&
 //operator<<( std::ostream & out, Container const & c) {
 //    if ( not c.empty()) {
-//        out << "[";   // todo??: add std::setw(3)
+//        out << "[";   // TODO??: add std::setw(3)
 //        out.width(9);
 //        //out << std::setw(9);
 //        std::copy(c.begin(), c.end(), std::ostream_iterator< typename Container::value_type >(out, ","));

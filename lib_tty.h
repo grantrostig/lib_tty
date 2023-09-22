@@ -2,7 +2,7 @@
  */
 #ifndef LIB_TTY_H
 #define LIB_TTY_H
-// posix define might be needed?  todo??:
+// posix define might be needed?  TODO??:
 #define _POSIX_C_SOURCE 200809L
 
 #include <deque>
@@ -34,26 +34,26 @@ namespace Lib_tty {
 /*****************************************************************************/
 /**************** START Lib_tty     Level Declarations ***********************/
 /*****************************************************************************/
-using Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. todo??: better? >using Lt_errno = typeof (errno);
-inline constexpr std::string STRING_NULL {"NULL"};  // SQL DB show an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
+inline constexpr std::string       STRING_NULL {"NULL"};    /// Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
 
 /** There are two semantic EOFs:
- *  1) eof_Key_char_singular is a "We probably don't handle eof well."); // todo: more eof handling needed
+ *  1) eof_Key_char_singular is a "We probably don't handle eof well."); // TODO: more eof handling needed
             file_status = File_status::eof_file_desc logical eof intended by the user by typing in a CTL-D,
  *  2) eof_file_descriptor occurs when a read() fails with that error.
  *  But I'm unclear about the exact distinction between these two especially with regard to COOKED versus RAW on a tty.
- *  todo: refactor these two out since I don't think we need a separate EOFs, since in tty raw mode we recognize ^D as a hot_key.
+ *  TODO: refactor these two out since I don't think we need a separate EOFs, since in tty raw mode we recognize ^D as a hot_key.
  */
 enum class File_status { /// After reading a char, did we get something good, should we expect more?
   initial_state,         /// initial state, should not remain this way after any tty read() or get().
-  other,                /// probably means got a good value.
-  unexpected_data,      /// got bad data from hardware error, or user error, ie. something we don't expect or support.
-  eof_Key_char_singular,/// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
-  eof_library,          /// get application library EOF.
-  eof_file_descriptor,  /// get library or OS EOF.
-  timed_out,            /// we read, but didn't get a value, or status.
-  fail,                 /// we read, but we got format/extraction error.
-  bad                   /// we read, but we got serious unrecoverable error.
+  good,                  /// we read and all is good() on cin.  TODO: implement this throughout lib_tty.
+  timed_out,             /// we read, but didn't get a value, could represent case where the user is hand typing in the CSI hot_key.
+  eof_Key_char_singular, /// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
+  eof_library,           /// get application library EOF.
+  eof_file_descriptor,   /// get library or OS EOF.
+  fail,                  /// we read, but we got format/extraction error.
+  bad,                   /// we read, but we got serious unrecoverable error.
+  other_user_kb_char_data_HACK,      /// probably means got a good kb_char value.  TODO was associated with "good", but need to separate the concepts and fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
+  unexpected_user_kb_char_data_HACK  /// got bad data from hardware error, or user error, ie. something we don't expect or support. TODO: fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
 };
 
 /** The user level intent of all "Categories" of HotKeys
@@ -62,14 +62,14 @@ enum class HotKeyFunctionCat {
   nav_field_completion,     // nav == user navigation between elements of a certain type.  here user want to finish that field input and move to next thing.
   nav_intra_field,          // user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
 
-  navigation_esc,           // user ESCAPE key, is used similarly to nav_field_completion, todo:not sure if it is needed seperately.
+  navigation_esc,           // user ESCAPE key, is used similarly to nav_field_completion, TODO:not sure if it is needed seperately.
 
-  job_control,              // todo: not implemented yet, nor mapped in hot_keys vector. maybe this is not a HotKeyFunctionCat?? // QUIT Ctrl-z,  STOP Ctrl-s, START Ctrl-q ,
+  job_control,              // TODO: not implemented yet, nor mapped in hot_keys vector. maybe this is not a HotKeyFunctionCat?? // QUIT Ctrl-z,  STOP Ctrl-s, START Ctrl-q ,
   help_popup,               // user is asking for help using keyboard, ie. F1 for help.
   editing_mode,             // <Insert> (or possibly other) HotKey toggles this.
-  na,						// todo:
-  other                     // todo:, used as ::na filler designation, probably means none.
-    //initial_state         // todo:
+  na,						// TODO:
+  other                     // TODO:, used as ::na filler designation, probably means none.
+    //initial_state         // TODO:
 };
 
 /** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
@@ -89,17 +89,17 @@ enum class FieldCompletionNav { ///the intent of the user as demonstrated by the
   save_form_as_is, 				// skip_to_end_of_fields and save?
 
   esc, 							// skip_to_end_of_fields and don't save, just prompt?
-  //help,  						// todo: is this a erronious duplicate from HotKeyFunctionCat?
+  //help,  						// TODO: is this a erronious duplicate from HotKeyFunctionCat?
 
-  eof,                                 // same handling as esc?, no more like <Enter> but save_form_as_is, then get out? todo:
-  interrupt_signal,                    // same as esc, no, more like CTRL-C. todo:
-  exit_immediately = interrupt_signal, // todo: fix this.
+  eof,                                 // same handling as esc?, no more like <Enter> but save_form_as_is, then get out? TODO:
+  interrupt_signal,                    // same as esc, no, more like CTRL-C. TODO:
+  exit_immediately = interrupt_signal, // TODO: fix this.
   exit_with_prompts,
-  quit_signal, // exit program immediately, and produce a core dump.  todo: security hole for memory? todo:
+  quit_signal, // exit program immediately, and produce a core dump.  TODO: security hole for memory? TODO:
   kill_signal, // WARNING: this may be invalid since it also appears in FieldIntraNav, however I guess I was thinking that it might have a different meaning if we are not dealing
-               // with a input field, but in another contect where we could interpret it as follows: exit program immediately like CTRL-C or posix kill KILL Ctrl-U command? todo:
+               // with a input field, but in another contect where we could interpret it as follows: exit program immediately like CTRL-C or posix kill KILL Ctrl-U command? TODO:
   na
-    //initial_state         // todo:
+    //initial_state         // TODO:
 };
 
 /** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
@@ -114,25 +114,26 @@ enum class FieldIntraNav {
   goto_end,
   kill, // remove content of entire line.
   na
-    //initial_state         // todo:
+    //initial_state         // TODO:
 };
 
 /** Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char"
- *  The most basic character type this associated with a user keyboard on the supported computer/OS. todo??: should this be unsigned char or ssize_t or unit8?
+ *  The most basic character type this associated with a user keyboard on the supported computer/OS. TODO??: should this be unsigned char or ssize_t or unit8?
  *  one byte long or the components of a hot key sequence.
- *  todo: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
+ *  TODO: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
  *  then fix next two lines of documentation.
  */
 using KbFundamentalUnit = char;                             /// The simplest thing that can be read from stdin from a tty via a hardware keyboard, on a Linux/POSIX workstation.
 using Key_char_singular = KbFundamentalUnit;                /// The most basic character that a keyboard can generate like ASCII or UNICODE 8? or 16? or 32?, which does not generate a multi-btye burst of characters, like F1
+inline constexpr KbFundamentalUnit CHAR_NULL {'\0'};        /// Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
 
 /** Is usally one (on a US Kb, but some keys probably have more than one on other language Kbs)
  *  normal/regular alphanumeric/ASCII like characters entered by the user.
- *  todo: Should probably rename this to Kb_regular_keystroke .
+ *  TODO: Should probably rename this to Kb_regular_keystroke .
  *  was?: Kb_regular_key .
- *  todo: make this the correct/internationalized char type, which would be KbFundamentalUnit from above?? or what???.
+ *  TODO: make this the correct/internationalized char type, which would be KbFundamentalUnit from above?? or what???.
 */
-using Key_char_i18ns 	    = std::string;
+using Key_char_i18ns 	= std::string;
 
 using Hot_key_chars     = std::vector< KbFundamentalUnit >;   /// A sequence of basic chars that are generated by a user single keypress of a Hot_key on a keyboard, ie. ESC, or F1 for help. but does not include a or 2 or /
 
@@ -141,20 +142,20 @@ using Hot_key_chars     = std::vector< KbFundamentalUnit >;   /// A sequence of 
  */
 class Hot_key {
 public:
-  /// Name given by Lib_tty
+        /// Name given by Lib_tty
   std::string        my_name            {STRING_NULL};
-  /// See the type's documentation.
+        /// See the type's documentation.
   Hot_key_chars      characters         {STRING_NULL.cbegin(),STRING_NULL.cend()};
-  /// Depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
+        /// Depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
   HotKeyFunctionCat  function_cat       {HotKeyFunctionCat::na};
-  /// gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
+        /// gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
   FieldCompletionNav f_completion_nav   {FieldCompletionNav::na};
-  /// gets a value if HotKeyFunctionCat::nav_intra_field
+        /// gets a value if HotKeyFunctionCat::nav_intra_field
   FieldIntraNav      intra_f_nav        {FieldIntraNav::na};
 
-  /// Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
+        /// Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
   bool               operator<( Hot_key const &) const;
-  /// Used for debugging only.
+        /// Used for debugging only.
   std::string        to_string()                 const;
 };
 using Hot_keys = std::vector< Hot_key >; /// Stores all known Hot_keys for internal library use.
@@ -162,15 +163,15 @@ using Hot_keys = std::vector< Hot_key >; /// Stores all known Hot_keys for inter
 /** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not.
  *  or EOF.
  *  Yes, this is everything but the kitchen sink.  Probaly excessive and need refactoring.
- *  todo: does this include an EOF character?
+ *  TODO: does this include an EOF character?
  *  was: //key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18ns, Hot_key_chars, Hot_key, File_status >;
  */
 using   Kb_key_variant = std::variant< std::monostate, Key_char_singular,               Hot_key_chars, Hot_key              >;
 
 /** Tells us if we got a Kb_key and if we "are at"/"or got?" EOF.
  *  _a_ == "and"
- *  todo: we have a problem with File_status, also in Kb_key_variant - we don't need it twice!  This one IS currenlty used.
- *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
+ *  TODO: we have a problem with File_status, also in Kb_key_variant - we don't need it twice!  This one IS currenlty used.
+ *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  *  was //using Kb_key_a_fstat = std::pair< Kb_key_variant, File_status >;
     // We return either regular char(s), or a Hot_key
 */
@@ -179,10 +180,10 @@ struct Kb_key_a_fstat {
   File_status       file_status     {File_status::initial_state};   /// holds what is happening with cin EOF
 };
 
-/** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. todo?:
+/** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. TODO?:
  *  Heavily used everywhere!
- *  todo: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
- *  todo: consider replacing std::tuple/std::pair with struct!
+ *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
+ *  TODO: consider replacing std::tuple/std::pair with struct!
  *  was: //using Kb_value_plus = std::tuple< Key_char_i18ns, Hot_key, File_status >;
  */
 struct Kb_value_plus {
@@ -240,7 +241,7 @@ get_kb_keystroke_raw();
  * as follows:
  *      +single   ASCII 7 or 8 bit chars    char, unsigned char, signed char    8 bits
  *      +multiple IBM PC AT function keys   char                                8 bits
- *    - more esoteric stuff that can be deferred for now. todo:
+ *    - more esoteric stuff that can be deferred for now. TODO:
  *      +single   Unicode 8  UTF-8          char8_t                             8 bits
  *      +multiple Unicode 8  UTF-8          char8_t                             8 bits                  Attempting to handle or at least consider now.
  *      +single   Microsoft Wide Char       wchar_t                             16 bits  AKA UTF-16LE
