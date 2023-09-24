@@ -932,7 +932,7 @@ get_kb_keystroke_raw() {
 /// Is true/ignore hot_key, if category isn't a HotKeyFunctionCat::nav_field_completion OR SIMILAR HK.
 /// Doesn't ignore TODO:
 /// Only used once as a helper function, internally to lib_tty
-bool is_ignore_hotkey( HotKeyFunctionCat const hot_key_function_cat ) {
+bool is_ignore_hot_key( HotKeyFunctionCat const hot_key_function_cat ) {
     LOGGERS("hot_key_function_cat: ", (int)hot_key_function_cat);
     // **** CASE on hot key Function Category
     switch ( hot_key_function_cat ) {
@@ -947,6 +947,7 @@ bool is_ignore_hotkey( HotKeyFunctionCat const hot_key_function_cat ) {
     case HotKeyFunctionCat::editing_mode :
         // TODO: how do we use this?  do we ignore the character?? is_editing_mode_insert = ! is_editing_mode_insert;
         LOGGER_("Editing mode toggled");
+        return true;
         break;
     // All subsequent cases appear to be exactly the same except for debugging messages.
     case HotKeyFunctionCat::navigation_esc :
@@ -1026,23 +1027,23 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     Termios const termios_orig 	{ termio_set_raw() };   /// Used to restore our keyboard to COOKED.
     key_char_i18ns_result.clear();                      // for this loop, we will consider size == 0 to be STRING_NULL.
     do {  // ******* BEGIN do_while to Gather char(s) to make a n-length value or until we get a "completion" Hot_key, or number of chars, or error.**************************
-        bool is_ignore_key_kcs  {false};                 /// Suppress this character if user enters it.
-        bool is_ignore_hot_key  {false};                 /// Does not constitute a HotKeyFuntionCat::nav_field_completion for this loop.
-        bool is_adequate_fs     {false};                 /// Don't worry about these file_descriptor stati.
-        hot_key_result          = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
-        hot_key_function_cat    = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
-                                                         // TODO?: may not need this local, but not sure untill below TODOs are done.
+        bool is_ignore_kcs_local    {false};                 /// Suppress this character if user enters it.  TODO: I may not need these locals set by function calls, but I'm not sure until all TODO S are done
+        bool is_ignore_hot_key_local{false};                 /// In case editing mode is toggled. TODO: not implemented yet.  TODO: I may not need these locals set by function calls, but I'm not sure until all TODO S are done
+        bool is_adequate_fs_local   {false};                 /// Don't worry about these file_descriptor stati.  TODO: I may not need these locals set by function calls, but I'm not sure until all TODO S are done
+        hot_key_result              = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
+        hot_key_function_cat        = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
+                                                               // TODO?: may not need this local, but not sure untill below TODOs are done.
 
         Kb_key_a_fstat const    kb_key_a_fstat  { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         file_status_result 		  		        = kb_key_a_fstat.file_status;
         LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_fstat.file_status);
-        if ( (is_adequate_fs = is_adequate_file_status( file_status_result )))   // file_status is OK
+        if ( (is_adequate_fs_local = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
-            LOGGERS("is_ignore_key_fd:", is_adequate_fs);
+            LOGGERS("is_ignore_key_fd:", is_adequate_fs_local);
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.kb_key_variant )) {
                 Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_fstat.kb_key_variant ) };
                 LOGGERS("is kcs:", kcs);
-                if ( not ( is_ignore_key_kcs = is_ignore_kcs( kcs, is_allow_control_chars, true, is_echo_skc_to_tty))) {  // TODO: parameterize is_ring_bell_on_ignore, just true here.
+                if ( not ( is_ignore_kcs_local = is_ignore_kcs( kcs, is_allow_control_chars, true, is_echo_skc_to_tty))) {  // TODO: parameterize is_ring_bell_on_ignore, just true here.
                     LOGGERS("is kcs:", kcs);
                     key_char_i18ns_result += kcs;
                 }
@@ -1057,7 +1058,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 //                    cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
                 //                }
 
-                is_ignore_hot_key            = is_ignore_hotkey( hot_key_function_cat );    // TODO: refactor to use within applicable tests and while 123.
+                is_ignore_hot_key_local            = is_ignore_hot_key( hot_key_function_cat );    // TODO: refactor to use within applicable tests and while 123.
             }
             else {
                 LOGGER_("Throwing away this key stroke, trying again to get one" )
@@ -1068,13 +1069,13 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         else {
             assert( false &&"Logic error/omission: on file_status we need to handle this case!");  // file_status is NOT ACCEPTABLE  or is NOT ADEQUATE, which might be different, not sure.
         }
-        if ( is_adequate_fs || not is_ignore_key_kcs || not is_ignore_hot_key ) {
+        if ( is_adequate_fs_local || not is_ignore_kcs_local || not is_ignore_hot_key_local  ) {
             LOGGER_("This gotten key stroke a good single regular char");
             --additional_skc;           // TODO??: do we need to, or can we check for underflow on size_t?
         }
     } while (   additional_skc              >  0                                        &&
 
-                 hot_key_function_cat        == HotKeyFunctionCat::none                    && // TODO: refactor to use within applicable tests and while 123.
+                hot_key_function_cat        == HotKeyFunctionCat::none                    && // TODO: refactor to use within applicable tests and while 123.
 
                 file_status_result          != File_status::eof_Key_char_singular       &&
                 file_status_result          != File_status::eof_library                 &&
