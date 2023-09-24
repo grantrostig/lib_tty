@@ -480,34 +480,39 @@ get_successfull_iostate_cin() {
 
 /// File_status is not acceptable for the Kb_key_a_fstat we got, so result is an error.
 /// The question is can we recover?
-bool is_kb_key_bad_dt_file_status( File_status const file_status )  { // **** CASE on File Status
+//bool is_kb_key_bad_dt_file_status( File_status const file_status )  { // **** CASE on File Status
+bool is_adequate_file_status( File_status const file_status )  { // **** CASE on File Status
     switch (file_status) {
-    case File_status::good : LOGGER_("File_status is: other"); // TODO fix relationship to "other"
-        return false;
-    case File_status::other_user_kb_char_data_HACK : LOGGER_("File_status is: other"); //
-        return false;
-    case File_status::eof_Key_char_singular : LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
-        return false;
-    case File_status::eof_library : LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
-        return false;
-    case File_status::bad : LOGGER_("File_status is bad"); //
-        return false;
-    case File_status::fail : LOGGER_("File_status is bad"); //
-        return false;
-    case File_status::timed_out :       // handles case where the user is hand typing in the CSI hot_key.
-        cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
-        break;
+    case File_status::good :                        LOGGER_("File_status is: good"); // TODO fix relationship to "other"
+        return true;
+    case File_status::other_user_kb_char_data_HACK :LOGGER_("File_status is: other"); //
+        return true;
+    case File_status::eof_Key_char_singular :       LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
+        return true;
+    case File_status::eof_library :                 LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
+        return true;
     case File_status::unexpected_user_kb_char_data_HACK :
         cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // TODO: handle scrolling and dialog
         break;
+    case File_status::timed_out :       // handles case where the user is hand typing in the CSI hot_key.
+        cout << "\ais_ignore_key_file_status: keyboard timeout, try again.";
+        break;
     case File_status::eof_file_descriptor :
         assert( false && "File descriptor is at eof.");  // TODO: is this correct, or should we not ignore it?
+        break;
+    case File_status::bad :
+        LOGGER_("File_status is bad"); //
+        assert( false && "File descriptor is bad.");  // TODO: is this correct, or should we not ignore it?
+        break;
+    case File_status::fail :
+        LOGGER_("File_status is fail"); //
+        assert( false && "File descriptor is fail.");  // TODO: is this correct, or should we not ignore it?
         break;
     case File_status::initial_state :
         assert( false && "File_status should be set by now.");  // TODO: is this correct, or should we not ignore it?
         break;
     }
-    return true;  // we will add back the input character that we have decided to ignore.
+    return false;  // we will add back the input character that we have decided to ignore.
 }
 
 /// give it the string "EOF" and you get back 4 or ^D */
@@ -1094,7 +1099,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         Kb_key_a_fstat const    kb_key_a_fstat  { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         file_status_result 		  		        = kb_key_a_fstat.file_status;
         LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_fstat.file_status);
-        if ( not (is_ignore_key_fd = is_kb_key_bad_dt_file_status( file_status_result )) )  // file_status is OK
+        if ( (is_ignore_key_fd = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
             LOGGERS("is_ignore_key_fd:", is_ignore_key_fd);
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.kb_key_variant )) {
