@@ -24,7 +24,8 @@ Also is able to react to a single key press without waiting for CR or Enter.
 
 ~ Searchable Symbols in the Source Code ~
 SYMBOL     MEANING
- todo:	   the principal programmer needs todo.
- todo?:	   the principal programmer is not sure about something, that should be addressed.
- todo??:   is a question for verbal discussion at CppMSG.com meetup meetings.
+ TODO:	   the principal programmer needs todo.
+ TODO?:	   the principal programmer is not sure about something, that should be addressed.
+ TODO?X:   the X programmer is not sure about something, that should be addressed.
+ TODO??:   is a question for verbal discussion at CppMSG.com meetup meetings.
 

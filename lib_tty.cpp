@@ -480,7 +480,6 @@ get_successfull_iostate_cin() {
 
 /// File_status is not acceptable for the Kb_key_a_fstat we got, so result is an error.
 /// The question is can we recover?
-//bool is_kb_key_bad_dt_file_status( File_status const file_status )  { // **** CASE on File Status
 bool is_adequate_file_status( File_status const file_status )  { // **** CASE on File Status
     static_assert( std::is_enum_v< File_status > , "Precondition/Logic_error, should be an enum class.");
     switch (file_status) {
@@ -627,15 +626,15 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         // Secondly the multicharacter ESC sequences for the XTERM initially and then VT100 or ANSI.SYS? keyboard, which might be different as in "termcap" on some other hardware.
         // TODO: Make sure I have ALL keystrokes from USA pc keyboard.  XTERM https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
         {"f1",			{CSI_ESC,'O','P'}, 				HotKeyFunctionCat::help_popup, 				FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f2",			{CSI_ESC,'O','Q'}, 				HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f3",			{CSI_ESC,'O','R'}, 				HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f2",			{CSI_ESC,'O','Q'}, 				HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f3",			{CSI_ESC,'O','R'}, 				HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         {"f4",			{CSI_ESC,'O','S'}, 				HotKeyFunctionCat::nav_field_completion,    FieldCompletionNav::exit_with_prompts, FieldIntraNav::na},
         {"up_arrow",	{CSI_ESC,'[','A'}, 				HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::browse_up, 		FieldIntraNav::na},
         {"down_arrow",	{CSI_ESC,'[','B'}, 				HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::browse_down, 	FieldIntraNav::na},
         {"right_arrow",	{CSI_ESC,'[','C'}, 				HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_right},
         {"left_arrow",	{CSI_ESC,'[','D'}, 				HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_left},
         {"end",			{CSI_ESC,'[','F'}, 				HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::goto_end},
-        {"key_pad_5",	{CSI_ESC,'[','G'}, 				HotKeyFunctionCat::na,			 		    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"key_pad_5",	{CSI_ESC,'[','G'}, 				HotKeyFunctionCat::none,			 		    FieldCompletionNav::na, 			FieldIntraNav::na},
         {"home",		{CSI_ESC,'[','H'}, 				HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
         {"shift-tab",	{CSI_ESC,'[','Z'}, 				HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::up_one_field, 	FieldIntraNav::na},
         // VT100/220
@@ -643,23 +642,23 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"delete",		{CSI_ESC,'[',    '3','~'}, 		HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na, 			FieldIntraNav::delete_char},
         {"pageup",	  	{CSI_ESC,'[',    '5','~'}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_up,		FieldIntraNav::na},
         {"pagedown",	{CSI_ESC,'[',    '6','~'}, 		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::page_down,		FieldIntraNav::na},
-        {"f5",			{CSI_ESC,'[','1','5','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f6",			{CSI_ESC,'[','1','7','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
-        {"f7",			{CSI_ESC,'[','1','8','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f8",			{CSI_ESC,'[','1','9','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f9",			{CSI_ESC,'[','2','0','~'}, 		HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f10",			{CSI_ESC,'[','2','1','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
-        {"f11",			{CSI_ESC,'[','2','3','~'}, 		HotKeyFunctionCat::na, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
-        {"f12",			{CSI_ESC,'[','2','4','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f5",			{CSI_ESC,'[','1','5','~'}, 		HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f6",			{CSI_ESC,'[','1','7','~'}, 		HotKeyFunctionCat::none, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
+        {"f7",			{CSI_ESC,'[','1','8','~'}, 		HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f8",			{CSI_ESC,'[','1','9','~'}, 		HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f9",			{CSI_ESC,'[','2','0','~'}, 		HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f10",			{CSI_ESC,'[','2','1','~'}, 		HotKeyFunctionCat::none, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
+        {"f11",			{CSI_ESC,'[','2','3','~'}, 		HotKeyFunctionCat::none, 					    FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
+        {"f12",			{CSI_ESC,'[','2','4','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         // VT100/220, but not on USA PC AT keyboard
-        {"f13",			{CSI_ESC,'[','2','5','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f14",			{CSI_ESC,'[','2','6','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f15",			{CSI_ESC,'[','2','7','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f16",			{CSI_ESC,'[','2','8','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f17",			{CSI_ESC,'[','3','1','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f18",			{CSI_ESC,'[','3','2','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f19",			{CSI_ESC,'[','3','3','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"f20",			{CSI_ESC,'[','3','4','~'},  	HotKeyFunctionCat::na,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f13",			{CSI_ESC,'[','2','5','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f14",			{CSI_ESC,'[','2','6','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f15",			{CSI_ESC,'[','2','7','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f16",			{CSI_ESC,'[','2','8','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f17",			{CSI_ESC,'[','3','1','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f18",			{CSI_ESC,'[','3','2','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f19",			{CSI_ESC,'[','3','3','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"f20",			{CSI_ESC,'[','3','4','~'},  	HotKeyFunctionCat::none,					    FieldCompletionNav::na, 			FieldIntraNav::na},
         // ;2 is shift aka shf
         //{"shf-insert",	{CSI_ESC,'[','2',	 ';','2','~'}, 	HotKeyFunctionCat::editing_mode,			FieldCompletionNav::na,			 	FieldIntraNav::na},
         {"shf-delete",		{CSI_ESC,'[','3', 	 ';','2','~'},	HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na, 			FieldIntraNav::delete_char},
@@ -672,18 +671,18 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         //{"shf-keypad_5",	{'5'},				 				HotKeyFunctionCat::na,			 		FieldCompletionNav::na, 			FieldIntraNav::na},
         //???{"shf-home",	{CSI_ESC,'[','1',    ';','2','H'}}, HotKeyFunctionCat::nav_intra_field,		FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
         //???{"shf-end",	{CSI_ESC,'[','1',    ';','2','F'}}, HotKeyFunctionCat::nav_intra_field, 	FieldCompletionNav::na, 			FieldIntraNav::goto_end},
-        {"shf-f1",			{CSI_ESC,'[','1',    ';','2','P'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"shf-f2",			{CSI_ESC,'[','1',    ';','2','Q'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
-        {"shf-f3",			{CSI_ESC,'[','1',    ';','2','R'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"shf-f4",			{CSI_ESC,'[','1',    ';','2','S'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"shf-f5",			{CSI_ESC,'[','1','5',';','2','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"shf-f6",			{CSI_ESC,'[','1','7',';','2','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
-        {"shf-f7",			{CSI_ESC,'[','1','8',';','2','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"shf-f8",			{CSI_ESC,'[','1','9',';','2','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"shf-f9",			{CSI_ESC,'[','2','0',';','2','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f1",			{CSI_ESC,'[','1',    ';','2','P'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f2",			{CSI_ESC,'[','1',    ';','2','Q'}, 	HotKeyFunctionCat::none, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
+        {"shf-f3",			{CSI_ESC,'[','1',    ';','2','R'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f4",			{CSI_ESC,'[','1',    ';','2','S'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f5",			{CSI_ESC,'[','1','5',';','2','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f6",			{CSI_ESC,'[','1','7',';','2','~'}, 	HotKeyFunctionCat::none, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
+        {"shf-f7",			{CSI_ESC,'[','1','8',';','2','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f8",			{CSI_ESC,'[','1','9',';','2','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f9",			{CSI_ESC,'[','2','0',';','2','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
         //???{"shf-f10",	{CSI_ESC,'[','2','1',';','2','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
-        {"shf-f11",			{CSI_ESC,'[','2','3',';','2','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
-        {"shf-f12",			{CSI_ESC,'[','2','4',';','2','~'},  HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"shf-f11",			{CSI_ESC,'[','2','3',';','2','~'}, 	HotKeyFunctionCat::none, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
+        {"shf-f12",			{CSI_ESC,'[','2','4',';','2','~'},  HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
         // shift-keypad_key's is just like "NumLock", you get the numbers, not the arrows etc., ie. like shift for the keypad. This may be false!
         // ;5 is ctl
         //{"ctl-insert",	{CSI_ESC,'[','2',    ';','5','~'}, 		HotKeyFunctionCat::editing_mode,			FieldCompletionNav::na,			 	FieldIntraNav::na},
@@ -694,21 +693,21 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"ctl-down_arrow",	{CSI_ESC,'[','1',    ';','5','B'},		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::browse_down, 	FieldIntraNav::na},
         {"ctl-right_arrow",	{CSI_ESC,'[','1',    ';','5','C'},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_right},
         {"ctl-left_arrow",	{CSI_ESC,'[','1',    ';','5','D'},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_left},
-        {"ctl-keypad_5",	{CSI_ESC,'[','1',    ';','5','E'},		HotKeyFunctionCat::na, 						FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-keypad_5",	{CSI_ESC,'[','1',    ';','5','E'},		HotKeyFunctionCat::none, 						FieldCompletionNav::na, 			FieldIntraNav::na},
         //???{"ctl-home",	{CSI_ESC,'[','1',    ';','5','H'}},		HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
         //???{"ctl-end",	{CSI_ESC,'[','1',    ';','5','F'}},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::goto_end},
-        {"ctl-f1",			{CSI_ESC,'[','1',    ';','5','P'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"ctl-f2",			{CSI_ESC,'[','1',    ';','5','Q'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
-        {"ctl-f3",			{CSI_ESC,'[','1',    ';','5','R'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"ctl-f4",			{CSI_ESC,'[','1',    ';','5','S'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"ctl-f5",			{CSI_ESC,'[','1','5',';','5','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"ctl-f6",			{CSI_ESC,'[','1','7',';','5','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
-        {"ctl-f7",			{CSI_ESC,'[','1','8',';','5','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"ctl-f8",			{CSI_ESC,'[','1','9',';','5','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
-        {"ctl-f9",			{CSI_ESC,'[','2','0',';','5','~'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f1",			{CSI_ESC,'[','1',    ';','5','P'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f2",			{CSI_ESC,'[','1',    ';','5','Q'}, 	HotKeyFunctionCat::none, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
+        {"ctl-f3",			{CSI_ESC,'[','1',    ';','5','R'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f4",			{CSI_ESC,'[','1',    ';','5','S'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f5",			{CSI_ESC,'[','1','5',';','5','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f6",			{CSI_ESC,'[','1','7',';','5','~'}, 	HotKeyFunctionCat::none, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 54 '6'
+        {"ctl-f7",			{CSI_ESC,'[','1','8',';','5','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f8",			{CSI_ESC,'[','1','9',';','5','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f9",			{CSI_ESC,'[','2','0',';','5','~'}, 	HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
         //{"ctl-f10",		{CSI_ESC,'[','2','1',';','5','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // TODO: is this like ESC or EOF_CHAR?
-        {"ctl-f11",			{CSI_ESC,'[','2','3',';','5','~'}, 	HotKeyFunctionCat::na, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
-        {"ctl-f12",			{CSI_ESC,'[','2','4',';','5','~'},  HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"ctl-f11",			{CSI_ESC,'[','2','3',';','5','~'}, 	HotKeyFunctionCat::none, 					FieldCompletionNav::na, 			FieldIntraNav::na}, // note skipped 50
+        {"ctl-f12",			{CSI_ESC,'[','2','4',';','5','~'},  HotKeyFunctionCat::none,					FieldCompletionNav::na, 			FieldIntraNav::na},
 
         // ;3 is alt
         {"alt-insert",		{CSI_ESC,'[','2',';','3','~'}, 		HotKeyFunctionCat::editing_mode,			FieldCompletionNav::na,			 	FieldIntraNav::na},
@@ -719,7 +718,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"alt-down_arrow",	{CSI_ESC,'[','1',';','3','B'},		HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::browse_down, 	FieldIntraNav::na},
         {"alt-right_arrow",	{CSI_ESC,'[','1',';','3','C'},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_right},
         {"alt-left_arrow",	{CSI_ESC,'[','1',';','3','D'},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::move_left},
-        {"alt-keypad_5",	{CSI_ESC,'[','1',';','3','E'},		HotKeyFunctionCat::na, 						FieldCompletionNav::na, 			FieldIntraNav::na},
+        {"alt-keypad_5",	{CSI_ESC,'[','1',';','3','E'},		HotKeyFunctionCat::none, 						FieldCompletionNav::na, 			FieldIntraNav::na},
         /*???{"alt-home",	{CSI_ESC,'[','1',    ';','3','H'}},		HotKeyFunctionCat::nav_intra_field,			FieldCompletionNav::na,			 	FieldIntraNav::goto_begin},
         //???{"alt-end",	{CSI_ESC,'[','1',    ';','3','F'}},		HotKeyFunctionCat::nav_intra_field, 		FieldCompletionNav::na, 			FieldIntraNav::goto_end},
         //{"alt-f1",			{CSI_ESC,'[','1',    ';','3','P'}, 	HotKeyFunctionCat::na,					FieldCompletionNav::na, 			FieldIntraNav::na},
@@ -817,69 +816,6 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
     LOGGER_("Return:No match");
     return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 }
-
-/* Kb_key_a_fstat get_kb_keystroke_raw_old2() {
-//    Hot_key_chars       hot_key_chars   {};
-//    File_status         file_status     {File_status::other};
-//    Key_char_singular   first_kcs       {0} ;
-//    cin.get( first_kcs );
-//    if ( first_kcs == CSI_ALT ) hot_key_chars.push_back( CSI_ESC ); else hot_key_chars.push_back( first_kcs );
-//    // So far, we have one kb char of some unknown type, but is it more complicated, ie. is it a simple ASCII letter, or a hot_key? which is possibly a singlebyte or multibyte function key like F1, let's continue and see.
-
-//    while ( true ) {
-//        file_status = File_status::other;
-//        if ( cin.eof() || first_kcs == 0) {             // does this every happen? TODO: 0 == the break character or what else could it mean?
-//            assert( (cin.eof() || first_kcs == 0) && "We probably don't handle eof well."); // TODO: more eof handling needed
-//            file_status = File_status::eof_file_descriptor;
-//            return { hot_key_chars, file_status};
-//        };
-//        if ( first_kcs == CSI_ESC ) {                   // If all is as expected, we might have one or  more characters from that single keystroke, so let's get another char.
-//            Key_char_singular timed_test_char {0};
-//            Termios const   termios_orig    { termio_set_timer( VTIME_ESC ) }; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
-//            cin.get( timed_test_char );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
-//                                                        // TODO??: could I use peek() to improve this code?
-//            // if ( cin.eof() ) {                       // TODO: Is this code needed?  Why commented out? this appears to be triggered by ESC alone, ie. the time expires.  Had thought that just the char would be 0.
-//             //   assert( (cin.eof()) && "Post timer, we probably don't handle eof well."); // TODO: more eof handling needed
-//              //  file_status = File_status::eof_file_descriptor;
-//               // termio_restore( termios_orig );
-//               // return { hkc, file_status};
-//            //};
-//            termio_restore( termios_orig );
-//            if ( timed_test_char == TIMED_GET_NULL )
-//            {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
-//                hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC TODO: is this needed?? in superficial testing is seems not!  // TODO: MAGIC NUMBER.
-//                cin.clear();                              // TODO: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
-//            }
-//            else {
-//                //cin.putback( timed_test_char );                                       // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
-//                hot_key_chars.push_back( timed_test_char );   // We got another char, and it may be part of a multi-byte sequence.
-//            }
-//        }
-//        Hotkey_o_errno const hot_key_or_error { consider_hot_key( hot_key_chars )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. TODO: consider using ref for speed?
-//        if ( std::holds_alternative< Hot_key >( hot_key_or_error ) )  // We have a real hot_key, so we are done!
-//            return { std::get< Hot_key >(hot_key_or_error),         File_status::other };  // TODO: file_status is what? might be EOF or other?
-//        else {
-//            LOGGERS("We have an Lt_errno.", std::get< Lt_errno >(hot_key_or_error) );
-//            switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
-//            case E_NO_MATCH:
-//                if ( XXXX hot_key_chars.size() == 1 )
-//                    return { first_kcs , File_status::other };  // MOST COMMON CASE!!  we just got a regular character after all. :)
-//                // **** this is the Hot_key_chars case of the variant return value  // TODO: should we throw away or putback?
-//                // std::for_each( hkc.rend(), std::prev(hkc.rbegin()), [](Key_char_singular i){cin.putback(i);});  // all except first one.  TODO: how many can I putback in this implementation?  Is it even a good idea?
-//                // hkc.clear();
-//                // Hot_key_chars const hot_key_chars_unfound { hkc.begin(), hkc.end() };
-//                else
-//                    return { hot_key_chars, File_status::unexpected_data };  // we got a CSI, but that followed didn't match any of the subsequent chars of a multi-byte sequence.
-//                break;
-//            case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get a hotkey.
-//                continue;
-//                break;
-//            }
-//        }
-//    } // * end loop *
-//    assert( false && "We should never get here.");
-//}
-*/
 
 Kb_key_a_fstat
 get_kb_keystroke_raw() {
@@ -1000,11 +936,10 @@ bool is_ignore_hotkey( HotKeyFunctionCat const hot_key_function_cat ) {
     LOGGERS("hot_key_function_cat: ", (int)hot_key_function_cat);
     // **** CASE on hot key Function Category
     switch ( hot_key_function_cat ) {
-    case HotKeyFunctionCat::other :
-        LOGGER_("HotKeyFunctionCat::other");
-        cout << "\aLast key press not handled here, so ignored.\n";
-        assert(false && "\aHotKeyFunctionCat::other sounds bad like a bad type, not sure about what cases are and how to handle." );  // TODO:
-        return false;
+    case HotKeyFunctionCat::initial_state :
+        //cout << "\aLast key press not handled here, so ignored.\n";
+        assert(false && "Logic_error: hot_key_function_cat should have been set prior." );  // TODO:
+        return true;
         break;
     case HotKeyFunctionCat::nav_field_completion :
         LOGGER_("Navigation completion");
@@ -1027,7 +962,7 @@ bool is_ignore_hotkey( HotKeyFunctionCat const hot_key_function_cat ) {
     case HotKeyFunctionCat::help_popup :
         LOGGER_("Help Pop-Up");
         break;
-    case HotKeyFunctionCat::na :
+    case HotKeyFunctionCat::none :
         LOGGER_("HotKeyFunctionCat::na");
         break;
     }
@@ -1084,18 +1019,19 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     Hot_key		 		hot_key_result          {};  /// The hot_key that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
     size_t 		 		additional_skc 			{length_in_keystrokes};  // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
-    HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::na};			// reset some variables from prior loop if any, specifically old/prior hot_key.
+    HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::none};			// reset some variables from prior loop if any, specifically old/prior hot_key.
     //unsigned 			int value_index			{0}; // Note: Points to the character beyond the current character (presuming zero origin), like an STL iterator it.end(), hence 0 == empty field.
     //bool 		 		is_editing_mode_insert  {true};
     cin.exceptions( std::istream::failbit );            // Throw on fail of cin.  TODO??: maybe interactions with CIN should include more calls to cin.good() etc., and rdstate/ios_base::badbit etc.
     Termios const termios_orig 	{ termio_set_raw() };   /// Used to restore our keyboard to COOKED.
     key_char_i18ns_result.clear();                      // for this loop, we will consider size == 0 to be STRING_NULL.
     do {  // ******* BEGIN do_while to Gather char(s) to make a n-length value or until we get a "completion" Hot_key, or number of chars, or error.**************************
-        bool is_ignore_key_kcs  {false};                /// Suppress this character if user enters it.
-        bool is_ignore_hot_key  {false};                /// Does not constitute a HotKeyFuntionCat::nav_field_completion for this loop.
-        bool is_adequate_fs     {false};                /// Don't worry about these file_descriptor stati.
+        bool is_ignore_key_kcs  {false};                 /// Suppress this character if user enters it.
+        bool is_ignore_hot_key  {false};                 /// Does not constitute a HotKeyFuntionCat::nav_field_completion for this loop.
+        bool is_adequate_fs     {false};                 /// Don't worry about these file_descriptor stati.
         hot_key_result          = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
-        hot_key_function_cat    = HotKeyFunctionCat::na; // reset some variables from prior loop if any, specifically old/prior hot_key.
+        hot_key_function_cat    = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
+                                                         // TODO?: may not need this local, but not sure untill below TODOs are done.
 
         Kb_key_a_fstat const    kb_key_a_fstat  { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         file_status_result 		  		        = kb_key_a_fstat.file_status;
@@ -1120,6 +1056,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 //                    is_editing_mode_insert 	= ! is_editing_mode_insert;  // TODO: Do we use this value here, or down the call stack?
                 //                    cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
                 //                }
+
                 is_ignore_hot_key            = is_ignore_hotkey( hot_key_function_cat );    // TODO: refactor to use within applicable tests and while 123.
             }
             else {
@@ -1129,23 +1066,27 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
             }
         }
         else {
-            assert( false &&"Logic error: on file_status we need to handle this case!");  // file_status is NOT ACCEPTABLE
+            assert( false &&"Logic error/omission: on file_status we need to handle this case!");  // file_status is NOT ACCEPTABLE  or is NOT ADEQUATE, which might be different, not sure.
         }
-        if ( is_adequate_fs || !is_ignore_key_kcs || !is_ignore_hot_key ) {
-            LOGGER_("This key stroke a good single regular char");
+        if ( is_adequate_fs || not is_ignore_key_kcs || not is_ignore_hot_key ) {
+            LOGGER_("This gotten key stroke a good single regular char");
             --additional_skc;           // TODO??: do we need to, or can we check for underflow on size_t?
         }
     } while (   additional_skc              >  0                                        &&
-                hot_key_function_cat        == HotKeyFunctionCat::na                    && // TODO: refactor to use within applicable tests and while 123.
+
+                 hot_key_function_cat        == HotKeyFunctionCat::none                    && // TODO: refactor to use within applicable tests and while 123.
+
                 file_status_result          != File_status::eof_Key_char_singular       &&
                 file_status_result          != File_status::eof_library                 &&
                 file_status_result          != File_status::eof_file_descriptor
             );      // TODO: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
     //******* END   do_while ****************************************************************************************************************
     //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now throwing away other keystrokes.
-    while (     is_require_field_completion_key                                         &&
+    while (     is_require_field_completion_key                                         &&  // TODO: probably totally wrong, check it.
+
                 hot_key_result.function_cat != HotKeyFunctionCat::nav_field_completion  &&  // TODO: may need more cats like intra_field, editing_mode?
                 hot_key_result.function_cat != HotKeyFunctionCat::navigation_esc        &&
+
                 file_status_result          != File_status::eof_Key_char_singular       &&
                 file_status_result          != File_status::eof_library                 &&
                 file_status_result          != File_status::eof_file_descriptor

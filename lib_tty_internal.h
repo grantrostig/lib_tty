@@ -30,6 +30,14 @@
 // POSIX headers
 #include <termios.h>
 // #include <uistd.h>  // I thought I needed it, but apparently not.
+
+// SYMBOL     MEANING
+// TODO:     the principal programmer needs todo.
+// TODO?:	 the principal programmer is not sure about something, that should be addressed.
+// TODO?:X   the X programmer is not sure about something, that should be addressed.
+// TODO??:   is a question for verbal discussion at CppMSG.com meetup meetings.
+
+
 //#define NDEBUG   // define if asserts are NOT to be checked.
 /// Some crude logging that privides source location.
 #define LOGGER_( msg )   using loc = std::source_location;std::cerr<<"\n\r["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:{" <<#msg<<"}.\r\n";

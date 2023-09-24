@@ -56,20 +56,19 @@ enum class File_status { /// After reading a char, did we get something good, sh
   unexpected_user_kb_char_data_HACK  /// got bad data from hardware error, or user error, ie. something we don't expect or support. TODO: fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
 };
 
-/** The user level intent of all "Categories" of HotKeys
+/** The "Categories" of user level intent expressed by use of HotKeys
  */
 enum class HotKeyFunctionCat {
-  nav_field_completion,     // nav == user navigation between elements of a certain type.  here user want to finish that field input and move to next thing.
+  none,						// a hot_key that is not yet assigned to a user intent function in the table.
+  help_popup,               // user is asking for help using keyboard, ie. F1 for help.
   nav_intra_field,          // user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
+  editing_mode,             // <Insert> (or possibly other) HotKey toggles this.
 
-  navigation_esc,           // user ESCAPE key, is used similarly to nav_field_completion, TODO:not sure if it is needed seperately.
+  nav_field_completion,     // nav == user navigation between elements of a certain type.  here user want to finish that field input and move to next thing.
+  navigation_esc,           // user ESCAPE key, is used similarly to nav_field_completion, TODO: not sure if it is needed seperately.
 
   job_control,              // TODO: not implemented yet, nor mapped in hot_keys vector. maybe this is not a HotKeyFunctionCat?? // QUIT Ctrl-z,  STOP Ctrl-s, START Ctrl-q ,
-  help_popup,               // user is asking for help using keyboard, ie. F1 for help.
-  editing_mode,             // <Insert> (or possibly other) HotKey toggles this.
-  na,						// TODO:
-  other                     // TODO:, used as ::na filler designation, probably means none.
-    //initial_state         // TODO:
+  initial_state             // TODO: probably need some assert for logic errors.
 };
 
 /** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
@@ -147,7 +146,7 @@ public:
         /// See the type's documentation.
   Hot_key_chars      characters         {STRING_NULL.cbegin(),STRING_NULL.cend()};
         /// Depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
-  HotKeyFunctionCat  function_cat       {HotKeyFunctionCat::na};
+  HotKeyFunctionCat  function_cat       {HotKeyFunctionCat::initial_state};
         /// gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
   FieldCompletionNav f_completion_nav   {FieldCompletionNav::na};
         /// gets a value if HotKeyFunctionCat::nav_intra_field
