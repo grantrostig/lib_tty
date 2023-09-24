@@ -482,6 +482,7 @@ get_successfull_iostate_cin() {
 /// The question is can we recover?
 //bool is_kb_key_bad_dt_file_status( File_status const file_status )  { // **** CASE on File Status
 bool is_adequate_file_status( File_status const file_status )  { // **** CASE on File Status
+    static_assert( std::is_enum_v< File_status > , "Precondition/Logic_error, should be an enum class.");
     switch (file_status) {
     case File_status::good :                        LOGGER_("File_status is: good"); // TODO fix relationship to "other"
         return true;
@@ -1092,16 +1093,16 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     do {  // ******* BEGIN do_while to Gather char(s) to make a n-length value or until we get a "completion" Hot_key, or number of chars, or error.**************************
         bool is_ignore_key_kcs  {false};                /// Suppress this character if user enters it.
         bool is_ignore_hot_key  {false};                /// Does not constitute a HotKeyFuntionCat::nav_field_completion for this loop.
-        bool is_ignore_key_fd   {false};                /// Don't worry about these file_descriptor stati.
+        bool is_adequate_fs     {false};                /// Don't worry about these file_descriptor stati.
         hot_key_result          = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat    = HotKeyFunctionCat::na; // reset some variables from prior loop if any, specifically old/prior hot_key.
 
         Kb_key_a_fstat const    kb_key_a_fstat  { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         file_status_result 		  		        = kb_key_a_fstat.file_status;
         LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_fstat.file_status);
-        if ( (is_ignore_key_fd = is_adequate_file_status( file_status_result )))   // file_status is OK
+        if ( (is_adequate_fs = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
-            LOGGERS("is_ignore_key_fd:", is_ignore_key_fd);
+            LOGGERS("is_ignore_key_fd:", is_adequate_fs);
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.kb_key_variant )) {
                 Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_fstat.kb_key_variant ) };
                 LOGGERS("is kcs:", kcs);
@@ -1130,8 +1131,10 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         else {
             assert( false &&"Logic error: on file_status we need to handle this case!");  // file_status is NOT ACCEPTABLE
         }
-        if ( !is_ignore_key_fd || !is_ignore_key_kcs || !is_ignore_hot_key )
-            --additional_skc;
+        if ( is_adequate_fs || !is_ignore_key_kcs || !is_ignore_hot_key ) {
+            LOGGER_("This key stroke a good single regular char");
+            --additional_skc;           // TODO??: do we need to, or can we check for underflow on size_t?
+        }
     } while (   additional_skc              >  0                                        &&
                 hot_key_function_cat        == HotKeyFunctionCat::na                    && // TODO: refactor to use within applicable tests and while 123.
                 file_status_result          != File_status::eof_Key_char_singular       &&
