@@ -47,8 +47,8 @@ enum class File_status { /// After reading a char, did we get something good, sh
   initial_state,         /// initial state, should not remain this way after any tty read() or get().
   good,                  /// we read and all is good() on cin.  TODO: implement this throughout lib_tty.
   timed_out,             /// we read, but didn't get a value, could represent case where the user is hand typing in the CSI hot_key.
-  eof_Key_char_singular, /// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
-  eof_library,           /// get application library EOF.
+  //eof_Key_char_singular, /// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
+  //eof_library,           /// get application library EOF.  TODO: not used, determine if different than hot_key CTRL-D, which is a nav_field_completion
   eof_file_descriptor,   /// get library or OS EOF.
   fail,                  /// we read, but we got format/extraction error.
   bad,                   /// we read, but we got serious unrecoverable error.
@@ -64,7 +64,8 @@ enum class HotKeyFunctionCat {
   nav_intra_field,          // user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
   editing_mode,             // <Insert> (or possibly other) HotKey toggles this.
 
-  nav_field_completion,     // nav == user navigation between elements of a certain type.  here user want to finish that field input and move to next thing.
+  nav_field_completion,     // nav == user navigation between elements of a certain type. Here user want to finish that field input and move to next thing.
+                            // note: this include CTRL-D entered by user, but not other types of EOF such as from the device.
   navigation_esc,           // user ESCAPE key, is used similarly to nav_field_completion, TODO: not sure if it is needed seperately.
 
   job_control,              // TODO: not implemented yet, nor mapped in hot_keys vector. maybe this is not a HotKeyFunctionCat?? // QUIT Ctrl-z,  STOP Ctrl-s, START Ctrl-q ,

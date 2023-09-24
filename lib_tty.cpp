@@ -487,10 +487,10 @@ bool is_adequate_file_status( File_status const file_status )  { // **** CASE on
         return true;
     case File_status::other_user_kb_char_data_HACK :LOGGER_("File_status is: other"); //
         return true;
-    case File_status::eof_Key_char_singular :       LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
-        return true;
-    case File_status::eof_library :                 LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
-        return true;
+    //case File_status::eof_Key_char_singular :       LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
+        //return true;
+    //case File_status::eof_library :                 LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
+        //return true;
     case File_status::unexpected_user_kb_char_data_HACK :
         cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // TODO: handle scrolling and dialog
         break;
@@ -1073,23 +1073,21 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
             LOGGER_("This gotten key stroke a good single regular char");
             --additional_skc;           // TODO??: do we need to, or can we check for underflow on size_t?
         }
+        assert(true && "Logic error: nav and nav_eof and file_status::eof_Key_char_singular are not consistent");  // TODO: might be worthwhile to add?
+
     } while (   additional_skc              >  0                                        &&
-
-                hot_key_function_cat        == HotKeyFunctionCat::none                    && // TODO: refactor to use within applicable tests and while 123.
-
-                file_status_result          != File_status::eof_Key_char_singular       &&
-                file_status_result          != File_status::eof_library                 &&
+                hot_key_function_cat        == HotKeyFunctionCat::none                  &&
+                //file_status_result          != File_status::eof_Key_char_singular       &&
+                //file_status_result          != File_status::eof_library                 &&
                 file_status_result          != File_status::eof_file_descriptor
             );      // TODO: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
     //******* END   do_while ****************************************************************************************************************
     //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now throwing away other keystrokes.
     while (     is_require_field_completion_key                                         &&  // TODO: probably totally wrong, check it.
-
                 hot_key_result.function_cat != HotKeyFunctionCat::nav_field_completion  &&  // TODO: may need more cats like intra_field, editing_mode?
                 hot_key_result.function_cat != HotKeyFunctionCat::navigation_esc        &&
-
-                file_status_result          != File_status::eof_Key_char_singular       &&
-                file_status_result          != File_status::eof_library                 &&
+                //file_status_result          != File_status::eof_Key_char_singular       &&
+                //file_status_result          != File_status::eof_library                 &&
                 file_status_result          != File_status::eof_file_descriptor
           )
     {
