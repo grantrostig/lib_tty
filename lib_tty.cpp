@@ -610,6 +610,7 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         // first the single key char action keys that are the good old Unix shell standard.
         {"escape",		{find_posix_char_from_posix_name(ascii_posix_map, "ESC"),
                          NO_MORE_CHARS},                                                  HotKeyFunctionCat::navigation_esc,        FieldCompletionNav::esc,			 	FieldIntraNav::na},
+                            // TODO?: do we need NO_MORE_CHARS? or do other single character hot_keys like <TAB>
         {"eof",			{find_posix_char_from_posix_name(ascii_posix_map, "EOF")},        HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::eof,			 	FieldIntraNav::na},
         {"quit",		{find_posix_char_from_posix_name(ascii_posix_map, "QUIT")}, 	  HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
         {"interrupt",	{find_posix_char_from_posix_name(ascii_posix_map, "INTR")},       HotKeyFunctionCat::nav_field_completion,	FieldCompletionNav::quit_signal,		FieldIntraNav::na},
@@ -1077,18 +1078,18 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
 
     } while (   additional_skc              >  0                                        &&
                 hot_key_function_cat        == HotKeyFunctionCat::none                  &&
+                file_status_result          != File_status::eof_file_descriptor
                 //file_status_result          != File_status::eof_Key_char_singular       &&
                 //file_status_result          != File_status::eof_library                 &&
-                file_status_result          != File_status::eof_file_descriptor
             );      // TODO: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
     //******* END   do_while ****************************************************************************************************************
     //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now throwing away other keystrokes.
     while (     is_require_field_completion_key                                         &&  // TODO: probably totally wrong, check it.
                 hot_key_result.function_cat != HotKeyFunctionCat::nav_field_completion  &&  // TODO: may need more cats like intra_field, editing_mode?
                 hot_key_result.function_cat != HotKeyFunctionCat::navigation_esc        &&
+                file_status_result          != File_status::eof_file_descriptor
                 //file_status_result          != File_status::eof_Key_char_singular       &&
                 //file_status_result          != File_status::eof_library                 &&
-                file_status_result          != File_status::eof_file_descriptor
           )
     {
         Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
