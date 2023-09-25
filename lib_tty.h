@@ -61,7 +61,8 @@ enum class File_status { /// After reading a char, did we get something good, sh
 enum class HotKeyFunctionCat {
   none,						// a hot_key that is not yet assigned to a user intent function in the table.
   help_popup,               // user is asking for help using keyboard, ie. F1 for help.
-  nav_intra_field,          // user wants to move within the single user input field.  Currently only single line, so left arrow and end-line, etc.
+  nav_intra_field,          // user wants to move within the single user input field.  Currently we have only a single line interface, so left arrow and end-line, <BS> backspace, <DEL> etc.
+                            // TODO?: NOTE: Should such nav_intra be handled by the client of the libaray, or what handling should be done with this libary when reading keystrokes?
   editing_mode,             // <Insert> (or possibly other) HotKey toggles this.
 
   nav_field_completion,     // nav == user navigation between elements of a certain type. Here user want to finish that field input and move to next thing.

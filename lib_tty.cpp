@@ -942,15 +942,15 @@ bool is_ignore_hot_key( HotKeyFunctionCat const hot_key_function_cat ) {
         assert(false && "Logic_error: hot_key_function_cat should have been set prior." );  // TODO:
         return true;
         break;
-    case HotKeyFunctionCat::nav_field_completion :
-        LOGGER_("Navigation completion");
-        break;
     case HotKeyFunctionCat::editing_mode :
         // TODO: how do we use this?  do we ignore the character?? is_editing_mode_insert = ! is_editing_mode_insert;
         LOGGER_("Editing mode toggled");
         return true;
         break;
     // All subsequent cases appear to be exactly the same except for debugging messages.
+    case HotKeyFunctionCat::nav_field_completion :
+        LOGGER_("Navigation completion");
+        break;
     case HotKeyFunctionCat::navigation_esc :
         LOGGER_("Navigation ESC");
         break;
@@ -995,14 +995,15 @@ bool is_ignore_kcs( Key_char_singular const skc,
     assert( skc != '\0' && "Precondition: Did not expect char of 0, but maybe it is acceptable and this assert needs to change." );
     LOGGERS("Char is:", static_cast< int >( skc ));
     if ( is_usable_char( skc, is_allow_control_chars )) {
-        if ( is_echo_skc_to_tty )
+        if ( is_echo_skc_to_tty ) {
             cout << skc <<endl;
-        //value_rv += skc; //value_index++; // TODO: index would have to be used if value is not a string, but instead an vector<KbFundamentalUnit>
+        }
         return false;
     }
     else {
-        if ( is_ring_bell_on_ignore )
+        if ( is_ring_bell_on_ignore ) {
             cout << "\a";
+        }
         cout << "Last key press invalid/unusable here, so ignored."<<endl;
         return true;
     }

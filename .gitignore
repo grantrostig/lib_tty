@@ -6,6 +6,8 @@ build/
 src/
 inc/
 
+.gdb*
+
 *~
 *.autosave
 *.a
