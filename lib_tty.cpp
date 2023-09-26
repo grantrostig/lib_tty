@@ -468,7 +468,8 @@ get_successfull_iostate_cin() {
                 file_status = File_status::bad;
                 assert( false && "cin is bad() how did that happen?  We don't handle it." );
             } else {
-                file_status = File_status::other_user_kb_char_data_HACK;
+                file_status = File_status::good; // grostig
+                // TODO?: might be good, but what if a timed get timed out with an alarm signal? Needs to be checked and possible reworking of logic.
                 LOGGER_("Cin is good.")
                 assert( cin.good() && "Logic error:Should be good by exclusion.");
             }
@@ -601,8 +602,9 @@ consider_hot_key( Hot_key_chars const & candidate_hk_chars ) {
         {"RS",	"record_separator",		"???",		'^',	0,		30,	30},  //
         {"US",	"unit_separator",		"???",		'_',	0,		31,	31},  //
         {"DEL",	"delete",				"ERASE",	'?',	0,	   127,127},  // BS alternative, how related to tty erase?. erase the last character typed. similar to "BS" // TODO: NOT IMPLEMENTED in hot_key_table //  BS/ERASE on MacOS?
-        {" ",	"space",				"???",	    0,		' ',    32, 32},  // simple space character or blank
-        {"\\",	"backslash",			"???",		0,		0x5C,   92, 92}, // simple
+
+        {" ",	"space",				"???",	    0,		' ',    32, 32},  // Simple space character or blank. TODO: why is this here with special chars?
+        {"\\",	"backslash",			"???",		0,		0x5C,   92, 92},  // Simple character. TODO: why is this here with special chars?
     };
     //static_assert( not ascii_posix_map.empty() );  TODO??: how to make this consexpr, and would it benefit size or speed of program?
     static       Hot_key_table 		 hot_key_table {
@@ -894,13 +896,11 @@ get_kb_keystroke_raw() {
             file_status = File_status::timed_out;
             hot_key_chars.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC TODO: is this needed?? in superficial testing is seems not!  // TODO: MAGIC NUMBER.
             cin.clear();                              // TODO: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
-            //file_status = File_status::other;
         }
         else {
             LOGGERS("Got a timed char.", timed_kcs);
-            //cin.putback( timed_test_char );                                       // WRONG?? It is part of an ESC multibyte sequence, so we will need it next loop iteration!  The CSI_ESC will be a partial match and later we pick up the other characters.
-            file_status = File_status::other_user_kb_char_data_HACK;
-            hot_key_chars.push_back( timed_kcs );   // We got another char, and it may be part of a multi-byte sequence.
+            // file_status = File_status::other_user_kb_char_data_HACK;  // grostig  just because we determined that we got a good char, doesn't change the file_status, so leave it alone! It was already set above after the get/read().
+            hot_key_chars.push_back( timed_kcs );   // We got another char, and we hope it may be part of a multi-byte sequence.
         }
 
         // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
@@ -910,7 +910,8 @@ get_kb_keystroke_raw() {
             assert( first_kcs != 0 && "Postcondition11.");
             assert( not hot_key_chars.empty() && "Postcondition12.");
             assert( File_status::initial_state != file_status && "Postcondition3.");
-            return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            //return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            return { std::get< Hot_key >(hot_key_or_error), file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
             LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
@@ -919,7 +920,8 @@ get_kb_keystroke_raw() {
                 assert( is_potential_CSI_ALT && "Postcondition13.");
                 assert( not hot_key_chars.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
                 assert( file_status != File_status::initial_state && "Postcondition4.");
-                return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                //return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { hot_key_chars, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
                 continue;          // to the top of the while loop.

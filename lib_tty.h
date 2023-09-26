@@ -161,31 +161,25 @@ public:
 };
 using Hot_key_table = std::vector< Hot_key >; /// Stores all known Hot_keys for internal library use.
 
-/** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not.
- *  or EOF.
- *  Yes, this is everything but the kitchen sink.  Probaly excessive and need refactoring.
- *  TODO: does this include an EOF character?
+/** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not OR EOF.
+ *  TODO: An international i18n char could look like a hotkey since it might start with <ESC> or something else special, this is not yet accounted for in this code.
+ *  TODO: char does this include an EOF character?
  *  was: //key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18ns, Hot_key_chars, Hot_key, File_status >;
  */
 using   Kb_key_variant = std::variant< std::monostate, Key_char_singular,               Hot_key_chars, Hot_key              >;
 
-/** Tells us if we got a Kb_key and if we "are at"/"or got?" EOF.
+/** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"
- *  TODO: we have a problem with File_status, also in Kb_key_variant - we don't need it twice!  This one IS currenlty used.
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
- *  was //using Kb_key_a_fstat = std::pair< Kb_key_variant, File_status >;
-    // We return either regular char(s), or a Hot_key
 */
 struct Kb_key_a_fstat {
   Kb_key_variant    kb_key_variant  {};                             /// some datatype form of the key
   File_status       file_status     {File_status::initial_state};   /// holds what is happening with cin EOF
 };
 
-/** a 3 tuple tells us if we got a Kb_key and?, or? a Hot_key, and, or?, is we got EOF. TODO?:
+/** A return value which tells us if we got a Kb_key and?, or? a Hot_key, and, or?, if we got EOF. TODO?:
  *  Heavily used everywhere!
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
- *  TODO: consider replacing std::tuple/std::pair with struct!
- *  was: //using Kb_value_plus = std::tuple< Key_char_i18ns, Hot_key, File_status >;
  */
 struct Kb_value_plus {
   Key_char_i18ns    key_char_i18ns  {STRING_NULL};
@@ -257,9 +251,9 @@ get_kb_keystroke_raw();
  */
 Kb_value_plus
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
-                 bool const   is_require_field_completion,
-                 bool const   is_echo_skc_to_tty,           /// skc == Key_char_singular
-                 bool const   is_allow_control_chars );
+                       bool const   is_require_field_completion,
+                       bool const   is_echo_skc_to_tty,           /// skc == Key_char_singular
+                       bool const   is_allow_control_chars );
 
 /*****************************************************************************/
 /**************** END   Lib_tty     Level Declarations ***********************/
