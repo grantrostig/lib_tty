@@ -125,7 +125,7 @@ void print_signal(int const signal) {
 }
 
 ///  Debugging use only at this time.
-std::optional<Hot_key>
+std::optional<Hot_key_row>
 find_hot_key(const Hot_key_table &hot_key_table, const Key_chars_i18n this_key) {
     for (auto & hk : hot_key_table)
         if ( hk.characters == this_key )
@@ -436,16 +436,16 @@ termio_set_timer( cc_t const time) {  // uses POSIX
 
 /********** START Hot_key Class specific code ********************************/
 /// Free function.  //TODO??: or should this be a member function? Why?
-bool is_hk_chars_equal( Hot_key const & left, Hot_key const & right ) {
+bool is_hk_chars_equal( Hot_key_row const & left, Hot_key_row const & right ) {
     return ( left.characters == right.characters );
 }
 
-bool Hot_key::operator< ( Hot_key const  & in ) const {
+bool Hot_key_row::operator< ( Hot_key_row const  & in ) const {
     return ( characters < in.characters );
 }
 
 std::string
-Hot_key::to_string() const {  // found in lib_tty.h
+Hot_key_row::to_string() const {  // found in lib_tty.h
     std::string s {my_name};  // TODO: finish this
     return s;
 }
@@ -849,7 +849,7 @@ xterm-256color|xterm with 256 colors,
 #endif
     }
     LOGGERS("Candidate_hk_chars:", candidate_hk_chars);
-    Hot_key const candidate_hk_search_target { {}, candidate_hk_chars };
+    Hot_key_row const candidate_hk_search_target { {}, candidate_hk_chars };
     auto    const firstmatch_o_prior_itr            { std::lower_bound( hot_key_table.begin(), hot_key_table.end(), candidate_hk_search_target )};  // first that matches, or the prior value (ie before the next too big number).
     if ( firstmatch_o_prior_itr != hot_key_table.end() ) {
         LOGGERS("First match or prior hot_key_table entry:",   firstmatch_o_prior_itr->my_name);
@@ -912,12 +912,12 @@ get_kb_keystroke_raw() {
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
         assert( key_chars_i18n.size() == 1 && "Logic error.");
         Hotkey_o_errno hot_key_candidate = consider_hot_key( key_chars_i18n );
-        if ( std::holds_alternative< Hot_key >( hot_key_candidate ) ) {
+        if ( std::holds_alternative< Hot_key_row >( hot_key_candidate ) ) {
             // ******* Handle hot_key that is a single ASCII char first and return it.
-            Key_chars_i18n hkc   { std::get< Hot_key >( hot_key_candidate ).characters };
+            Key_chars_i18n hkc   { std::get< Hot_key_row >( hot_key_candidate ).characters };
             assert( not hkc.empty()                           && "Postcondition9.");
             assert( file_status != File_status::initial_state && "Postcondition1.");
-            return { std::get< Hot_key >( hot_key_candidate ), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::get< Hot_key_row >( hot_key_candidate ), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
             // ******* Handle single simple regular ASCII first and return it.
             assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
@@ -967,13 +967,13 @@ get_kb_keystroke_raw() {
 
         // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
         Hotkey_o_errno const hot_key_or_error { consider_hot_key( key_chars_i18n )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read. TODO: consider using ref for speed?
-        if ( std::holds_alternative< Hot_key >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
+        if ( std::holds_alternative< Hot_key_row >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* Hot_key
             assert( first_kcs != 0 && "Postcondition11.");
             assert( not key_chars_i18n.empty() && "Postcondition12.");
             assert( File_status::initial_state != file_status && "Postcondition3.");
             //return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
-            return { std::get< Hot_key >(hot_key_or_error), file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            return { std::get< Hot_key_row >(hot_key_or_error), file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
             LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
@@ -1091,7 +1091,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     assert( cin.good() && "Precondition.");
     assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     Key_chars_i18n 	    key_char_i18ns_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  /// The char(s) in the keystroke.
-    Hot_key		 		hot_key_result          {};  /// The hot_key that might have been found.
+    Hot_key_row		 		hot_key_result          {};  /// The hot_key that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
     size_t 		 		additional_skc 			{length_in_keystrokes};  // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::none};			// reset some variables from prior loop if any, specifically old/prior hot_key.
@@ -1123,8 +1123,8 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                     key_char_i18ns_result.push_back( kcs );
                 }
             }
-            else if ( std::holds_alternative< Hot_key > ( kb_key_a_fstat.kb_key_variant )) {
-                hot_key_result 			    = std::get < Hot_key >( kb_key_a_fstat.kb_key_variant );  // TODO:?? is this a copy?
+            else if ( std::holds_alternative< Hot_key_row > ( kb_key_a_fstat.kb_key_variant )) {
+                hot_key_result 			    = std::get < Hot_key_row >( kb_key_a_fstat.kb_key_variant );  // TODO:?? is this a copy?
                 hot_key_function_cat        = hot_key_result.function_cat;
                 LOGGERS("is hk:", hot_key_result.my_name);
                 LOGGERS("is hot_key_function_cat:", (int)hot_key_result.function_cat);
@@ -1168,8 +1168,8 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     {
         Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         file_status_result                  = kb_key_a_fstat.file_status;
-        if ( Kb_key_variant const k { kb_key_a_fstat.kb_key_variant }; std::holds_alternative< Hot_key >( k ))
-            hot_key_result = std::get< Hot_key >( k );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
+        if ( Kb_key_variant const k { kb_key_a_fstat.kb_key_variant }; std::holds_alternative< Hot_key_row >( k ))
+            hot_key_result = std::get< Hot_key_row >( k );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
         else
             cout<< "\aError: expecting a CR or other special completion key, try again."<<endl;
     }   //******* END   while *****************************************************************************************************************

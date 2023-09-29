@@ -99,7 +99,7 @@ enum class InteractionIntentNav {
     // *** menu specific navigation commands  	- supplemented by universals'
     retain_menu,                // Once the action selected from a particular menu completes, stay at that sub-menu.
     prior_menu,                 // Once the action selected from a particular menu completes, DO NOT stay at that sub-menu, but instead drop back to the prior menu in the navigation stack.  This was initally intended for actions that only input one value, so in fact the menu action was simply an input field.  May now be impractical or useless, but it could still be usefull/simpler/easier to use if just grabbing a simple value.
-    prior_menu_discard_value,   // Related to "prior_menu", but can't think of an example right now.  todo:
+    prior_menu_discard_value,   // Related to "prior_menu", but can't think of an example right now.  TODO:
     main_menu,                  // Once the action selected from a particular menu completes, goto the main menu.
     exit_all_menu,              // Once the action selected from a particular menu completes, exit all menus, not sure where that would take the user? Perhaps the startup of the program where basic initialization questions are asked of the user before the main menu is displayed.
     // *** dialog specific navigation commands  - supplemented by menus'
@@ -165,7 +165,7 @@ using Key_chars_i18n 	= std::vector< KbFundamentalUnit >;   /// A sequence of ba
 /** A "Hot_key" is one keystroke of a ANSI keyboard of a SPECIAL key like "F1" or "Insert" or ESC or TAB, that is one or more chars/bytes long.
  *  For multi-byte sequences that flow from one keystroke, it can start with a CSI_ESC or we allow for another other designated char being CSI_ALT.
  */
-class Hot_key {
+class Hot_key_row {
 public:
         /// Name given by Lib_tty
   std::string        my_name            {STRING_NULL};
@@ -174,30 +174,30 @@ public:
         /// Depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
   HotKeyFunctionCat  function_cat       {HotKeyFunctionCat::initial_state};
         /// gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
-  InteractionIntentNav f_completion_nav   {InteractionIntentNav::na};
+  InteractionIntentNav interaction_intent_nav   {InteractionIntentNav::na};
         /// gets a value if HotKeyFunctionCat::nav_intra_field
   FieldIntraNav      intra_f_nav        {FieldIntraNav::na};
 
         /// Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
-  bool               operator<( Hot_key const &) const;
+  bool               operator<( Hot_key_row const &) const;
         /// Used for debugging only.
   std::string        to_string()                 const;
 };
-using Hot_key_table = std::vector< Hot_key >; /// Stores all known Hot_keys for internal library use.
+using Hot_key_table = std::vector< Hot_key_row >; /// Stores all known Hot_keys for internal library use.
 
-class Hot_key_single_char : public Hot_key {
+class Hot_key_single_char : public Hot_key_row {
 };
 
-class Hot_key_multi_char : public Hot_key {
+class Hot_key_multi_char : public Hot_key_row {
 };
 
-class Hot_key_multi_char_partial : public Hot_key {
+class Hot_key_multi_char_partial : public Hot_key_row {
 };
 
-class I18n_multi_char : public Hot_key {
+class I18n_multi_char : public Hot_key_row {
 };
 
-class I18n_multi_char_partial : public Hot_key {
+class I18n_multi_char_partial : public Hot_key_row {
 };
 
 /** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not OR EOF.
@@ -205,7 +205,7 @@ class I18n_multi_char_partial : public Hot_key {
  *  TODO: char does this include an EOF character?
  *  was: //key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18ns, Hot_key_chars, Hot_key, File_status >;
  */
-using   Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_chars_i18n,                Hot_key              >;
+using   Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_chars_i18n,                Hot_key_row              >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"
@@ -222,7 +222,7 @@ struct Kb_key_a_fstat {
  */
 struct Kb_value_plus {
   Key_chars_i18n    key_chars_i18n  {STRING_NULL.cbegin(),STRING_NULL.cend()};
-  Hot_key           hot_key         {};
+  Hot_key_row           hot_key         {};
   File_status       file_status     {File_status::initial_state};
 };
 
