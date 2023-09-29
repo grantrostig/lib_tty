@@ -1,0 +1,952 @@
+#pragma once
+#include <ncurses.h>
+#include <ncurses/tic.h>
+static char xterm_256color_alias_data[] = "xterm-256color|xterm with 256 colors";
+
+static char xterm_256color_s_cbt[] = "\033[Z";
+static char xterm_256color_s_bel[] = "\007";
+static char xterm_256color_s_cr [] = "\015";
+static char xterm_256color_s_csr[] = "\033[%i%p1%d;%p2%dr";
+static char xterm_256color_s_tbc[] = "\033[3g";
+static char xterm_256color_s_clear[] = "\033[H\033[2J";
+static char xterm_256color_s_el [] = "\033[K";
+static char xterm_256color_s_ed [] = "\033[J";
+static char xterm_256color_s_hpa[] = "\033[%i%p1%dG";
+static char xterm_256color_s_cup[] = "\033[%i%p1%d;%p2%dH";
+static char xterm_256color_s_cud1[] = "\012";
+static char xterm_256color_s_home[] = "\033[H";
+static char xterm_256color_s_civis[] = "\033[?25l";
+static char xterm_256color_s_cub1[] = "\010";
+static char xterm_256color_s_cnorm[] = "\033[?12l\033[?25h";
+static char xterm_256color_s_cuf1[] = "\033[C";
+static char xterm_256color_s_cuu1[] = "\033[A";
+static char xterm_256color_s_cvvis[] = "\033[?12;25h";
+static char xterm_256color_s_dch1[] = "\033[P";
+static char xterm_256color_s_dl1[] = "\033[M";
+static char xterm_256color_s_smacs[] = "\033(0";
+static char xterm_256color_s_blink[] = "\033[5m";
+static char xterm_256color_s_bold[] = "\033[1m";
+static char xterm_256color_s_smcup[] = "\033[?1049h\033[22;0;0t";
+static char xterm_256color_s_dim[] = "\033[2m";
+static char xterm_256color_s_smir[] = "\033[4h";
+static char xterm_256color_s_invis[] = "\033[8m";
+static char xterm_256color_s_rev[] = "\033[7m";
+static char xterm_256color_s_smso[] = "\033[7m";
+static char xterm_256color_s_smul[] = "\033[4m";
+static char xterm_256color_s_ech[] = "\033[%p1%dX";
+static char xterm_256color_s_rmacs[] = "\033(B";
+static char xterm_256color_s_sgr0[] = "\033(B\033[m";
+static char xterm_256color_s_rmcup[] = "\033[?1049l\033[23;0;0t";
+static char xterm_256color_s_rmir[] = "\033[4l";
+static char xterm_256color_s_rmso[] = "\033[27m";
+static char xterm_256color_s_rmul[] = "\033[24m";
+static char xterm_256color_s_flash[] = "\033[?5h$<100/>\033[?5l";
+static char xterm_256color_s_is2[] = "\033[!p\033[?3;4l\033[4l\033>";
+static char xterm_256color_s_il1[] = "\033[L";
+static char xterm_256color_s_kbs[] = "\177";
+static char xterm_256color_s_kdch1[] = "\033[3~";
+static char xterm_256color_s_kcud1[] = "\033OB";
+static char xterm_256color_s_kf1[] = "\033OP";
+static char xterm_256color_s_kf10[] = "\033[21~";
+static char xterm_256color_s_kf2[] = "\033OQ";
+static char xterm_256color_s_kf3[] = "\033OR";
+static char xterm_256color_s_kf4[] = "\033OS";
+static char xterm_256color_s_kf5[] = "\033[15~";
+static char xterm_256color_s_kf6[] = "\033[17~";
+static char xterm_256color_s_kf7[] = "\033[18~";
+static char xterm_256color_s_kf8[] = "\033[19~";
+static char xterm_256color_s_kf9[] = "\033[20~";
+static char xterm_256color_s_khome[] = "\033OH";
+static char xterm_256color_s_kich1[] = "\033[2~";
+static char xterm_256color_s_kcub1[] = "\033OD";
+static char xterm_256color_s_knp[] = "\033[6~";
+static char xterm_256color_s_kpp[] = "\033[5~";
+static char xterm_256color_s_kcuf1[] = "\033OC";
+static char xterm_256color_s_kind[] = "\033[1;2B";
+static char xterm_256color_s_kri[] = "\033[1;2A";
+static char xterm_256color_s_kcuu1[] = "\033OA";
+static char xterm_256color_s_rmkx[] = "\033[?1l\033>";
+static char xterm_256color_s_smkx[] = "\033[?1h\033=";
+static char xterm_256color_s_rmm[] = "\033[?1034l";
+static char xterm_256color_s_smm[] = "\033[?1034h";
+static char xterm_256color_s_nel[] = "\033E";
+static char xterm_256color_s_dch[] = "\033[%p1%dP";
+static char xterm_256color_s_dl [] = "\033[%p1%dM";
+static char xterm_256color_s_cud[] = "\033[%p1%dB";
+static char xterm_256color_s_ich[] = "\033[%p1%d@";
+static char xterm_256color_s_indn[] = "\033[%p1%dS";
+static char xterm_256color_s_il [] = "\033[%p1%dL";
+static char xterm_256color_s_cub[] = "\033[%p1%dD";
+static char xterm_256color_s_cuf[] = "\033[%p1%dC";
+static char xterm_256color_s_rin[] = "\033[%p1%dT";
+static char xterm_256color_s_cuu[] = "\033[%p1%dA";
+static char xterm_256color_s_mc0[] = "\033[i";
+static char xterm_256color_s_mc4[] = "\033[4i";
+static char xterm_256color_s_mc5[] = "\033[5i";
+static char xterm_256color_s_rep[] = "%p1%c\033[%p2%{1}%-%db";
+static char xterm_256color_s_rs1[] = "\033c\033]104\007";
+static char xterm_256color_s_rs2[] = "\033[!p\033[?3;4l\033[4l\033>";
+static char xterm_256color_s_rc [] = "\0338";
+static char xterm_256color_s_vpa[] = "\033[%i%p1%dd";
+static char xterm_256color_s_sc [] = "\0337";
+static char xterm_256color_s_ind[] = "\012";
+static char xterm_256color_s_ri [] = "\033M";
+static char xterm_256color_s_sgr[] = "%?%p9%t\033(0%e\033(B%;\033[0%?%p6%t;1%;%?%p5%t;2%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m";
+static char xterm_256color_s_hts[] = "\033H";
+static char xterm_256color_s_ht [] = "\011";
+static char xterm_256color_s_ka1[] = "\033Ow";
+static char xterm_256color_s_ka3[] = "\033Oy";
+static char xterm_256color_s_kb2[] = "\033Ou";
+static char xterm_256color_s_kc1[] = "\033Oq";
+static char xterm_256color_s_kc3[] = "\033Os";
+static char xterm_256color_s_acsc[] = "``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~";
+static char xterm_256color_s_kcbt[] = "\033[Z";
+static char xterm_256color_s_smam[] = "\033[?7h";
+static char xterm_256color_s_rmam[] = "\033[?7l";
+static char xterm_256color_s_kbeg[] = "\033OE";
+static char xterm_256color_s_kend[] = "\033OF";
+static char xterm_256color_s_kent[] = "\033OM";
+static char xterm_256color_s_kDC[] = "\033[3;2~";
+static char xterm_256color_s_kEND[] = "\033[1;2F";
+static char xterm_256color_s_kHOM[] = "\033[1;2H";
+static char xterm_256color_s_kIC[] = "\033[2;2~";
+static char xterm_256color_s_kLFT[] = "\033[1;2D";
+static char xterm_256color_s_kNXT[] = "\033[6;2~";
+static char xterm_256color_s_kPRV[] = "\033[5;2~";
+static char xterm_256color_s_kRIT[] = "\033[1;2C";
+static char xterm_256color_s_kf11[] = "\033[23~";
+static char xterm_256color_s_kf12[] = "\033[24~";
+static char xterm_256color_s_kf13[] = "\033[1;2P";
+static char xterm_256color_s_kf14[] = "\033[1;2Q";
+static char xterm_256color_s_kf15[] = "\033[1;2R";
+static char xterm_256color_s_kf16[] = "\033[1;2S";
+static char xterm_256color_s_kf17[] = "\033[15;2~";
+static char xterm_256color_s_kf18[] = "\033[17;2~";
+static char xterm_256color_s_kf19[] = "\033[18;2~";
+static char xterm_256color_s_kf20[] = "\033[19;2~";
+static char xterm_256color_s_kf21[] = "\033[20;2~";
+static char xterm_256color_s_kf22[] = "\033[21;2~";
+static char xterm_256color_s_kf23[] = "\033[23;2~";
+static char xterm_256color_s_kf24[] = "\033[24;2~";
+static char xterm_256color_s_kf25[] = "\033[1;5P";
+static char xterm_256color_s_kf26[] = "\033[1;5Q";
+static char xterm_256color_s_kf27[] = "\033[1;5R";
+static char xterm_256color_s_kf28[] = "\033[1;5S";
+static char xterm_256color_s_kf29[] = "\033[15;5~";
+static char xterm_256color_s_kf30[] = "\033[17;5~";
+static char xterm_256color_s_kf31[] = "\033[18;5~";
+static char xterm_256color_s_kf32[] = "\033[19;5~";
+static char xterm_256color_s_kf33[] = "\033[20;5~";
+static char xterm_256color_s_kf34[] = "\033[21;5~";
+static char xterm_256color_s_kf35[] = "\033[23;5~";
+static char xterm_256color_s_kf36[] = "\033[24;5~";
+static char xterm_256color_s_kf37[] = "\033[1;6P";
+static char xterm_256color_s_kf38[] = "\033[1;6Q";
+static char xterm_256color_s_kf39[] = "\033[1;6R";
+static char xterm_256color_s_kf40[] = "\033[1;6S";
+static char xterm_256color_s_kf41[] = "\033[15;6~";
+static char xterm_256color_s_kf42[] = "\033[17;6~";
+static char xterm_256color_s_kf43[] = "\033[18;6~";
+static char xterm_256color_s_kf44[] = "\033[19;6~";
+static char xterm_256color_s_kf45[] = "\033[20;6~";
+static char xterm_256color_s_kf46[] = "\033[21;6~";
+static char xterm_256color_s_kf47[] = "\033[23;6~";
+static char xterm_256color_s_kf48[] = "\033[24;6~";
+static char xterm_256color_s_kf49[] = "\033[1;3P";
+static char xterm_256color_s_kf50[] = "\033[1;3Q";
+static char xterm_256color_s_kf51[] = "\033[1;3R";
+static char xterm_256color_s_kf52[] = "\033[1;3S";
+static char xterm_256color_s_kf53[] = "\033[15;3~";
+static char xterm_256color_s_kf54[] = "\033[17;3~";
+static char xterm_256color_s_kf55[] = "\033[18;3~";
+static char xterm_256color_s_kf56[] = "\033[19;3~";
+static char xterm_256color_s_kf57[] = "\033[20;3~";
+static char xterm_256color_s_kf58[] = "\033[21;3~";
+static char xterm_256color_s_kf59[] = "\033[23;3~";
+static char xterm_256color_s_kf60[] = "\033[24;3~";
+static char xterm_256color_s_kf61[] = "\033[1;4P";
+static char xterm_256color_s_kf62[] = "\033[1;4Q";
+static char xterm_256color_s_kf63[] = "\033[1;4R";
+static char xterm_256color_s_el1[] = "\033[1K";
+static char xterm_256color_s_mgc[] = "\033[?69l";
+static char xterm_256color_s_u6 [] = "\033[%i%d;%dR";
+static char xterm_256color_s_u7 [] = "\033[6n";
+static char xterm_256color_s_u8 [] = "\033[?%[;0123456789]c";
+static char xterm_256color_s_u9 [] = "\033[c";
+static char xterm_256color_s_op [] = "\033[39;49m";
+static char xterm_256color_s_oc [] = "\033]104\007";
+static char xterm_256color_s_initc[] = "\033]4;%p1%d;rgb:%p2%{255}%*%{1000}%/%2.2X/%p3%{255}%*%{1000}%/%2.2X/%p4%{255}%*%{1000}%/%2.2X\033\134";
+static char xterm_256color_s_sitm[] = "\033[3m";
+static char xterm_256color_s_ritm[] = "\033[23m";
+static char xterm_256color_s_smglp[] = "\033[?69h\033[%i%p1%ds";
+static char xterm_256color_s_smgrp[] = "\033[?69h\033[%i;%p1%ds";
+static char xterm_256color_s_kmous[] = "\033[<";
+static char xterm_256color_s_setaf[] = "\033[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m";
+static char xterm_256color_s_setab[] = "\033[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m";
+static char xterm_256color_s_smglr[] = "\033[?69h\033[%i%p1%d;%p2%ds";
+static char xterm_256color_s_meml[] = "\033l";
+static char xterm_256color_s_memu[] = "\033m";
+static char xterm_256color_s_BD [] = "\033[?2004l";
+static char xterm_256color_s_BE [] = "\033[?2004h";
+static char xterm_256color_s_Cr [] = "\033]112\007";
+static char xterm_256color_s_Cs [] = "\033]12;%p1%s\007";
+static char xterm_256color_s_E3 [] = "\033[3J";
+static char xterm_256color_s_Ms [] = "\033]52;%p1%s;%p2%s\007";
+static char xterm_256color_s_PE [] = "\033[201~";
+static char xterm_256color_s_PS [] = "\033[200~";
+static char xterm_256color_s_RV [] = "\033[>c";
+static char xterm_256color_s_Se [] = "\033[2 q";
+static char xterm_256color_s_Ss [] = "\033[%p1%d q";
+static char xterm_256color_s_XM [] = "\033[?1006;1000%?%p1%{1}%=%th%el%;";
+static char xterm_256color_s_XR [] = "\033[>0q";
+static char xterm_256color_s_kDC3[] = "\033[3;3~";
+static char xterm_256color_s_kDC4[] = "\033[3;4~";
+static char xterm_256color_s_kDC5[] = "\033[3;5~";
+static char xterm_256color_s_kDC6[] = "\033[3;6~";
+static char xterm_256color_s_kDC7[] = "\033[3;7~";
+static char xterm_256color_s_kDN[] = "\033[1;2B";
+static char xterm_256color_s_kDN3[] = "\033[1;3B";
+static char xterm_256color_s_kDN4[] = "\033[1;4B";
+static char xterm_256color_s_kDN5[] = "\033[1;5B";
+static char xterm_256color_s_kDN6[] = "\033[1;6B";
+static char xterm_256color_s_kDN7[] = "\033[1;7B";
+static char xterm_256color_s_kEND3[] = "\033[1;3F";
+static char xterm_256color_s_kEND4[] = "\033[1;4F";
+static char xterm_256color_s_kEND5[] = "\033[1;5F";
+static char xterm_256color_s_kEND6[] = "\033[1;6F";
+static char xterm_256color_s_kEND7[] = "\033[1;7F";
+static char xterm_256color_s_kHOM3[] = "\033[1;3H";
+static char xterm_256color_s_kHOM4[] = "\033[1;4H";
+static char xterm_256color_s_kHOM5[] = "\033[1;5H";
+static char xterm_256color_s_kHOM6[] = "\033[1;6H";
+static char xterm_256color_s_kHOM7[] = "\033[1;7H";
+static char xterm_256color_s_kIC3[] = "\033[2;3~";
+static char xterm_256color_s_kIC4[] = "\033[2;4~";
+static char xterm_256color_s_kIC5[] = "\033[2;5~";
+static char xterm_256color_s_kIC6[] = "\033[2;6~";
+static char xterm_256color_s_kIC7[] = "\033[2;7~";
+static char xterm_256color_s_kLFT3[] = "\033[1;3D";
+static char xterm_256color_s_kLFT4[] = "\033[1;4D";
+static char xterm_256color_s_kLFT5[] = "\033[1;5D";
+static char xterm_256color_s_kLFT6[] = "\033[1;6D";
+static char xterm_256color_s_kLFT7[] = "\033[1;7D";
+static char xterm_256color_s_kNXT3[] = "\033[6;3~";
+static char xterm_256color_s_kNXT4[] = "\033[6;4~";
+static char xterm_256color_s_kNXT5[] = "\033[6;5~";
+static char xterm_256color_s_kNXT6[] = "\033[6;6~";
+static char xterm_256color_s_kNXT7[] = "\033[6;7~";
+static char xterm_256color_s_kPRV3[] = "\033[5;3~";
+static char xterm_256color_s_kPRV4[] = "\033[5;4~";
+static char xterm_256color_s_kPRV5[] = "\033[5;5~";
+static char xterm_256color_s_kPRV6[] = "\033[5;6~";
+static char xterm_256color_s_kPRV7[] = "\033[5;7~";
+static char xterm_256color_s_kRIT3[] = "\033[1;3C";
+static char xterm_256color_s_kRIT4[] = "\033[1;4C";
+static char xterm_256color_s_kRIT5[] = "\033[1;5C";
+static char xterm_256color_s_kRIT6[] = "\033[1;6C";
+static char xterm_256color_s_kRIT7[] = "\033[1;7C";
+static char xterm_256color_s_kUP[] = "\033[1;2A";
+static char xterm_256color_s_kUP3[] = "\033[1;3A";
+static char xterm_256color_s_kUP4[] = "\033[1;4A";
+static char xterm_256color_s_kUP5[] = "\033[1;5A";
+static char xterm_256color_s_kUP6[] = "\033[1;6A";
+static char xterm_256color_s_kUP7[] = "\033[1;7A";
+static char xterm_256color_s_ka2[] = "\033Ox";
+static char xterm_256color_s_kb1[] = "\033Ot";
+static char xterm_256color_s_kb3[] = "\033Ov";
+static char xterm_256color_s_kc2[] = "\033Or";
+static char xterm_256color_s_kp5[] = "\033OE";
+static char xterm_256color_s_kpADD[] = "\033Ok";
+static char xterm_256color_s_kpCMA[] = "\033Ol";
+static char xterm_256color_s_kpDIV[] = "\033Oo";
+static char xterm_256color_s_kpDOT[] = "\033On";
+static char xterm_256color_s_kpMUL[] = "\033Oj";
+static char xterm_256color_s_kpSUB[] = "\033Om";
+static char xterm_256color_s_kpZRO[] = "\033Op";
+static char xterm_256color_s_kxIN[] = "\033[I";
+static char xterm_256color_s_kxOUT[] = "\033[O";
+static char xterm_256color_s_rmxx[] = "\033[29m";
+static char xterm_256color_s_rv [] = "\033\134[41;[1-6][0-9][0-9];0c";
+static char xterm_256color_s_smxx[] = "\033[9m";
+static char xterm_256color_s_xm [] = "\033[<%i%p3%d;%p1%d;%p2%d;%?%p4%tM%em%;";
+static char xterm_256color_s_xr [] = "\033P>\134|XTerm\134([1-9][0-9]+\134)\033\134\134";
+
+static char xterm_256color_bool_data[] = {
+	/*   0: bw       */	FALSE,
+	/*   1: am       */	TRUE,
+	/*   2: xsb      */	FALSE,
+	/*   3: xhp      */	FALSE,
+	/*   4: xenl     */	TRUE,
+	/*   5: eo       */	FALSE,
+	/*   6: gn       */	FALSE,
+	/*   7: hc       */	FALSE,
+	/*   8: km       */	TRUE,
+	/*   9: hs       */	FALSE,
+	/*  10: in       */	FALSE,
+	/*  11: da       */	FALSE,
+	/*  12: db       */	FALSE,
+	/*  13: mir      */	TRUE,
+	/*  14: msgr     */	TRUE,
+	/*  15: os       */	FALSE,
+	/*  16: eslok    */	FALSE,
+	/*  17: xt       */	FALSE,
+	/*  18: hz       */	FALSE,
+	/*  19: ul       */	FALSE,
+	/*  20: xon      */	FALSE,
+	/*  21: nxon     */	FALSE,
+	/*  22: mc5i     */	TRUE,
+	/*  23: chts     */	FALSE,
+	/*  24: nrrmc    */	FALSE,
+	/*  25: npc      */	TRUE,
+	/*  26: ndscr    */	FALSE,
+	/*  27: ccc      */	TRUE,
+	/*  28: bce      */	TRUE,
+	/*  29: hls      */	FALSE,
+	/*  30: xhpa     */	FALSE,
+	/*  31: crxm     */	FALSE,
+	/*  32: daisy    */	FALSE,
+	/*  33: xvpa     */	FALSE,
+	/*  34: sam      */	FALSE,
+	/*  35: cpix     */	FALSE,
+	/*  36: lpix     */	FALSE,
+	/*  37: OTbs     */	TRUE,
+	/*  38: OTns     */	FALSE,
+	/*  39: OTnc     */	FALSE,
+	/*  40: OTMT     */	FALSE,
+	/*  41: OTNL     */	FALSE,
+	/*  42: OTpt     */	FALSE,
+	/*  43: OTxr     */	FALSE,
+	/*  44: AX       */	TRUE,
+	/*  45: XF       */	TRUE,
+	/*  46: XT       */	TRUE,
+};
+static short xterm_256color_number_data[] = {
+	/*   0: cols     */	80,
+	/*   1: it       */	8,
+	/*   2: lines    */	24,
+	/*   3: lm       */	ABSENT_NUMERIC,
+	/*   4: xmc      */	ABSENT_NUMERIC,
+	/*   5: pb       */	ABSENT_NUMERIC,
+	/*   6: vt       */	ABSENT_NUMERIC,
+	/*   7: wsl      */	ABSENT_NUMERIC,
+	/*   8: nlab     */	ABSENT_NUMERIC,
+	/*   9: lh       */	ABSENT_NUMERIC,
+	/*  10: lw       */	ABSENT_NUMERIC,
+	/*  11: ma       */	ABSENT_NUMERIC,
+	/*  12: wnum     */	ABSENT_NUMERIC,
+	/*  13: colors   */	256,
+	/*  14: pairs    */	65536,
+	/*  15: ncv      */	ABSENT_NUMERIC,
+	/*  16: bufsz    */	ABSENT_NUMERIC,
+	/*  17: spinv    */	ABSENT_NUMERIC,
+	/*  18: spinh    */	ABSENT_NUMERIC,
+	/*  19: maddr    */	ABSENT_NUMERIC,
+	/*  20: mjump    */	ABSENT_NUMERIC,
+	/*  21: mcs      */	ABSENT_NUMERIC,
+	/*  22: mls      */	ABSENT_NUMERIC,
+	/*  23: npins    */	ABSENT_NUMERIC,
+	/*  24: orc      */	ABSENT_NUMERIC,
+	/*  25: orl      */	ABSENT_NUMERIC,
+	/*  26: orhi     */	ABSENT_NUMERIC,
+	/*  27: orvi     */	ABSENT_NUMERIC,
+	/*  28: cps      */	ABSENT_NUMERIC,
+	/*  29: widcs    */	ABSENT_NUMERIC,
+	/*  30: btns     */	ABSENT_NUMERIC,
+	/*  31: bitwin   */	ABSENT_NUMERIC,
+	/*  32: bitype   */	ABSENT_NUMERIC,
+	/*  33: OTug     */	ABSENT_NUMERIC,
+	/*  34: OTdC     */	ABSENT_NUMERIC,
+	/*  35: OTdN     */	ABSENT_NUMERIC,
+	/*  36: OTdB     */	ABSENT_NUMERIC,
+	/*  37: OTdT     */	ABSENT_NUMERIC,
+	/*  38: OTkn     */	ABSENT_NUMERIC,
+};
+static char * xterm_256color_string_data[] = {
+	/*   0: cbt      */	xterm_256color_s_cbt,
+	/*   1: bel      */	xterm_256color_s_bel,
+	/*   2: cr       */	xterm_256color_s_cr,
+	/*   3: csr      */	xterm_256color_s_csr,
+	/*   4: tbc      */	xterm_256color_s_tbc,
+	/*   5: clear    */	xterm_256color_s_clear,
+	/*   6: el       */	xterm_256color_s_el,
+	/*   7: ed       */	xterm_256color_s_ed,
+	/*   8: hpa      */	xterm_256color_s_hpa,
+	/*   9: cmdch    */	ABSENT_STRING,
+	/*  10: cup      */	xterm_256color_s_cup,
+	/*  11: cud1     */	xterm_256color_s_cud1,
+	/*  12: home     */	xterm_256color_s_home,
+	/*  13: civis    */	xterm_256color_s_civis,
+	/*  14: cub1     */	xterm_256color_s_cub1,
+	/*  15: mrcup    */	ABSENT_STRING,
+	/*  16: cnorm    */	xterm_256color_s_cnorm,
+	/*  17: cuf1     */	xterm_256color_s_cuf1,
+	/*  18: ll       */	ABSENT_STRING,
+	/*  19: cuu1     */	xterm_256color_s_cuu1,
+	/*  20: cvvis    */	xterm_256color_s_cvvis,
+	/*  21: dch1     */	xterm_256color_s_dch1,
+	/*  22: dl1      */	xterm_256color_s_dl1,
+	/*  23: dsl      */	ABSENT_STRING,
+	/*  24: hd       */	ABSENT_STRING,
+	/*  25: smacs    */	xterm_256color_s_smacs,
+	/*  26: blink    */	xterm_256color_s_blink,
+	/*  27: bold     */	xterm_256color_s_bold,
+	/*  28: smcup    */	xterm_256color_s_smcup,
+	/*  29: smdc     */	ABSENT_STRING,
+	/*  30: dim      */	xterm_256color_s_dim,
+	/*  31: smir     */	xterm_256color_s_smir,
+	/*  32: invis    */	xterm_256color_s_invis,
+	/*  33: prot     */	ABSENT_STRING,
+	/*  34: rev      */	xterm_256color_s_rev,
+	/*  35: smso     */	xterm_256color_s_smso,
+	/*  36: smul     */	xterm_256color_s_smul,
+	/*  37: ech      */	xterm_256color_s_ech,
+	/*  38: rmacs    */	xterm_256color_s_rmacs,
+	/*  39: sgr0     */	xterm_256color_s_sgr0,
+	/*  40: rmcup    */	xterm_256color_s_rmcup,
+	/*  41: rmdc     */	ABSENT_STRING,
+	/*  42: rmir     */	xterm_256color_s_rmir,
+	/*  43: rmso     */	xterm_256color_s_rmso,
+	/*  44: rmul     */	xterm_256color_s_rmul,
+	/*  45: flash    */	xterm_256color_s_flash,
+	/*  46: ff       */	ABSENT_STRING,
+	/*  47: fsl      */	ABSENT_STRING,
+	/*  48: is1      */	ABSENT_STRING,
+	/*  49: is2      */	xterm_256color_s_is2,
+	/*  50: is3      */	ABSENT_STRING,
+	/*  51: if       */	ABSENT_STRING,
+	/*  52: ich1     */	ABSENT_STRING,
+	/*  53: il1      */	xterm_256color_s_il1,
+	/*  54: ip       */	ABSENT_STRING,
+	/*  55: kbs      */	xterm_256color_s_kbs,
+	/*  56: ktbc     */	ABSENT_STRING,
+	/*  57: kclr     */	ABSENT_STRING,
+	/*  58: kctab    */	ABSENT_STRING,
+	/*  59: kdch1    */	xterm_256color_s_kdch1,
+	/*  60: kdl1     */	ABSENT_STRING,
+	/*  61: kcud1    */	xterm_256color_s_kcud1,
+	/*  62: krmir    */	ABSENT_STRING,
+	/*  63: kel      */	ABSENT_STRING,
+	/*  64: ked      */	ABSENT_STRING,
+	/*  65: kf0      */	ABSENT_STRING,
+	/*  66: kf1      */	xterm_256color_s_kf1,
+	/*  67: kf10     */	xterm_256color_s_kf10,
+	/*  68: kf2      */	xterm_256color_s_kf2,
+	/*  69: kf3      */	xterm_256color_s_kf3,
+	/*  70: kf4      */	xterm_256color_s_kf4,
+	/*  71: kf5      */	xterm_256color_s_kf5,
+	/*  72: kf6      */	xterm_256color_s_kf6,
+	/*  73: kf7      */	xterm_256color_s_kf7,
+	/*  74: kf8      */	xterm_256color_s_kf8,
+	/*  75: kf9      */	xterm_256color_s_kf9,
+	/*  76: khome    */	xterm_256color_s_khome,
+	/*  77: kich1    */	xterm_256color_s_kich1,
+	/*  78: kil1     */	ABSENT_STRING,
+	/*  79: kcub1    */	xterm_256color_s_kcub1,
+	/*  80: kll      */	ABSENT_STRING,
+	/*  81: knp      */	xterm_256color_s_knp,
+	/*  82: kpp      */	xterm_256color_s_kpp,
+	/*  83: kcuf1    */	xterm_256color_s_kcuf1,
+	/*  84: kind     */	xterm_256color_s_kind,
+	/*  85: kri      */	xterm_256color_s_kri,
+	/*  86: khts     */	ABSENT_STRING,
+	/*  87: kcuu1    */	xterm_256color_s_kcuu1,
+	/*  88: rmkx     */	xterm_256color_s_rmkx,
+	/*  89: smkx     */	xterm_256color_s_smkx,
+	/*  90: lf0      */	ABSENT_STRING,
+	/*  91: lf1      */	ABSENT_STRING,
+	/*  92: lf10     */	ABSENT_STRING,
+	/*  93: lf2      */	ABSENT_STRING,
+	/*  94: lf3      */	ABSENT_STRING,
+	/*  95: lf4      */	ABSENT_STRING,
+	/*  96: lf5      */	ABSENT_STRING,
+	/*  97: lf6      */	ABSENT_STRING,
+	/*  98: lf7      */	ABSENT_STRING,
+	/*  99: lf8      */	ABSENT_STRING,
+	/* 100: lf9      */	ABSENT_STRING,
+	/* 101: rmm      */	xterm_256color_s_rmm,
+	/* 102: smm      */	xterm_256color_s_smm,
+	/* 103: nel      */	xterm_256color_s_nel,
+	/* 104: pad      */	ABSENT_STRING,
+	/* 105: dch      */	xterm_256color_s_dch,
+	/* 106: dl       */	xterm_256color_s_dl,
+	/* 107: cud      */	xterm_256color_s_cud,
+	/* 108: ich      */	xterm_256color_s_ich,
+	/* 109: indn     */	xterm_256color_s_indn,
+	/* 110: il       */	xterm_256color_s_il,
+	/* 111: cub      */	xterm_256color_s_cub,
+	/* 112: cuf      */	xterm_256color_s_cuf,
+	/* 113: rin      */	xterm_256color_s_rin,
+	/* 114: cuu      */	xterm_256color_s_cuu,
+	/* 115: pfkey    */	ABSENT_STRING,
+	/* 116: pfloc    */	ABSENT_STRING,
+	/* 117: pfx      */	ABSENT_STRING,
+	/* 118: mc0      */	xterm_256color_s_mc0,
+	/* 119: mc4      */	xterm_256color_s_mc4,
+	/* 120: mc5      */	xterm_256color_s_mc5,
+	/* 121: rep      */	xterm_256color_s_rep,
+	/* 122: rs1      */	xterm_256color_s_rs1,
+	/* 123: rs2      */	xterm_256color_s_rs2,
+	/* 124: rs3      */	ABSENT_STRING,
+	/* 125: rf       */	ABSENT_STRING,
+	/* 126: rc       */	xterm_256color_s_rc,
+	/* 127: vpa      */	xterm_256color_s_vpa,
+	/* 128: sc       */	xterm_256color_s_sc,
+	/* 129: ind      */	xterm_256color_s_ind,
+	/* 130: ri       */	xterm_256color_s_ri,
+	/* 131: sgr      */	xterm_256color_s_sgr,
+	/* 132: hts      */	xterm_256color_s_hts,
+	/* 133: wind     */	ABSENT_STRING,
+	/* 134: ht       */	xterm_256color_s_ht,
+	/* 135: tsl      */	ABSENT_STRING,
+	/* 136: uc       */	ABSENT_STRING,
+	/* 137: hu       */	ABSENT_STRING,
+	/* 138: iprog    */	ABSENT_STRING,
+	/* 139: ka1      */	xterm_256color_s_ka1,
+	/* 140: ka3      */	xterm_256color_s_ka3,
+	/* 141: kb2      */	xterm_256color_s_kb2,
+	/* 142: kc1      */	xterm_256color_s_kc1,
+	/* 143: kc3      */	xterm_256color_s_kc3,
+	/* 144: mc5p     */	ABSENT_STRING,
+	/* 145: rmp      */	ABSENT_STRING,
+	/* 146: acsc     */	xterm_256color_s_acsc,
+	/* 147: pln      */	ABSENT_STRING,
+	/* 148: kcbt     */	xterm_256color_s_kcbt,
+	/* 149: smxon    */	ABSENT_STRING,
+	/* 150: rmxon    */	ABSENT_STRING,
+	/* 151: smam     */	xterm_256color_s_smam,
+	/* 152: rmam     */	xterm_256color_s_rmam,
+	/* 153: xonc     */	ABSENT_STRING,
+	/* 154: xoffc    */	ABSENT_STRING,
+	/* 155: enacs    */	ABSENT_STRING,
+	/* 156: smln     */	ABSENT_STRING,
+	/* 157: rmln     */	ABSENT_STRING,
+	/* 158: kbeg     */	xterm_256color_s_kbeg,
+	/* 159: kcan     */	ABSENT_STRING,
+	/* 160: kclo     */	ABSENT_STRING,
+	/* 161: kcmd     */	ABSENT_STRING,
+	/* 162: kcpy     */	ABSENT_STRING,
+	/* 163: kcrt     */	ABSENT_STRING,
+	/* 164: kend     */	xterm_256color_s_kend,
+	/* 165: kent     */	xterm_256color_s_kent,
+	/* 166: kext     */	ABSENT_STRING,
+	/* 167: kfnd     */	ABSENT_STRING,
+	/* 168: khlp     */	ABSENT_STRING,
+	/* 169: kmrk     */	ABSENT_STRING,
+	/* 170: kmsg     */	ABSENT_STRING,
+	/* 171: kmov     */	ABSENT_STRING,
+	/* 172: knxt     */	ABSENT_STRING,
+	/* 173: kopn     */	ABSENT_STRING,
+	/* 174: kopt     */	ABSENT_STRING,
+	/* 175: kprv     */	ABSENT_STRING,
+	/* 176: kprt     */	ABSENT_STRING,
+	/* 177: krdo     */	ABSENT_STRING,
+	/* 178: kref     */	ABSENT_STRING,
+	/* 179: krfr     */	ABSENT_STRING,
+	/* 180: krpl     */	ABSENT_STRING,
+	/* 181: krst     */	ABSENT_STRING,
+	/* 182: kres     */	ABSENT_STRING,
+	/* 183: ksav     */	ABSENT_STRING,
+	/* 184: kspd     */	ABSENT_STRING,
+	/* 185: kund     */	ABSENT_STRING,
+	/* 186: kBEG     */	ABSENT_STRING,
+	/* 187: kCAN     */	ABSENT_STRING,
+	/* 188: kCMD     */	ABSENT_STRING,
+	/* 189: kCPY     */	ABSENT_STRING,
+	/* 190: kCRT     */	ABSENT_STRING,
+	/* 191: kDC      */	xterm_256color_s_kDC,
+	/* 192: kDL      */	ABSENT_STRING,
+	/* 193: kslt     */	ABSENT_STRING,
+	/* 194: kEND     */	xterm_256color_s_kEND,
+	/* 195: kEOL     */	ABSENT_STRING,
+	/* 196: kEXT     */	ABSENT_STRING,
+	/* 197: kFND     */	ABSENT_STRING,
+	/* 198: kHLP     */	ABSENT_STRING,
+	/* 199: kHOM     */	xterm_256color_s_kHOM,
+	/* 200: kIC      */	xterm_256color_s_kIC,
+	/* 201: kLFT     */	xterm_256color_s_kLFT,
+	/* 202: kMSG     */	ABSENT_STRING,
+	/* 203: kMOV     */	ABSENT_STRING,
+	/* 204: kNXT     */	xterm_256color_s_kNXT,
+	/* 205: kOPT     */	ABSENT_STRING,
+	/* 206: kPRV     */	xterm_256color_s_kPRV,
+	/* 207: kPRT     */	ABSENT_STRING,
+	/* 208: kRDO     */	ABSENT_STRING,
+	/* 209: kRPL     */	ABSENT_STRING,
+	/* 210: kRIT     */	xterm_256color_s_kRIT,
+	/* 211: kRES     */	ABSENT_STRING,
+	/* 212: kSAV     */	ABSENT_STRING,
+	/* 213: kSPD     */	ABSENT_STRING,
+	/* 214: kUND     */	ABSENT_STRING,
+	/* 215: rfi      */	ABSENT_STRING,
+	/* 216: kf11     */	xterm_256color_s_kf11,
+	/* 217: kf12     */	xterm_256color_s_kf12,
+	/* 218: kf13     */	xterm_256color_s_kf13,
+	/* 219: kf14     */	xterm_256color_s_kf14,
+	/* 220: kf15     */	xterm_256color_s_kf15,
+	/* 221: kf16     */	xterm_256color_s_kf16,
+	/* 222: kf17     */	xterm_256color_s_kf17,
+	/* 223: kf18     */	xterm_256color_s_kf18,
+	/* 224: kf19     */	xterm_256color_s_kf19,
+	/* 225: kf20     */	xterm_256color_s_kf20,
+	/* 226: kf21     */	xterm_256color_s_kf21,
+	/* 227: kf22     */	xterm_256color_s_kf22,
+	/* 228: kf23     */	xterm_256color_s_kf23,
+	/* 229: kf24     */	xterm_256color_s_kf24,
+	/* 230: kf25     */	xterm_256color_s_kf25,
+	/* 231: kf26     */	xterm_256color_s_kf26,
+	/* 232: kf27     */	xterm_256color_s_kf27,
+	/* 233: kf28     */	xterm_256color_s_kf28,
+	/* 234: kf29     */	xterm_256color_s_kf29,
+	/* 235: kf30     */	xterm_256color_s_kf30,
+	/* 236: kf31     */	xterm_256color_s_kf31,
+	/* 237: kf32     */	xterm_256color_s_kf32,
+	/* 238: kf33     */	xterm_256color_s_kf33,
+	/* 239: kf34     */	xterm_256color_s_kf34,
+	/* 240: kf35     */	xterm_256color_s_kf35,
+	/* 241: kf36     */	xterm_256color_s_kf36,
+	/* 242: kf37     */	xterm_256color_s_kf37,
+	/* 243: kf38     */	xterm_256color_s_kf38,
+	/* 244: kf39     */	xterm_256color_s_kf39,
+	/* 245: kf40     */	xterm_256color_s_kf40,
+	/* 246: kf41     */	xterm_256color_s_kf41,
+	/* 247: kf42     */	xterm_256color_s_kf42,
+	/* 248: kf43     */	xterm_256color_s_kf43,
+	/* 249: kf44     */	xterm_256color_s_kf44,
+	/* 250: kf45     */	xterm_256color_s_kf45,
+	/* 251: kf46     */	xterm_256color_s_kf46,
+	/* 252: kf47     */	xterm_256color_s_kf47,
+	/* 253: kf48     */	xterm_256color_s_kf48,
+	/* 254: kf49     */	xterm_256color_s_kf49,
+	/* 255: kf50     */	xterm_256color_s_kf50,
+	/* 256: kf51     */	xterm_256color_s_kf51,
+	/* 257: kf52     */	xterm_256color_s_kf52,
+	/* 258: kf53     */	xterm_256color_s_kf53,
+	/* 259: kf54     */	xterm_256color_s_kf54,
+	/* 260: kf55     */	xterm_256color_s_kf55,
+	/* 261: kf56     */	xterm_256color_s_kf56,
+	/* 262: kf57     */	xterm_256color_s_kf57,
+	/* 263: kf58     */	xterm_256color_s_kf58,
+	/* 264: kf59     */	xterm_256color_s_kf59,
+	/* 265: kf60     */	xterm_256color_s_kf60,
+	/* 266: kf61     */	xterm_256color_s_kf61,
+	/* 267: kf62     */	xterm_256color_s_kf62,
+	/* 268: kf63     */	xterm_256color_s_kf63,
+	/* 269: el1      */	xterm_256color_s_el1,
+	/* 270: mgc      */	xterm_256color_s_mgc,
+	/* 271: smgl     */	ABSENT_STRING,
+	/* 272: smgr     */	ABSENT_STRING,
+	/* 273: fln      */	ABSENT_STRING,
+	/* 274: sclk     */	ABSENT_STRING,
+	/* 275: dclk     */	ABSENT_STRING,
+	/* 276: rmclk    */	ABSENT_STRING,
+	/* 277: cwin     */	ABSENT_STRING,
+	/* 278: wingo    */	ABSENT_STRING,
+	/* 279: hup      */	ABSENT_STRING,
+	/* 280: dial     */	ABSENT_STRING,
+	/* 281: qdial    */	ABSENT_STRING,
+	/* 282: tone     */	ABSENT_STRING,
+	/* 283: pulse    */	ABSENT_STRING,
+	/* 284: hook     */	ABSENT_STRING,
+	/* 285: pause    */	ABSENT_STRING,
+	/* 286: wait     */	ABSENT_STRING,
+	/* 287: u0       */	ABSENT_STRING,
+	/* 288: u1       */	ABSENT_STRING,
+	/* 289: u2       */	ABSENT_STRING,
+	/* 290: u3       */	ABSENT_STRING,
+	/* 291: u4       */	ABSENT_STRING,
+	/* 292: u5       */	ABSENT_STRING,
+	/* 293: u6       */	xterm_256color_s_u6,
+	/* 294: u7       */	xterm_256color_s_u7,
+	/* 295: u8       */	xterm_256color_s_u8,
+	/* 296: u9       */	xterm_256color_s_u9,
+	/* 297: op       */	xterm_256color_s_op,
+	/* 298: oc       */	xterm_256color_s_oc,
+	/* 299: initc    */	xterm_256color_s_initc,
+	/* 300: initp    */	ABSENT_STRING,
+	/* 301: scp      */	ABSENT_STRING,
+	/* 302: setf     */	ABSENT_STRING,
+	/* 303: setb     */	ABSENT_STRING,
+	/* 304: cpi      */	ABSENT_STRING,
+	/* 305: lpi      */	ABSENT_STRING,
+	/* 306: chr      */	ABSENT_STRING,
+	/* 307: cvr      */	ABSENT_STRING,
+	/* 308: defc     */	ABSENT_STRING,
+	/* 309: swidm    */	ABSENT_STRING,
+	/* 310: sdrfq    */	ABSENT_STRING,
+	/* 311: sitm     */	xterm_256color_s_sitm,
+	/* 312: slm      */	ABSENT_STRING,
+	/* 313: smicm    */	ABSENT_STRING,
+	/* 314: snlq     */	ABSENT_STRING,
+	/* 315: snrmq    */	ABSENT_STRING,
+	/* 316: sshm     */	ABSENT_STRING,
+	/* 317: ssubm    */	ABSENT_STRING,
+	/* 318: ssupm    */	ABSENT_STRING,
+	/* 319: sum      */	ABSENT_STRING,
+	/* 320: rwidm    */	ABSENT_STRING,
+	/* 321: ritm     */	xterm_256color_s_ritm,
+	/* 322: rlm      */	ABSENT_STRING,
+	/* 323: rmicm    */	ABSENT_STRING,
+	/* 324: rshm     */	ABSENT_STRING,
+	/* 325: rsubm    */	ABSENT_STRING,
+	/* 326: rsupm    */	ABSENT_STRING,
+	/* 327: rum      */	ABSENT_STRING,
+	/* 328: mhpa     */	ABSENT_STRING,
+	/* 329: mcud1    */	ABSENT_STRING,
+	/* 330: mcub1    */	ABSENT_STRING,
+	/* 331: mcuf1    */	ABSENT_STRING,
+	/* 332: mvpa     */	ABSENT_STRING,
+	/* 333: mcuu1    */	ABSENT_STRING,
+	/* 334: porder   */	ABSENT_STRING,
+	/* 335: mcud     */	ABSENT_STRING,
+	/* 336: mcub     */	ABSENT_STRING,
+	/* 337: mcuf     */	ABSENT_STRING,
+	/* 338: mcuu     */	ABSENT_STRING,
+	/* 339: scs      */	ABSENT_STRING,
+	/* 340: smgb     */	ABSENT_STRING,
+	/* 341: smgbp    */	ABSENT_STRING,
+	/* 342: smglp    */	xterm_256color_s_smglp,
+	/* 343: smgrp    */	xterm_256color_s_smgrp,
+	/* 344: smgt     */	ABSENT_STRING,
+	/* 345: smgtp    */	ABSENT_STRING,
+	/* 346: sbim     */	ABSENT_STRING,
+	/* 347: scsd     */	ABSENT_STRING,
+	/* 348: rbim     */	ABSENT_STRING,
+	/* 349: rcsd     */	ABSENT_STRING,
+	/* 350: subcs    */	ABSENT_STRING,
+	/* 351: supcs    */	ABSENT_STRING,
+	/* 352: docr     */	ABSENT_STRING,
+	/* 353: zerom    */	ABSENT_STRING,
+	/* 354: csnm     */	ABSENT_STRING,
+	/* 355: kmous    */	xterm_256color_s_kmous,
+	/* 356: minfo    */	ABSENT_STRING,
+	/* 357: reqmp    */	ABSENT_STRING,
+	/* 358: getm     */	ABSENT_STRING,
+	/* 359: setaf    */	xterm_256color_s_setaf,
+	/* 360: setab    */	xterm_256color_s_setab,
+	/* 361: pfxl     */	ABSENT_STRING,
+	/* 362: devt     */	ABSENT_STRING,
+	/* 363: csin     */	ABSENT_STRING,
+	/* 364: s0ds     */	ABSENT_STRING,
+	/* 365: s1ds     */	ABSENT_STRING,
+	/* 366: s2ds     */	ABSENT_STRING,
+	/* 367: s3ds     */	ABSENT_STRING,
+	/* 368: smglr    */	xterm_256color_s_smglr,
+	/* 369: smgtb    */	ABSENT_STRING,
+	/* 370: birep    */	ABSENT_STRING,
+	/* 371: binel    */	ABSENT_STRING,
+	/* 372: bicr     */	ABSENT_STRING,
+	/* 373: colornm  */	ABSENT_STRING,
+	/* 374: defbi    */	ABSENT_STRING,
+	/* 375: endbi    */	ABSENT_STRING,
+	/* 376: setcolor */	ABSENT_STRING,
+	/* 377: slines   */	ABSENT_STRING,
+	/* 378: dispc    */	ABSENT_STRING,
+	/* 379: smpch    */	ABSENT_STRING,
+	/* 380: rmpch    */	ABSENT_STRING,
+	/* 381: smsc     */	ABSENT_STRING,
+	/* 382: rmsc     */	ABSENT_STRING,
+	/* 383: pctrm    */	ABSENT_STRING,
+	/* 384: scesc    */	ABSENT_STRING,
+	/* 385: scesa    */	ABSENT_STRING,
+	/* 386: ehhlm    */	ABSENT_STRING,
+	/* 387: elhlm    */	ABSENT_STRING,
+	/* 388: elohlm   */	ABSENT_STRING,
+	/* 389: erhlm    */	ABSENT_STRING,
+	/* 390: ethlm    */	ABSENT_STRING,
+	/* 391: evhlm    */	ABSENT_STRING,
+	/* 392: sgr1     */	ABSENT_STRING,
+	/* 393: slength  */	ABSENT_STRING,
+	/* 394: OTi2     */	ABSENT_STRING,
+	/* 395: OTrs     */	ABSENT_STRING,
+	/* 396: OTnl     */	ABSENT_STRING,
+	/* 397: OTbc     */	ABSENT_STRING,
+	/* 398: OTko     */	ABSENT_STRING,
+	/* 399: OTma     */	ABSENT_STRING,
+	/* 400: OTG2     */	ABSENT_STRING,
+	/* 401: OTG3     */	ABSENT_STRING,
+	/* 402: OTG1     */	ABSENT_STRING,
+	/* 403: OTG4     */	ABSENT_STRING,
+	/* 404: OTGR     */	ABSENT_STRING,
+	/* 405: OTGL     */	ABSENT_STRING,
+	/* 406: OTGU     */	ABSENT_STRING,
+	/* 407: OTGD     */	ABSENT_STRING,
+	/* 408: OTGH     */	ABSENT_STRING,
+	/* 409: OTGV     */	ABSENT_STRING,
+	/* 410: OTGC     */	ABSENT_STRING,
+	/* 411: meml     */	xterm_256color_s_meml,
+	/* 412: memu     */	xterm_256color_s_memu,
+	/* 413: box1     */	ABSENT_STRING,
+	/* 414: BD       */	xterm_256color_s_BD,
+	/* 415: BE       */	xterm_256color_s_BE,
+	/* 416: Cr       */	xterm_256color_s_Cr,
+	/* 417: Cs       */	xterm_256color_s_Cs,
+	/* 418: E3       */	xterm_256color_s_E3,
+	/* 419: Ms       */	xterm_256color_s_Ms,
+	/* 420: PE       */	xterm_256color_s_PE,
+	/* 421: PS       */	xterm_256color_s_PS,
+	/* 422: RV       */	xterm_256color_s_RV,
+	/* 423: Se       */	xterm_256color_s_Se,
+	/* 424: Ss       */	xterm_256color_s_Ss,
+	/* 425: XM       */	xterm_256color_s_XM,
+	/* 426: XR       */	xterm_256color_s_XR,
+	/* 427: kDC3     */	xterm_256color_s_kDC3,
+	/* 428: kDC4     */	xterm_256color_s_kDC4,
+	/* 429: kDC5     */	xterm_256color_s_kDC5,
+	/* 430: kDC6     */	xterm_256color_s_kDC6,
+	/* 431: kDC7     */	xterm_256color_s_kDC7,
+	/* 432: kDN      */	xterm_256color_s_kDN,
+	/* 433: kDN3     */	xterm_256color_s_kDN3,
+	/* 434: kDN4     */	xterm_256color_s_kDN4,
+	/* 435: kDN5     */	xterm_256color_s_kDN5,
+	/* 436: kDN6     */	xterm_256color_s_kDN6,
+	/* 437: kDN7     */	xterm_256color_s_kDN7,
+	/* 438: kEND3    */	xterm_256color_s_kEND3,
+	/* 439: kEND4    */	xterm_256color_s_kEND4,
+	/* 440: kEND5    */	xterm_256color_s_kEND5,
+	/* 441: kEND6    */	xterm_256color_s_kEND6,
+	/* 442: kEND7    */	xterm_256color_s_kEND7,
+	/* 443: kHOM3    */	xterm_256color_s_kHOM3,
+	/* 444: kHOM4    */	xterm_256color_s_kHOM4,
+	/* 445: kHOM5    */	xterm_256color_s_kHOM5,
+	/* 446: kHOM6    */	xterm_256color_s_kHOM6,
+	/* 447: kHOM7    */	xterm_256color_s_kHOM7,
+	/* 448: kIC3     */	xterm_256color_s_kIC3,
+	/* 449: kIC4     */	xterm_256color_s_kIC4,
+	/* 450: kIC5     */	xterm_256color_s_kIC5,
+	/* 451: kIC6     */	xterm_256color_s_kIC6,
+	/* 452: kIC7     */	xterm_256color_s_kIC7,
+	/* 453: kLFT3    */	xterm_256color_s_kLFT3,
+	/* 454: kLFT4    */	xterm_256color_s_kLFT4,
+	/* 455: kLFT5    */	xterm_256color_s_kLFT5,
+	/* 456: kLFT6    */	xterm_256color_s_kLFT6,
+	/* 457: kLFT7    */	xterm_256color_s_kLFT7,
+	/* 458: kNXT3    */	xterm_256color_s_kNXT3,
+	/* 459: kNXT4    */	xterm_256color_s_kNXT4,
+	/* 460: kNXT5    */	xterm_256color_s_kNXT5,
+	/* 461: kNXT6    */	xterm_256color_s_kNXT6,
+	/* 462: kNXT7    */	xterm_256color_s_kNXT7,
+	/* 463: kPRV3    */	xterm_256color_s_kPRV3,
+	/* 464: kPRV4    */	xterm_256color_s_kPRV4,
+	/* 465: kPRV5    */	xterm_256color_s_kPRV5,
+	/* 466: kPRV6    */	xterm_256color_s_kPRV6,
+	/* 467: kPRV7    */	xterm_256color_s_kPRV7,
+	/* 468: kRIT3    */	xterm_256color_s_kRIT3,
+	/* 469: kRIT4    */	xterm_256color_s_kRIT4,
+	/* 470: kRIT5    */	xterm_256color_s_kRIT5,
+	/* 471: kRIT6    */	xterm_256color_s_kRIT6,
+	/* 472: kRIT7    */	xterm_256color_s_kRIT7,
+	/* 473: kUP      */	xterm_256color_s_kUP,
+	/* 474: kUP3     */	xterm_256color_s_kUP3,
+	/* 475: kUP4     */	xterm_256color_s_kUP4,
+	/* 476: kUP5     */	xterm_256color_s_kUP5,
+	/* 477: kUP6     */	xterm_256color_s_kUP6,
+	/* 478: kUP7     */	xterm_256color_s_kUP7,
+	/* 479: ka2      */	xterm_256color_s_ka2,
+	/* 480: kb1      */	xterm_256color_s_kb1,
+	/* 481: kb3      */	xterm_256color_s_kb3,
+	/* 482: kc2      */	xterm_256color_s_kc2,
+	/* 483: kp5      */	xterm_256color_s_kp5,
+	/* 484: kpADD    */	xterm_256color_s_kpADD,
+	/* 485: kpCMA    */	xterm_256color_s_kpCMA,
+	/* 486: kpDIV    */	xterm_256color_s_kpDIV,
+	/* 487: kpDOT    */	xterm_256color_s_kpDOT,
+	/* 488: kpMUL    */	xterm_256color_s_kpMUL,
+	/* 489: kpSUB    */	xterm_256color_s_kpSUB,
+	/* 490: kpZRO    */	xterm_256color_s_kpZRO,
+	/* 491: kxIN     */	xterm_256color_s_kxIN,
+	/* 492: kxOUT    */	xterm_256color_s_kxOUT,
+	/* 493: rmxx     */	xterm_256color_s_rmxx,
+	/* 494: rv       */	xterm_256color_s_rv,
+	/* 495: smxx     */	xterm_256color_s_smxx,
+	/* 496: xm       */	xterm_256color_s_xm,
+	/* 497: xr       */	xterm_256color_s_xr,
+};
+static char * xterm_256color_string_ext_data[] = {
+	/*  44: bool */	"AX",
+	/*  45: bool */	"XF",
+	/*  46: bool */	"XT",
+	/* 414: str */	"BD",
+	/* 415: str */	"BE",
+	/* 416: str */	"Cr",
+	/* 417: str */	"Cs",
+	/* 418: str */	"E3",
+	/* 419: str */	"Ms",
+	/* 420: str */	"PE",
+	/* 421: str */	"PS",
+	/* 422: str */	"RV",
+	/* 423: str */	"Se",
+	/* 424: str */	"Ss",
+	/* 425: str */	"XM",
+	/* 426: str */	"XR",
+	/* 427: str */	"kDC3",
+	/* 428: str */	"kDC4",
+	/* 429: str */	"kDC5",
+	/* 430: str */	"kDC6",
+	/* 431: str */	"kDC7",
+	/* 432: str */	"kDN",
+	/* 433: str */	"kDN3",
+	/* 434: str */	"kDN4",
+	/* 435: str */	"kDN5",
+	/* 436: str */	"kDN6",
+	/* 437: str */	"kDN7",
+	/* 438: str */	"kEND3",
+	/* 439: str */	"kEND4",
+	/* 440: str */	"kEND5",
+	/* 441: str */	"kEND6",
+	/* 442: str */	"kEND7",
+	/* 443: str */	"kHOM3",
+	/* 444: str */	"kHOM4",
+	/* 445: str */	"kHOM5",
+	/* 446: str */	"kHOM6",
+	/* 447: str */	"kHOM7",
+	/* 448: str */	"kIC3",
+	/* 449: str */	"kIC4",
+	/* 450: str */	"kIC5",
+	/* 451: str */	"kIC6",
+	/* 452: str */	"kIC7",
+	/* 453: str */	"kLFT3",
+	/* 454: str */	"kLFT4",
+	/* 455: str */	"kLFT5",
+	/* 456: str */	"kLFT6",
+	/* 457: str */	"kLFT7",
+	/* 458: str */	"kNXT3",
+	/* 459: str */	"kNXT4",
+	/* 460: str */	"kNXT5",
+	/* 461: str */	"kNXT6",
+	/* 462: str */	"kNXT7",
+	/* 463: str */	"kPRV3",
+	/* 464: str */	"kPRV4",
+	/* 465: str */	"kPRV5",
+	/* 466: str */	"kPRV6",
+	/* 467: str */	"kPRV7",
+	/* 468: str */	"kRIT3",
+	/* 469: str */	"kRIT4",
+	/* 470: str */	"kRIT5",
+	/* 471: str */	"kRIT6",
+	/* 472: str */	"kRIT7",
+	/* 473: str */	"kUP",
+	/* 474: str */	"kUP3",
+	/* 475: str */	"kUP4",
+	/* 476: str */	"kUP5",
+	/* 477: str */	"kUP6",
+	/* 478: str */	"kUP7",
+	/* 479: str */	"ka2",
+	/* 480: str */	"kb1",
+	/* 481: str */	"kb3",
+	/* 482: str */	"kc2",
+	/* 483: str */	"kp5",
+	/* 484: str */	"kpADD",
+	/* 485: str */	"kpCMA",
+	/* 486: str */	"kpDIV",
+	/* 487: str */	"kpDOT",
+	/* 488: str */	"kpMUL",
+	/* 489: str */	"kpSUB",
+	/* 490: str */	"kpZRO",
+	/* 491: str */	"kxIN",
+	/* 492: str */	"kxOUT",
+	/* 493: str */	"rmxx",
+	/* 494: str */	"rv",
+	/* 495: str */	"smxx",
+	/* 496: str */	"xm",
+	/* 497: str */	"xr",
+};

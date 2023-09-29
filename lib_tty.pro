@@ -35,6 +35,8 @@ SOURCES += \
     lib_tty_internal.cpp
 
 HEADERS += \
+    infocmp-1faE.h \
+    infocmp-e.h \
     lib_tty.h \
     lib_tty_internal.h
 

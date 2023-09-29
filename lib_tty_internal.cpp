@@ -3,6 +3,14 @@
 #include "lib_tty_internal.h"
 #include <deque>
 #include <string>
+//#include <bits/stdc++.h>
+//#include <ttyent.h>
+//#include <term.h>
+//#include <ncurses.h>
+//#include <ncurses/term.h>
+
+
+
 
 //template<typename Container>            // utility f() to print vectors
 //    requires Insertable<Container>

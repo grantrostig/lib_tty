@@ -51,15 +51,16 @@ enum class File_status { /// After reading a char, did we get something good, sh
   //eof_library,           /// get application library EOF.  TODO: not used, determine if different than hot_key CTRL-D, which is a nav_field_completion
   eof_file_descriptor,   /// get library or OS EOF.
   fail,                  /// we read, but we got format/extraction error.
-  bad,                   /// we read, but we got serious unrecoverable error.
-  other_user_kb_char_data_HACK,      /// probably means got a good kb_char value.  TODO was associated with "good", but need to separate the concepts and fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
-  unexpected_user_kb_char_data_HACK  /// got bad data from hardware error, or user error, ie. something we don't expect or support. TODO: fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
+  bad                   /// we read, but we got serious unrecoverable error.
+  //other_user_kb_char_data_HACK,      /// probably means got a good kb_char value.  TODO was associated with "good", but need to separate the concepts and fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
+  //unexpected_user_kb_char_data_HACK  /// got bad data from hardware error, or user error, ie. something we don't expect or support. TODO: fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
 };
 
 /** The "Categories" of user level intent expressed by use of HotKeys
  */
 enum class HotKeyFunctionCat {
   none,						// a hot_key that is not yet assigned to a user intent function in the table.
+  none_i18n,				// NOT a hot_key, but instead a french or other keyboard that uses special multibyte sequences, similar to hot_keys but are not since they don't express IntentNav.
   help_popup,               // user is asking for help using keyboard, ie. F1 for help.
   nav_intra_field,          // user wants to move within the single user input field.  Currently we have only a single line interface, so left arrow and end-line, <BS> backspace, <DEL> etc.
                             // TODO?: NOTE: Should such nav_intra be handled by the client of the libaray, or what handling should be done with this libary when reading keystrokes?
@@ -73,34 +74,58 @@ enum class HotKeyFunctionCat {
   initial_state             // TODO: probably need some assert for logic errors.
 };
 
-/** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
- */
-enum class FieldCompletionNav { ///the intent of the user as demonstrated by the last navigation hot_key entered at a prompt. NOTE: each of these has a HotKeyFunctionCat (or is
-                                /// ignored/not currently assigned) in hot_keys object in .cpp file.  NOTE: also, each has multiple entries in FNIMap object in file_maintenance
-                                /// project which uses lib_tty library.
-  no_result,                    /// there was no interaction, and so there is no result.  is this different from ::na?
-  up_one_field,
-  down_one_field, 				// MOST COMMON response, meaning <CR> <ENTER> <RETURN> key
-  skip_one_field, 				// same as <TAB> with no data value.
-  skip_to_end_of_fields,
-  page_up,
-  page_down,
-  browse_up,       				// if at default value selection input, then select prior value on list of default values, else consider this as 'up_one_field'.
-  browse_down,     				//  also see prior comment.
-  save_form_as_is, 				// skip_to_end_of_fields and save?
+/// The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category",
+/// The intent of the user as demonstrated by the last navigation hot_key entered at a prompt.
+/// User's intent for what should happen after inputting a particular hot_key at a data field.
+/// NOTE: each of these has a HotKeyFunctionCat (or is ignored/not currently assigned) in hot_keys object in .cpp file.
+/// NOTE: also, each has multiple entries in FNIMap object in file_maintenance project which uses lib_tty library.
+enum class InteractionIntentNav {
+    initial_state,              // NULL - never set.
+    na,                          // not applicable
+    no_result,                  // there was no interaction, and so there is no result.
 
-  esc, 							// skip_to_end_of_fields and don't save, just prompt?
-  //help,  						// TODO: is this a erronious duplicate from HotKeyFunctionCat?
+    //help,  				    // TODO: is this a erronious duplicate from HotKeyFunctionCat?
+    esc, 					    // skip_to_end_of_fields and don't save, just prompt?
+    eof,                        // same handling as esc?, no more like <Enter> but save_form_as_is, then get out? TODO:
+    interrupt_signal,           // same as esc, no, more like CTRL-C. TODO:
+    quit_signal,                // exit program immediately, and produce a core dump.  TODO: security hole for memory? TODO:
+    kill_signal,                // WARNING: this may be invalid since it also appears in FieldIntraNav, however I guess I was thinking that it might have a different meaning if we are not dealing with a input field, but in another contect where we could interpret it as follows: exit program immediately like CTRL-C or posix kill KILL Ctrl-U command? TODO:
 
-  eof,                                 // same handling as esc?, no more like <Enter> but save_form_as_is, then get out? TODO:
-  interrupt_signal,                    // same as esc, no, more like CTRL-C. TODO:
-  exit_immediately = interrupt_signal, // TODO: fix this.
-  exit_with_prompts,
-  quit_signal, // exit program immediately, and produce a core dump.  TODO: security hole for memory? TODO:
-  kill_signal, // WARNING: this may be invalid since it also appears in FieldIntraNav, however I guess I was thinking that it might have a different meaning if we are not dealing
-               // with a input field, but in another contect where we could interpret it as follows: exit program immediately like CTRL-C or posix kill KILL Ctrl-U command? TODO:
-  na
-    //initial_state         // TODO:
+    // *** universal navigation commands, this group operates at all levels
+    exit_pgm_immediately = interrupt_signal, // TODO: fix this.
+    exit_pgm_with_prompts,
+    exit_fn_immediately,
+    exit_fn_with_prompts,
+    // *** menu specific navigation commands  	- supplemented by universals'
+    retain_menu,                // Once the action selected from a particular menu completes, stay at that sub-menu.
+    prior_menu,                 // Once the action selected from a particular menu completes, DO NOT stay at that sub-menu, but instead drop back to the prior menu in the navigation stack.  This was initally intended for actions that only input one value, so in fact the menu action was simply an input field.  May now be impractical or useless, but it could still be usefull/simpler/easier to use if just grabbing a simple value.
+    prior_menu_discard_value,   // Related to "prior_menu", but can't think of an example right now.  todo:
+    main_menu,                  // Once the action selected from a particular menu completes, goto the main menu.
+    exit_all_menu,              // Once the action selected from a particular menu completes, exit all menus, not sure where that would take the user? Perhaps the startup of the program where basic initialization questions are asked of the user before the main menu is displayed.
+    // *** dialog specific navigation commands  - supplemented by menus'
+    continue_forward_pagination,
+    continue_backward_pagination,
+    // *** detail_row 			- supplemented by menus'
+    save_form_as_is, 			// skip_to_end_of_fields and save?
+    page_up,
+    page_down,
+    up_one_field,
+    down_one_field, 			// MOST COMMON response, meaning <CR> <ENTER> <RETURN> key
+    skip_one_field, 			// same as <TAB> with no data value.
+    skip_to_end_of_fields,
+    // *** block  			 	   supplemented by menus'
+    up_one_block,               // Top of input block, or if there then top of prior block. A block would be a sub-section of an input screen, if there were two or more sections. A complex example would be having a master/detail input screen.
+    down_one_block,             // Bottom of input block, or if there then bottom of next block. A block would be a sub-section of an input screen, if there were two or more sections. A complex example would be having a master/detail input screen.
+    // *** inter_row
+    next_row,
+    prior_row,
+    first_row,
+    last_row,
+    // *** field
+    browse_up,     				// if at default value selection input, then select prior value on list of default values, else consider this as 'up_one_field'.
+    browse_down   				//  also see prior comment.
+    //store_value
+                                // TODO: should we have a separate enum for dialFieldCompletionNavogs, menus, data_fields?
 };
 
 /** The user level intent of a pressed HotKey of this HotKeyFunctionCat "Category"
@@ -121,12 +146,13 @@ enum class FieldIntraNav {
 /** Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char"
  *  The most basic character type this associated with a user keyboard on the supported computer/OS. TODO??: should this be unsigned char or ssize_t or unit8?
  *  one byte long or the components of a hot key sequence.
+ *  The simplest thing that can be read from stdin from a tty via a hardware keyboard, on a Linux/POSIX workstation.
  *  TODO: figure out what one char can store from an international keyboard, does the code assume it is human visible as a normal Alphanumeric character,
  *  then fix next two lines of documentation.
  */
-using KbFundamentalUnit = char;                             /// The simplest thing that can be read from stdin from a tty via a hardware keyboard, on a Linux/POSIX workstation.
-using Key_char_singular = KbFundamentalUnit;                /// The most basic character that a keyboard can generate like ASCII or UNICODE 8? or 16? or 32?, which does not generate a multi-btye burst of characters, like F1
-inline constexpr KbFundamentalUnit CHAR_NULL {'\0'};        /// Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
+using KbFundamentalUnit = char;
+using Key_char_singular = KbFundamentalUnit;                // The most basic character that a keyboard can generate like ASCII or UNICODE 8? or 16? or 32?, which does not generate a multi-btye burst of characters, like F1
+inline constexpr KbFundamentalUnit CHAR_NULL {'\0'};        // Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
 
 /** Is usally one (on a US Kb, but some keys probably have more than one on other language Kbs)
  *  normal/regular alphanumeric/ASCII like characters entered by the user.
@@ -134,9 +160,7 @@ inline constexpr KbFundamentalUnit CHAR_NULL {'\0'};        /// Value is unset/n
  *  was?: Kb_regular_key .
  *  TODO: make this the correct/internationalized char type, which would be KbFundamentalUnit from above?? or what???.
 */
-using Key_char_i18ns 	= std::string;
-
-using Hot_key_chars     = std::vector< KbFundamentalUnit >;   /// A sequence of basic chars that are generated by a user single keypress of a Hot_key on a keyboard, ie. ESC, or F1 for help. but does not include a or 2 or /
+using Key_chars_i18n 	= std::vector< KbFundamentalUnit >;   /// A sequence of basic chars that are generated by a user single keypress of a Hot_key on a keyboard, ie. ESC, or F1 for help. but does not include a or 2 or /
 
 /** A "Hot_key" is one keystroke of a ANSI keyboard of a SPECIAL key like "F1" or "Insert" or ESC or TAB, that is one or more chars/bytes long.
  *  For multi-byte sequences that flow from one keystroke, it can start with a CSI_ESC or we allow for another other designated char being CSI_ALT.
@@ -146,11 +170,11 @@ public:
         /// Name given by Lib_tty
   std::string        my_name            {STRING_NULL};
         /// See the type's documentation.
-  Hot_key_chars      characters         {STRING_NULL.cbegin(),STRING_NULL.cend()};
+  Key_chars_i18n     characters         {STRING_NULL.cbegin(),STRING_NULL.cend()};
         /// Depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
   HotKeyFunctionCat  function_cat       {HotKeyFunctionCat::initial_state};
         /// gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
-  FieldCompletionNav f_completion_nav   {FieldCompletionNav::na};
+  InteractionIntentNav f_completion_nav   {InteractionIntentNav::na};
         /// gets a value if HotKeyFunctionCat::nav_intra_field
   FieldIntraNav      intra_f_nav        {FieldIntraNav::na};
 
@@ -161,12 +185,27 @@ public:
 };
 using Hot_key_table = std::vector< Hot_key >; /// Stores all known Hot_keys for internal library use.
 
+class Hot_key_single_char : public Hot_key {
+};
+
+class Hot_key_multi_char : public Hot_key {
+};
+
+class Hot_key_multi_char_partial : public Hot_key {
+};
+
+class I18n_multi_char : public Hot_key {
+};
+
+class I18n_multi_char_partial : public Hot_key {
+};
+
 /** Is one char or one Hot_key in various forms,  ie. the result of hitting any key whether it is special or not OR EOF.
  *  TODO: An international i18n char could look like a hotkey since it might start with <ESC> or something else special, this is not yet accounted for in this code.
  *  TODO: char does this include an EOF character?
  *  was: //key_variant = std::variant< std::monostate, Key_char_singular, Key_char_i18ns, Hot_key_chars, Hot_key, File_status >;
  */
-using   Kb_key_variant = std::variant< std::monostate, Key_char_singular,               Hot_key_chars, Hot_key              >;
+using   Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_chars_i18n,                Hot_key              >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"
@@ -182,7 +221,7 @@ struct Kb_key_a_fstat {
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  */
 struct Kb_value_plus {
-  Key_char_i18ns    key_char_i18ns  {STRING_NULL};
+  Key_chars_i18n    key_chars_i18n  {STRING_NULL.cbegin(),STRING_NULL.cend()};
   Hot_key           hot_key         {};
   File_status       file_status     {File_status::initial_state};
 };

@@ -96,6 +96,7 @@ inline constexpr   ssize_t     NO_MORE_CHARS =     0;  /// Character used like a
 using              Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. TODO??: better? >using Lt_errno = typeof (errno);
 inline constexpr   Lt_errno    E_NO_MATCH =        1;  /// Designates that a hot_key has not been found after examining all raw characters of a multi-byte sequence of a key stroke. TODO: new convention for lib_tey errno-like codes
 inline constexpr   Lt_errno    E_PARTIAL_MATCH =   2;  /// Designates that we have a partial match on the prefix characters, leading to a possible E_NO_MATCH, of above line. TODO: new convention for lib_tey errno-like codes
+inline constexpr   Lt_errno    I18N_MATCH =        8;  /// TODO: far future, HACK for i18n chars that might have a CSI or not, or time out or not.
 
 /*****************************************************************************/
 /**************** START POSIX level declarations *****************************/
@@ -243,8 +244,9 @@ constexpr KbFundamentalUnit CSI_ESC = 27;
 /** Is lib_tty's customized manual alternative to the CSI Control Sequence Introducer CSI_ESC, which is the first char in multi-byte sequence Hot_key_chars such as F1.
  *  A cell phone (or other limited/alternate keyboard) user can type this character and follow it by the codes that a full keyboard would.
  *  so this allows manual entry of special function keys, etc.
+ *  https://www.aflahaye.nl/en/frequently-asked-questions/how-to-type-french-accents/#/
  *  TODO: Do we handle a single alt character as a plain character if it does not start a defined mulitbyte sequence? */
-constexpr KbFundamentalUnit CSI_ALT = '`';
+constexpr KbFundamentalUnit CSI_ALT = '`';  // others include hat ^, double quote ", <CTRL>+<ALT>[ and <CTRL>+<ALT>] (those two actually generate a CSI_ESC followed by the square braket.
 
 /** Variant that returns either a Hotkey OR an ERRNO.
  *  _o_ === "exclusive or"
@@ -256,7 +258,7 @@ using Hotkey_o_errno = std::variant< Hot_key, Lt_errno >;
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */
 std::optional<Hot_key>
-find_hot_key(const Hot_key_table &hot_key_table, const Hot_key_chars this_key);
+find_hot_key(const Hot_key_table &hot_key_table, const Key_chars_i18n this_key);
 
 /*****************************************************************************/
 /**************** END   Application Level Declarations ***********************/
