@@ -97,7 +97,7 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,ar
     std::string                 STRING_QQQ  {"qqq"};
     Lib_tty::Key_chars_i18n     QQQ         {STRING_QQQ.begin(),STRING_QQQ.end()};
     Lib_tty::Key_chars_i18n     i18ns {};
-    Lib_tty::Hot_key            hk {};
+    Lib_tty::Hot_key_row        hk {};
     Lib_tty::File_status        fs {};
     string                      user_ack {};
 
