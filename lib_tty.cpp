@@ -825,6 +825,7 @@ xterm-256color|xterm with 256 colors,
         u6=\E[%i%d;%dR, u7=\E[6n, u8=\E[?%[;0123456789]c,
         u9=\E[c, vpa=\E[%i%p1%dd,
 [grostig@fx6350-fedora terminfo]$
+        >>>>>> showkey -a
         */
     //  {"i18n-Keys1",      {CSI_ESC,'['                },		HotKeyFunctionCat::none_i18n, 				FieldCompletionNav::na, 			FieldIntraNav::na},  // TODO
     //  {"i18n-Keys2",      {'^',    'e'                },		HotKeyFunctionCat::none_i18n, 				FieldCompletionNav::na, 			FieldIntraNav::na},  // TODO
@@ -998,6 +999,7 @@ get_kb_keystroke_raw() {
     assert( false && "We should never get here.");
 }
 
+namespace detail {  // TODO: for support / helper / Utility  fn()s
 /// Is true/ignore hot_key, if category isn't a HotKeyFunctionCat::nav_field_completion OR SIMILAR HK.
 /// Doesn't ignore TODO:
 /// Only used once as a helper function, internally to lib_tty
@@ -1081,7 +1083,9 @@ bool is_ignore_kcs( Key_char_singular const skc,
     }
     assert(false && "We never get here.");
 }
+}
 
+using namespace detail;
 Kb_value_plus
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool   const is_require_field_completion_key,
