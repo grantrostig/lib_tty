@@ -904,6 +904,8 @@ get_kb_keystroke_raw() {
     // AND
     File_status         file_status     {File_status::initial_state};
 
+    bool                is_had_partial_hot_key_match  { false };
+    bool                is_had_partial_key_i18n_match { false };
     Key_chars_i18n      chars_temp      {STRING_NULL.cbegin(),STRING_NULL.cend()};
     LOGGER_("Pre  cin.get():");
     cin.get( first_kcs );           // TODO: first_kcs == 0 // does this ever happen? TODO: 0 == the break character or what else could it mean?
@@ -930,13 +932,13 @@ get_kb_keystroke_raw() {
             Key_chars_i18n hkc   { std::get< Hot_key_row >( hot_key_candidate ).characters };
             assert( not hkc.empty()                           && "Postcondition9.");
             assert( file_status != File_status::initial_state && "Postcondition1.");
-            return { std::get< Hot_key_row >( hot_key_candidate ), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::get< Hot_key_row >( hot_key_candidate ), is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
             // ******* Handle single simple regular ASCII first and return it.
             assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
             assert( first_kcs   != 0                          && "Postcondition10.");
             assert( file_status != File_status::initial_state && "Postcondition2.");
-            return { first_kcs, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { first_kcs, is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     }
     LOGGER_("We have a CSI, so we'll loop to get the whole multi-byte sequence");
@@ -961,7 +963,7 @@ get_kb_keystroke_raw() {
 //            // TODO??: could I use peek() to improve this code?
         if ( file_status == File_status::eof_file_descriptor ) {
             assert( false && "We probably don't handle eof well.");
-            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { hot_key_chars, is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
         if ( timed_kcs == TIMED_GET_NULL )
         {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
@@ -987,7 +989,7 @@ get_kb_keystroke_raw() {
             assert( not chars_temp.empty() && "Postcondition12.");
             assert( File_status::initial_state != file_status && "Postcondition3.");
             //return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
-            return { std::get< Hot_key_row >(hot_key_or_error), file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            return { std::get< Hot_key_row >(hot_key_or_error), is_had_partial_hot_key_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
             LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
@@ -997,13 +999,14 @@ get_kb_keystroke_raw() {
                 assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
                 assert( file_status != File_status::initial_state && "Postcondition4.");
                 //return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-                return { chars_temp, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case I18N_MATCH:
                 assert( false && "Logic error: unimplemented logic.");  // TODO:
-                return { chars_temp, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
+                is_had_partial_hot_key_match = true;
                 continue;          // to the top of the while loop.
                 break;
             }

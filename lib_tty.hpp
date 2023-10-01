@@ -251,8 +251,9 @@ using   Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_ch
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
 */
 struct Kb_key_a_fstat {
-  Kb_key_variant    kb_key_variant  {};                             // some datatype form of the key
-  File_status       file_status     {File_status::initial_state};   /// holds what is happening with cin EOF
+  Kb_key_variant    kb_key_variant       {};                             // some datatype form of the key
+  bool              is_had_partial_match {};
+  File_status       file_status          {File_status::initial_state};   /// holds what is happening with cin EOF
 };
 
 /** A return value which tells us if we got a Kb_key and?, or? a Hot_key, and, or?, if we got EOF. TODO?:
