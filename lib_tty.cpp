@@ -1,8 +1,5 @@
 /*  Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  */
-
-// TODO: rename .h to .hpp
-
 #include "lib_tty.hpp"
 #include "lib_tty_internal.hpp"
 #include <cstring>
@@ -24,16 +21,35 @@
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
 
-/// TODO??: better alternative? >using namespace Lib_tty; // or $Lib_tty::C_EOF // or $using Lib_tty::C_EOF will this last one work?
+/// TODO??: better alternative? >using namespace Lib_tty or each member? Lib_tty::IDENTIFIER ?
 namespace Lib_tty {
-/*****************************************************************************/
-/***************** START Debugging only section ******************************/
-/*****************************************************************************/
 /// define if asserts are NOT to be checked.  Put in *.h file not *.CPP
 //#define 	NDEBUG
 /// define I'm Debugging LT.  TODO??: Put in *.h file not *.CPP
 //#define  	GR_DEBUG
 //#undef  	GR_DEBUG
+
+/********** START Hot_key Class specific code ********************************/
+/// Free function.  //TODO??: or should this be a member function? Why?
+bool is_hk_chars_equal( Hot_key_row const & left, Hot_key_row const & right ) {
+    return ( left.characters == right.characters );
+}
+
+bool Hot_key_row::operator< ( Hot_key_row const  & in ) const {
+    return ( characters < in.characters );
+}
+
+std::string
+Hot_key_row::to_string() const {  // found in lib_tty.h
+    std::string s {my_name};  // TODO: finish this
+    return s;
+}
+/********** END   Hot_key Class specific code ********************************/
+
+namespace Detail {
+/*****************************************************************************/
+/***************** START Debugging only section ******************************/
+/*****************************************************************************/
 
 string
 source_loc( ) {  // give more detail on error location, used by perror()
@@ -196,7 +212,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // TODO: wh
 }
 
 // forward declaration
-Lib_tty::Sigaction_return
+Sigaction_return
 set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in );
 
 /// signal handler function to be called when a timeout alarm goes off via a user defined signal is received
@@ -230,7 +246,7 @@ void sigaction_restore_for_termination( Sigaction_termination_return const & act
 }
 
 /// called by enable_inactivity_handler
-Lib_tty::Sigaction_return
+Sigaction_return
 set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
     struct sigaction action {};
     sigemptyset( &action.sa_mask );
@@ -305,7 +321,7 @@ void print_iostate(const std::istream &stream) {
 }
 
 /// created as a "hack" since operator== doesn't work reliably? on structs.
-bool check_equality(Lib_tty::Termios const &termios, Lib_tty::Termios const &termios2){  // Used for debugging using assert().
+bool check_equality(Termios const &termios, Termios const &termios2){  // Used for debugging using assert().
     /* https://embeddedgurus.com/stack-overflow/2009/12/effective-c-tip-8-structure-comparison/
      * https://isocpp.org/blog/2016/02/a-bit-of-background-for-the-default-comparison-proposal-bjarne-stroustrup
      * https://stackoverflow.com/questions/141720/how-do-you-compare-structs-for-equality-in-c
@@ -325,7 +341,7 @@ bool check_equality(Lib_tty::Termios const &termios, Lib_tty::Termios const &ter
     return true;
 }
 
-Lib_tty::Termios & termio_get() { // uses POSIX  // TODO TODO: what are advantages of other version of this function?
+Termios & termio_get() { // uses POSIX  // TODO TODO: what are advantages of other version of this function?
     static Termios termios;
     if (auto result = tcgetattr( fileno(stdin), &termios); result == POSIX_ERROR) { // TODO: throw() in signature?
         int errno_save = errno;
@@ -356,7 +372,7 @@ void termio_set( Termios const & termios_new ) { // uses POSIX
     assert( check_equality( termios_new, termios_current ) && "Tcsetattr failed at least partially." );
 };
 
-Lib_tty::Termios & termio_set_raw() { // uses POSIX
+Termios & termio_set_raw() { // uses POSIX
     cin.sync_with_stdio( false );  									// TODO:  iostreams bug?  This is required for timer time-out else a bug occurs.
     static Termios termios_orig { termio_get() };
     Termios 	   termios_new 	{ termios_orig };                   // https://www.gnu.org/software/libc/manual/html_mono/libc.html#Mode-Data-Types
@@ -408,13 +424,13 @@ Lib_tty::Termios & termio_set_raw() { // uses POSIX
     return termios_orig;
 }
 
-void termio_restore( Lib_tty::Termios const &termios_orig) { // uses POSIX  // TODO: do you like my const 2x, what is effect calling POSIX?
+void termio_restore( Termios const &termios_orig) { // uses POSIX  // TODO: do you like my const 2x, what is effect calling POSIX?
     termio_set( termios_orig );
     cin.sync_with_stdio(true);  // TODO:  iostreams bug?  This is required for timer time-out bug occurs.
     return;
 }
 
-Lib_tty::Termios &
+Termios &
 termio_set_timer( cc_t const time) {  // uses POSIX
     static Termios termios_orig { termio_get() }; // TODO: why does this compile with termios and &termios?
     Termios termios_new = termios_orig;
@@ -432,22 +448,6 @@ termio_set_timer( cc_t const time) {  // uses POSIX
 /**************** START Lib_tty specific code ********************************/
 /*****************************************************************************/
 
-/********** START Hot_key Class specific code ********************************/
-/// Free function.  //TODO??: or should this be a member function? Why?
-bool is_hk_chars_equal( Hot_key_row const & left, Hot_key_row const & right ) {
-    return ( left.characters == right.characters );
-}
-
-bool Hot_key_row::operator< ( Hot_key_row const  & in ) const {
-    return ( characters < in.characters );
-}
-
-std::string
-Hot_key_row::to_string() const {  // found in lib_tty.h
-    std::string s {my_name};  // TODO: finish this
-    return s;
-}
-/********** END   Hot_key Class specific code ********************************/
 
 /// Allows eof on fd, but aborts on all other stati.
 /// Utility function called only twice within lib_tty.
@@ -880,9 +880,13 @@ xterm-256color|xterm with 256 colors,
     LOGGER_("Return:No match");
     return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 }
+}  // Detail namespace NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
+using namespace Detail;
 Kb_key_a_fstat
 get_kb_keystroke_raw() {
+    using namespace Detail;
+    //using namespace Lib_tty::Detail;
     assert( cin.good() && "Precondition.");
     // @return values
     // THIS
@@ -997,7 +1001,7 @@ get_kb_keystroke_raw() {
     assert( false && "We should never get here.");
 }
 
-namespace detail {  // TODO: for support / helper / Utility  fn()s
+namespace Detail {  // TODO: what is best nameing convention for these?: support / helper / Utility  fn()s
 /// Is true/ignore hot_key, if category isn't a HotKeyFunctionCat::nav_field_completion OR SIMILAR HK.
 /// Doesn't ignore TODO:
 /// Only used once as a helper function, internally to lib_tty
@@ -1083,13 +1087,13 @@ bool is_ignore_kcs( Key_char_singular const skc,
 }
 }
 
-using namespace detail;
 Kb_value_plus
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool   const is_require_field_completion_key,
                        bool   const is_echo_skc_to_tty,
                        bool   const is_allow_control_chars
                      ) {
+    using namespace Detail;
     assert( cin.good() && "Precondition.");
     assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     Key_chars_i18n 	    key_char_i18ns_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  /// The char(s) in the keystroke.

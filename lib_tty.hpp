@@ -1,10 +1,7 @@
 /* Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  */
-#ifndef LIB_TTY_H
-#define LIB_TTY_H
-// posix define might be needed?  TODO??:
-#define _POSIX_C_SOURCE 200809L
-
+#pragma once
+#define _POSIX_C_SOURCE 200809L // warning: posix define might also be needed in here in future.
 #include <deque>
 #include <ios>
 #include <iostream>
@@ -240,7 +237,7 @@ using   Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_ch
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
 */
 struct Kb_key_a_fstat {
-  Kb_key_variant    kb_key_variant  {};                             /// some datatype form of the key
+  Kb_key_variant    kb_key_variant  {};                             // some datatype form of the key
   File_status       file_status     {File_status::initial_state};   /// holds what is happening with cin EOF
 };
 
@@ -325,4 +322,3 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
 /**************** END   Lib_tty     Level Declarations ***********************/
 /*****************************************************************************/
 }  // namespace end Lib_tty
-#endif // LIB_TTY_H

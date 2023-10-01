@@ -73,6 +73,7 @@ operator<<( std::ostream & out, Container const & c) {
 //template std::ostream & operator<<( std::ostream & , std::deque<int>          const & );
 
 namespace Lib_tty {
+namespace Detail {
 using std::string;
 using namespace std::chrono_literals; // for wait().  TODO??: is there a better way? Marc may know.
 using namespace std::string_literals;
@@ -262,4 +263,5 @@ find_hot_key(const Hot_key_table &hot_key_table, const Key_chars_i18n this_key);
 /*****************************************************************************/
 /**************** END   Application Level Declarations ***********************/
 /*****************************************************************************/
-}  // namespace end Lib_tty
+}  // namespace end Detail NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+}  // namespace end Lib_tty NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
