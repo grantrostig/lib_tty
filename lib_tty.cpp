@@ -890,7 +890,7 @@ consider_key_i18n( Key_chars_i18n const & candidate_i18n_chars ) {
 }  // Detail namespace NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
 using namespace Detail;
-Kb_key_a_fstat
+Kb_key_a_stati
 get_kb_keystroke_raw() {
     //using namespace Lib_tty::Detail;
     assert( cin.good() && "Precondition.");
@@ -1128,14 +1128,14 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         hot_key_function_cat        = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
                                                                // TODO?: may not need this local, but not sure untill below TODOs are done.
 
-        Kb_key_a_fstat const    kb_key_a_fstat  { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-        file_status_result 		  		        = kb_key_a_fstat.file_status;
-        LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_fstat.file_status);
+        Kb_key_a_stati const kb_key_a_stati { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        file_status_result = kb_key_a_stati.file_status;
+        LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_stati.file_status);
         if ( (is_adequate_fs_local = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
             LOGGERS("is_ignore_key_fd:", is_adequate_fs_local);
-            if      ( std::holds_alternative< Key_char_singular >( kb_key_a_fstat.kb_key_variant )) {
-                Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_fstat.kb_key_variant ) };
+            if      ( std::holds_alternative< Key_char_singular >( kb_key_a_stati.kb_key_variant )) {
+                Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_stati.kb_key_variant ) };
                 LOGGERS("is kcs:", kcs);
                 if ( not ( is_ignore_kcs_local = is_ignore_kcs( kcs, is_allow_control_chars, true, is_echo_skc_to_tty))) {  // TODO: parameterize is_ring_bell_on_ignore, just true here.
                     LOGGERS("is kcs:", kcs);
@@ -1143,8 +1143,8 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                     key_char_i18ns_result.push_back( kcs );
                 }
             }
-            else if ( std::holds_alternative< Hot_key_row > ( kb_key_a_fstat.kb_key_variant )) {
-                hot_key_result 			    = std::get < Hot_key_row >( kb_key_a_fstat.kb_key_variant );  // TODO:?? is this a copy?
+            else if ( std::holds_alternative< Hot_key_row > ( kb_key_a_stati.kb_key_variant )) {
+                hot_key_result 			    = std::get < Hot_key_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
                 hot_key_function_cat        = hot_key_result.function_cat;
                 LOGGERS("is hk:", hot_key_result.my_name);
                 LOGGERS("is hot_key_function_cat:", (int)hot_key_result.function_cat);
@@ -1186,7 +1186,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 //file_status_result          != File_status::eof_library                 &&
           )
     {
-        Kb_key_a_fstat const kb_key_a_fstat { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        Kb_key_a_stati const kb_key_a_fstat { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         file_status_result                  = kb_key_a_fstat.file_status;
         if ( Kb_key_variant const k { kb_key_a_fstat.kb_key_variant }; std::holds_alternative< Hot_key_row >( k ))
             hot_key_result = std::get< Hot_key_row >( k );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.

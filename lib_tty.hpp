@@ -250,7 +250,7 @@ using   Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_ch
  *  _a_ == "and"
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
 */
-struct Kb_key_a_fstat {
+struct Kb_key_a_stati {
   Kb_key_variant    kb_key_variant       {};                             // some datatype form of the key
   bool              is_had_partial_match {};
   File_status       file_status          {File_status::initial_state};   /// holds what is happening with cin EOF
@@ -270,7 +270,7 @@ struct Kb_value_plus {
  *  Called by get_kb_keystrokes_raw().
  *  PUBLIC FUNCTION could it be that also? Can be called by end user, but not used in the client "file_maintenance_*" programs.
  *  Probably needs much more debugging, if it is to be called directly. */
-Kb_key_a_fstat
+Kb_key_a_stati
 get_kb_keystroke_raw();
 
 /** Seeks to get n Key_char_singular(s) from keyboard in raw stty mode.
