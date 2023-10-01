@@ -1,6 +1,6 @@
 /* copyright grant rostig grantrostig.com
  */
-#include "lib_tty_internal.h"
+#include "lib_tty_internal.hpp"
 #include <deque>
 #include <string>
 //#include <bits/stdc++.h>

@@ -3,8 +3,8 @@
 
 // TODO: rename .h to .hpp
 
-#include "lib_tty.h"
-#include "lib_tty_internal.h"
+#include "lib_tty.hpp"
+#include "lib_tty_internal.hpp"
 #include <cstring>
 #include <cstdio>
 #include <deque>
@@ -31,11 +31,9 @@ namespace Lib_tty {
 /*****************************************************************************/
 /// define if asserts are NOT to be checked.  Put in *.h file not *.CPP
 //#define 	NDEBUG
-/// define I'm Debugging LT.  Put in *.h file not *.CPP
-#define  	GR_DEBUG
+/// define I'm Debugging LT.  TODO??: Put in *.h file not *.CPP
+//#define  	GR_DEBUG
 //#undef  	GR_DEBUG
-//#ifdef   	GR_DEBUG
-//#endif  # GR_DEBUG
 
 string
 source_loc( ) {  // give more detail on error location, used by perror()
@@ -840,7 +838,7 @@ xterm-256color|xterm with 256 colors,
             LOGGERS("Duplicate hot_key:", dup->my_name);
             assert( false && "We don't allow duplicate hotkey character sequences.");
         }
-#ifndef GR_DEBUG
+#ifdef GR_DEBUG
         // TODO??: make it accept operator<< : LOGGERS("Run once only now, here are the hot_key_table,characters:",hot_key_table)
         //LOGGER_("Run once only now, here are the hot_key_table,characters:")
         for (auto & i : hot_key_table) {

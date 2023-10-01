@@ -1,10 +1,9 @@
 /* Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
  */
-#ifndef LIB_TTY_INTERNAL_H
-#define LIB_TTY_INTERNAL_H
+#pragma once
 
 #define _POSIX_C_SOURCE 200809L  // required for Fedora and Debian Linux, don't know about WIN or MAC.
-#include "lib_tty.h"
+#include "lib_tty.hpp"
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -264,4 +263,3 @@ find_hot_key(const Hot_key_table &hot_key_table, const Key_chars_i18n this_key);
 /**************** END   Application Level Declarations ***********************/
 /*****************************************************************************/
 }  // namespace end Lib_tty
-#endif // LIB_TTY_H

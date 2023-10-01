@@ -7,8 +7,8 @@
 
 //#include <bits/stdc++>  // TODO??: why is .h needed?
 //#include <bits/stdc++.h>
-#include "lib_tty.h"
-#include "lib_tty_internal.h"
+#include "lib_tty.hpp"
+#include "lib_tty_internal.hpp"
 #include <stacktrace>
 #include <source_location>
 #include <iostream>
