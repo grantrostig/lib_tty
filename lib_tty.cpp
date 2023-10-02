@@ -906,7 +906,9 @@ get_kb_keystroke_raw() {
 
     bool                is_had_partial_hot_key_match  { false };
     bool                is_had_partial_key_i18n_match { false };
-    Key_chars_i18n      chars_temp      {STRING_NULL.cbegin(),STRING_NULL.cend()};
+
+    Key_chars_i18n      chars_temp              {STRING_NULL.cbegin(),STRING_NULL.cend()};
+    bool                is_had_partial_match_temp   {false};
     LOGGER_("Pre  cin.get():");
     cin.get( first_kcs );           // TODO: first_kcs == 0 // does this ever happen? TODO: 0 == the break character or what else could it mean?
     LOGGER_("Post cin.get():");
@@ -926,7 +928,7 @@ get_kb_keystroke_raw() {
     // ******* Handle the single simple regular char case first and return it.
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
         assert( chars_temp.size() == 1 && "Logic error.");
-        Hotkey_o_errno hot_key_candidate = consider_hot_key( chars_temp );
+        Hotkey_o_errno hot_key_candidate = consider_hot_key( chars_temp );  // TODO2: this context may also need to consider single char i18n chars, but for now we handle them as single key char ASCII.
         if ( std::holds_alternative< Hot_key_row >( hot_key_candidate ) ) {
             // ******* Handle hot_key that is a single ASCII char first and return it.
             Key_chars_i18n hkc   { std::get< Hot_key_row >( hot_key_candidate ).characters };
@@ -938,7 +940,7 @@ get_kb_keystroke_raw() {
             assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
             assert( first_kcs   != 0                          && "Postcondition10.");
             assert( file_status != File_status::initial_state && "Postcondition2.");
-            return { first_kcs, is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { first_kcs, is_had_partial_match_temp, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     }
     LOGGER_("We have a CSI, so we'll loop to get the whole multi-byte sequence");
@@ -950,6 +952,10 @@ get_kb_keystroke_raw() {
 //            file_status = File_status::eof_file_descriptor;
 //            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 //        };
+        assert( ( (    is_had_partial_hot_key_match && not is_had_partial_key_i18n_match) ||
+                  (not is_had_partial_hot_key_match &&     is_had_partial_key_i18n_match)
+                        //&& is_had_partial_match_temp
+                ) && "Logic error:Invariant:of mixed hot_keys and i18n_keys partial parts.");
 
         // ******* We might have one or more characters from that single keystroke,
         // ******* so let's get another char within a potential multibyte sequence, which would come very quickly before our timer on the get() expires.
@@ -963,7 +969,7 @@ get_kb_keystroke_raw() {
 //            // TODO??: could I use peek() to improve this code?
         if ( file_status == File_status::eof_file_descriptor ) {
             assert( false && "We probably don't handle eof well.");
-            return { hot_key_chars, is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::monostate {}, is_had_partial_match_temp || is_had_partial_hot_key_match || is_had_partial_key_i18n_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
         if ( timed_kcs == TIMED_GET_NULL )
         {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
@@ -980,8 +986,8 @@ get_kb_keystroke_raw() {
 
         // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
         Hotkey_o_errno   const hot_key_or_error  { consider_hot_key(  chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
-        // ALSO Let's see if we now have a single or multybyte i18n AND we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
-        // ******* TODO2: next line needs to be fully coded, it is just a stub at this point.
+        // **ALSO* Let's see if we now have a single or multybyte i18n AND we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
+        // ******* TODO2: next line needs to be fully coded, it is just a stub at this point. Will likely include need to differntiate between hot_key case and i18n case overlaping logic.
         Key_i18n_o_errno const key_i18n_or_error { consider_key_i18n( chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
         if ( std::holds_alternative< Hot_key_row >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* Hot_key
@@ -1011,6 +1017,35 @@ get_kb_keystroke_raw() {
                 break;
             }
         }
+        if ( std::holds_alternative< Key_i18n_row >( key_i18n_or_error ) ) {  // We have a real hot_key, so we are done!
+            // ******* Hot_key
+            assert( timed_kcs != 0 && "Postcondition11.");
+            assert( not chars_temp.empty() && "Postcondition12.");
+            assert( File_status::initial_state != file_status && "Postcondition3.");
+            //return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            return { std::get< Key_i18n_row >(key_i18n_or_error), is_had_partial_key_i18n_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+        }
+        else {
+            LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
+            switch ( std::get< Lt_errno >( key_i18n_or_error ) ) {
+            case E_NO_MATCH:                                                // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
+                assert( is_potential_CSI_ALT && "Postcondition13.");
+                assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
+                assert( file_status != File_status::initial_state && "Postcondition4.");
+                //return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                break;
+            case I18N_MATCH:
+                assert( false && "Logic error: unimplemented logic.");  // TODO:
+                return { chars_temp, is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                break;
+            case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
+                is_had_partial_key_i18n_match = true;
+                continue;          // to the top of the while loop.
+                break;
+            }
+        }
+
     } //******* END while *******
     assert( false && "We should never get here.");
 }
@@ -1111,9 +1146,9 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     assert( cin.good() && "Precondition.");
     assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     Key_chars_i18n 	    key_char_i18ns_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  /// The char(s) in the keystroke.
-    Hot_key_row		 		hot_key_result          {};  /// The hot_key that might have been found.
+    Hot_key_row		 	hot_key_result          {};  /// The hot_key that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
-    size_t 		 		additional_skc 			{length_in_keystrokes};  // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
+    size_t 		 		additional_keystrokes 	{length_in_keystrokes};  // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::none};			// reset some variables from prior loop if any, specifically old/prior hot_key.
     //unsigned 			int value_index			{0}; // Note: Points to the character beyond the current character (presuming zero origin), like an STL iterator it.end(), hence 0 == empty field.
     //bool 		 		is_editing_mode_insert  {true};
@@ -1128,10 +1163,10 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         hot_key_function_cat        = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
                                                                // TODO?: may not need this local, but not sure untill below TODOs are done.
 
-        Kb_key_a_stati const kb_key_a_stati { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        Kb_key_a_stati const kb_key_a_stati { get_kb_keystroke_raw() };  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
         file_status_result = kb_key_a_stati.file_status;
         LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_stati.file_status);
-        if ( (is_adequate_fs_local = is_adequate_file_status( file_status_result )))   // file_status is OK
+        if ( ( is_adequate_fs_local = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
             LOGGERS("is_ignore_key_fd:", is_adequate_fs_local);
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_stati.kb_key_variant )) {
@@ -1142,6 +1177,11 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                     // key_char_i18ns_result += kcs; grostig
                     key_char_i18ns_result.push_back( kcs );
                 }
+            }
+            else if ( std::holds_alternative< Key_i18n_row > ( kb_key_a_stati.kb_key_variant )) {
+                hot_key_result 			    = std::get < Hot_key_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
+
+
             }
             else if ( std::holds_alternative< Hot_key_row > ( kb_key_a_stati.kb_key_variant )) {
                 hot_key_result 			    = std::get < Hot_key_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
@@ -1166,11 +1206,11 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         }
         if ( is_adequate_fs_local || not is_ignore_kcs_local || not is_ignore_hot_key_local  ) {
             LOGGER_("This gotten key stroke a good single regular char");
-            --additional_skc;           // TODO??: do we need to, or can we check for underflow on size_t?
+            --additional_keystrokes;           // TODO??: do we need to, or can we check for underflow on size_t?
         }
         assert(true && "Logic error: nav and nav_eof and file_status::eof_Key_char_singular are not consistent");  // TODO: might be worthwhile to add?
 
-    } while (   additional_skc              >  0                                        &&
+    } while (   additional_keystrokes              >  0                                        &&
                 hot_key_function_cat        == HotKeyFunctionCat::none                  &&
                 file_status_result          != File_status::eof_file_descriptor
                 //file_status_result          != File_status::eof_Key_char_singular       &&
@@ -1186,7 +1226,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 //file_status_result          != File_status::eof_library                 &&
           )
     {
-        Kb_key_a_stati const kb_key_a_fstat { get_kb_keystroke_raw() };  // READ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        Kb_key_a_stati const kb_key_a_fstat { get_kb_keystroke_raw() };  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
         file_status_result                  = kb_key_a_fstat.file_status;
         if ( Kb_key_variant const k { kb_key_a_fstat.kb_key_variant }; std::holds_alternative< Hot_key_row >( k ))
             hot_key_result = std::get< Hot_key_row >( k );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
@@ -1199,20 +1239,20 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     if ( not key_char_i18ns_result.empty() ) {
         LOGGERS("My character(s) are/is:", key_char_i18ns_result);
         LOGGERS("My character(s) length is:", key_char_i18ns_result.size());
-        if (        hot_key_result.my_name == STRING_NULL ) {
-            assert( hot_key_result.my_name == STRING_NULL && "Postcondition6: result not set.");
+        if (            hot_key_result.my_name == STRING_NULL ) {
+            assert(     hot_key_result.my_name == STRING_NULL && "Postcondition6: result not set.");
             assert( not key_char_i18ns_result.empty() && "Postcondition16: result not set.");
-            return { key_char_i18ns_result, {},             file_status_result };
+            return { std::vector<Kb_key_row_variant> {key_char_i18ns_result.begin(),key_char_i18ns_result.end()}, bool {false}, file_status_result };  // RETURN RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
-            assert( hot_key_result.my_name != STRING_NULL && "Postcondition6: result not set.");
+            assert(     hot_key_result.my_name != STRING_NULL && "Postcondition6: result not set.");
             assert( not key_char_i18ns_result.empty() && "Postcondition16: result not set.");
-            return { key_char_i18ns_result, hot_key_result, file_status_result };
+            return { std::vector<Kb_key_row_variant> {Kb_key_row_variant {hot_key_result}}, bool {false}, file_status_result };  // RETURN RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     } else {
         LOGGERS("Hot_key name is:", hot_key_result.my_name );
-        assert(     hot_key_result.my_name != STRING_NULL  && "Postcondition7: result not set.");
+        assert(         hot_key_result.my_name != STRING_NULL  && "Postcondition7: result not set.");
         assert(         key_char_i18ns_result.empty() && "Postcondition7: result not set.");
-        return     { {}                   , hot_key_result, file_status_result };
+        return     { std::vector<Kb_key_row_variant> {Kb_key_row_variant {hot_key_result}}, bool {false}, file_status_result };  // RETURN RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
     }
     assert( false && "We never get here.");
 }

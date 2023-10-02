@@ -244,15 +244,16 @@ class Kb_get_result2 {
  *  TODO: An international i18n char could look like a hotkey since it might start with <ESC> or something else special, this is not yet accounted for in this code.
  *  TODO: char does this include an EOF character?
  */
-using   Kb_key_variant = std::variant< std::monostate, Key_char_singular, Key_chars_i18n, Key_i18n_row, Hot_key_row >;
+using   Kb_key_variant =     std::variant< std::monostate, Key_char_singular, Key_chars_i18n, Key_i18n_row, Hot_key_row >;
+using   Kb_key_row_variant = std::variant< std::monostate, Key_char_singular,                 Key_i18n_row, Hot_key_row >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
 */
 struct Kb_key_a_stati {
-  Kb_key_variant    kb_key_variant       {};                             // some datatype form of the key
-  bool              is_had_partial_match {};
+  Kb_key_variant    kb_key_variant       {std::monostate {}};                             // some datatype form of the key
+  bool              is_had_partial_match {false};
   File_status       file_status          {File_status::initial_state};   /// holds what is happening with cin EOF
 };
 
@@ -260,10 +261,15 @@ struct Kb_key_a_stati {
  *  Heavily used everywhere!
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  */
-struct Kb_value_plus {
+struct Kb_value_plus_old {
   Key_chars_i18n    key_chars_i18n  {STRING_NULL.cbegin(),STRING_NULL.cend()};
   Hot_key_row       hot_key         {};
   File_status       file_status     {File_status::initial_state};
+};
+struct Kb_value_plus {  // XXXXX new
+  std::vector<Kb_key_row_variant>   keystrokes      {std::monostate{}};
+  bool                              is_partial      {false};
+  File_status                       file_status     {File_status::initial_state};
 };
 /** Gets one single keystroke from user keyboard, which may consist of multiple characters in a key's multi-byte sequence
  *  Relies on cin being in raw mode!
