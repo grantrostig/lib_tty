@@ -91,7 +91,7 @@ inline constexpr   cc_t        VTIME_ESC =         1;  /// Designates 1/10 th of
 
 inline constexpr   ssize_t     TIMED_GET_NOT_SET = 99; /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  TODO: 0 might be bad, especially since above is also 0 and they are used in same function.
                                                        /// TODO verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
-inline constexpr   ssize_t     TIMED_GET_NULL =    0;  /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  TODO: 0 might be bad, especially since above is also 0 and they are used in same function.
+inline constexpr   ssize_t     TIMED_GET_GOT_NULL =    0;  /// Designates that no automatic additional multi-byte sequence chars are readable from the keyboard, used for CSI_ESC handling.  TODO: 0 might be bad, especially since above is also 0 and they are used in same function.
 inline constexpr   ssize_t     NO_MORE_CHARS =     0;  /// Character used like as a "flag", and is concatinated to a singular CSI_ESC read from user, to generate an artificial multi-byte sequence to denote that the CSI_ESC is alone and is not part/start of a multibyte sequence.  But the CSI_ESC alone is important in that it represents the Escape/ESC key, which is a hot_key.
 using              Lt_errno =  int;                    /// The type for lib_tty errnos, similar to Unix errno. TODO??: better? >using Lt_errno = typeof (errno);
 inline constexpr   Lt_errno    E_NO_MATCH =        1;  /// Designates that a hot_key has not been found after examining all raw characters of a multi-byte sequence of a key stroke. TODO: new convention for lib_tey errno-like codes
@@ -241,12 +241,13 @@ constexpr KbFundamentalUnit ESC_KEY = 27;
  *  TODO: Could this be implemented as a "termcap" like table. */
 constexpr KbFundamentalUnit CSI_ESC = 27;
 
-/** Is lib_tty's customized manual alternative to the CSI Control Sequence Introducer CSI_ESC, which is the first char in multi-byte sequence Hot_key_chars such as F1.
- *  A cell phone (or other limited/alternate keyboard) user can type this character and follow it by the codes that a full keyboard would.
- *  so this allows manual entry of special function keys, etc.
+/** Is lib_tty's customized user manual entry alternative to initiate the CSI Control Sequence Introducer CSI_ESC, which is the first char in multi-byte sequence Hot_key_chars such as F1.
+ *  A cell phone (or other limited/alternate keyboard) user can type this character and follow it by the codes that a full keyboard would do instantly on pressing a keystroke.
+ *  Hence this allows manual entry of special function keys, etc.
+ *  We chose ` but others include hat ^, double quote ", <CTRL>+<ALT>[ and <CTRL>+<ALT>] (those two actually generate a CSI_ESC followed by the square braket.
  *  https://www.aflahaye.nl/en/frequently-asked-questions/how-to-type-french-accents/#/
  *  TODO: Do we handle a single alt character as a plain character if it does not start a defined mulitbyte sequence? */
-constexpr KbFundamentalUnit CSI_ALT = '`';  // others include hat ^, double quote ", <CTRL>+<ALT>[ and <CTRL>+<ALT>] (those two actually generate a CSI_ESC followed by the square braket.
+constexpr KbFundamentalUnit CSI_MANUAL_ENTRY = '`';
 
 /** Variant that returns either a Hotkey OR an ERRNO.
  *  _o_ === "exclusive or"

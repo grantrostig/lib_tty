@@ -558,6 +558,7 @@ consider_hot_key( I18n_key_chars const & candidate_hk_chars ) {
         After removing all of the completely unusable control characters, it
         turns out that Ctrl could only reliably be used with twenty of the forty
         basic keys (A, B, C, D, E, F, G, K, L, N, O, P, R, T, U, V, W, X, Y, Z).
+     *  https://www.aflahaye.nl/en/frequently-asked-questions/how-to-type-french-accents/#/
      */
     static const Ascii_Posix_table ascii_posix_map {                            // TODO??: why is constexpr allowed, is it the vector?
     //ascii_id, ascii_name,          posix_id, ascii_ctrl+, \+,  ascii_char, posix_char
@@ -894,63 +895,59 @@ Kb_key_a_stati
 get_kb_keystroke_raw() {
     //using namespace Lib_tty::Detail;
     assert( cin.good() && "Precondition.");
-    // @return values
-    // THIS
-    Key_char_singular   first_kcs       {CHAR_NULL} ;
-    // OR
-    Hot_key_chars       hot_key_chars   {STRING_NULL.cbegin(),STRING_NULL.cend()};
-    // OR
-    I18n_key_chars      i18n_key_chars  {STRING_NULL.cbegin(),STRING_NULL.cend()};
-    // AND
-    File_status         file_status     {File_status::initial_state};
+    Key_char_singular   first_kcs                       {CHAR_NULL} ;
+    Hot_key_chars       hot_key_chars                   {STRING_NULL.cbegin(),STRING_NULL.cend()};
+    I18n_key_chars      i18n_key_chars                  {STRING_NULL.cbegin(),STRING_NULL.cend()};
+    int16_t             is_partial_hot_key_matches      { 0 };  // If and Number of search matched multibyte characters, less one 1, but then incremented when returned to give correct number of chars in parial match.
+    int16_t             is_partial_i18n_key_matches     { 0 };
+    File_status         file_status                     {File_status::initial_state};
 
-    int16_t             is_had_partial_hot_key_match  { 0 };  // search matched characters less one 1, but incremented when returned.
-    int16_t             is_had_partial_i18n_key_match { 0 };
-
-    I18n_key_chars      chars_temp              {STRING_NULL.cbegin(),STRING_NULL.cend()};
-    int16_t             is_had_partial_match_temp     {0};
-    LOGGER_("Pre  cin.get():");
+    I18n_key_chars      chars_temp                      {STRING_NULL.cbegin(),STRING_NULL.cend()};  // TODO2: WARNING: this variable assumes it can hold either Hot_key_chars or I18n_key_chars.
+    int16_t             is_partial_temp_matches       { 0 };  // If and Number of search matched multibyte characters, less one 1, but then incremented when returned to give correct number of chars in parial match.
+                                LOGGER_("Pre  cin.get():");
     cin.get( first_kcs );           // TODO: first_kcs == 0 // does this ever happen? TODO: 0 == the break character or what else could it mean?
-    LOGGER_("Post cin.get():");
-    assert( cin && "Logic error: cin is not good.");
-    assert( first_kcs != 0 && "Logic error: Got a zero from cin.get().");  // Note: here we consider a zero as a failed cin.get(), below on a timed get we start with a magic number and we expect to get a zero 0 if the timer expires. TODO verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
+                                LOGGER_("Post cin.get():");
+                                assert( cin && "Logic error: cin is not good.");
+                                assert( first_kcs != 0 && "Logic error: Got a zero from cin.get().");  // Note: here we consider a zero as a failed cin.get(), below on a timed get we start with a magic number and we expect to get a zero 0 if the timer expires. TODO verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
     file_status = get_successfull_iostate_cin();
-
-    bool is_potential_CSI_ALT   {false};
-    chars_temp.clear();
-    if ( first_kcs == CSI_ALT ) {
+    bool is_potential_CSI_MANUAL_ENTRY   {false};
+    if ( first_kcs == CSI_MANUAL_ENTRY ) {
+        chars_temp.clear();
         chars_temp.push_back( CSI_ESC );
-        is_potential_CSI_ALT = true;
+        is_potential_CSI_MANUAL_ENTRY = true;
     }
-    else
+    else {
+        chars_temp.clear();
         chars_temp.push_back( first_kcs );
+    }
 
-    // ******* Handle the single char case first and return it.
+    // ******* Handle the single char 3 CASEs, and return it.
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
-        assert( chars_temp.size() == 1 && "Logic error.");
-        Hot_key_o_errno   hot_key_candidate = consider_hot_key( chars_temp );
+                                assert( chars_temp.size() == 1 && "Logic error.");
+        Hot_key_o_errno   hot_key_candidate = consider_hot_key(  chars_temp );
         I18n_key_o_errno i18n_key_candidate = consider_i18n_key( chars_temp );
         if (        std::holds_alternative< Hot_key_row >(  hot_key_candidate ) ) {
-            // ******* Handle hot_key that is a single ASCII char first and return it, such as <TAB> <BS>? , but probably not 'h' for help.
+            // ******* CASE: Handle hot_key that is a single char, and return it, such as <TAB> <BS>? , but probably not 'h' for help.
 #ifndef NDEBUG
-            I18n_key_chars hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };  // TODO3:  this is probably not correct check
-            assert( not hkc.empty()                           && "Postcondition9.");
-            assert( file_status != File_status::initial_state && "Postcondition1.");
+                                Hot_key_chars hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };  // TODO3:  this is probably not correct check
+                                assert( not hkc.empty()                           && "Postcondition9.");
+                                assert( file_status != File_status::initial_state && "Postcondition1.");
 #endif
-            return { std::get< Hot_key_row >( hot_key_candidate ), ++is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                                return { std::get< Hot_key_row >(  hot_key_candidate  ), is_partial_hot_key_matches,  file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else if ( std::holds_alternative< I18n_key_row >( i18n_key_candidate ) ) {
-           // TODO2: Code/check this case. Similar to above.
-            return { std::get< I18n_key_row >( i18n_key_candidate ), ++is_had_partial_i18n_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            // ******* CASE: Handle i18n_key that is a single char, and return it.
+                                // TODO2: Code/check this case. Similar to above.
+                                return { std::get< I18n_key_row >( i18n_key_candidate ), is_partial_i18n_key_matches, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
-            // ******* Handle single simple regular ASCII first and return it.
-            assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
-            assert( first_kcs   != 0                          && "Postcondition10.");
-            assert( file_status != File_status::initial_state && "Postcondition2.");
-            return { first_kcs, ++is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            // ******* CASE: Handle single simple regular char, and return it.
+                                assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
+                                assert( first_kcs   != 0                          && "Postcondition10.");
+                                assert( file_status != File_status::initial_state && "Postcondition2.");
+            return { first_kcs, 0,                                                                  file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     }
-    LOGGER_("We have a CSI, so we'll loop to get the whole multi-byte sequence");
-    // ******* So far, we have one kb char. Is it a hot_key? Which is could be a singlebyte (CR TAB or ESC) or a multibyte function key like F1.
+    LOGGER_("We have a CSI or ESC, so we'll loop to get the whole multi-byte sequence");
+    // ******* CSI or ESC: It will manifest as either: 1) a multibyte sequence of hot_key (like F1}, or 2) i18n sequence, or a singlebyte hot_key such as ESC (others too? We think not).
     while ( true ) {
 //        if ( cin.eof() || first_kcs == 0) {             // ????????????????????? does this evern happen? TODO: 0 == the break character or what else could it mean?
 //            assert( false && "logic error or needs more work."); // TODO: more eof handling needed
@@ -958,8 +955,8 @@ get_kb_keystroke_raw() {
 //            file_status = File_status::eof_file_descriptor;
 //            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 //        };
-        assert( ( (    is_had_partial_hot_key_match && not is_had_partial_i18n_key_match) ||
-                  (not is_had_partial_hot_key_match &&     is_had_partial_i18n_key_match)
+        assert( ( (    is_partial_hot_key_matches && not is_partial_i18n_key_matches) ||
+                  (not is_partial_hot_key_matches &&     is_partial_i18n_key_matches)
                         //&& is_had_partial_match_temp
                 ) && "Logic error:Invariant:of mixed hot_keys and i18n_keys partial parts.");
 
@@ -967,84 +964,83 @@ get_kb_keystroke_raw() {
         // ******* so let's get another char within a potential multibyte sequence, which would come very quickly before our timer on the get() expires.
         Key_char_singular   timed_kcs       {TIMED_GET_NOT_SET};  // TODO: verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
         Termios const       termios_orig    { termio_set_timer( VTIME_ESC )}; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
-        LOGGER_("Pre  cin.get():");
+                                LOGGER_("Pre  cin.get():");
         cin.get( timed_kcs );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
-        LOGGER_("Post cin.get():");
-        file_status = get_successfull_iostate_cin();
+                                LOGGER_("Post cin.get():");
         termio_restore( termios_orig );
-//            // TODO??: could I use peek() to improve this code?
+                                // TODO??: could I use peek() to improve this code?
+        file_status = get_successfull_iostate_cin();  // We could exit here with an abort().  ????????EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE??????
         if ( file_status == File_status::eof_file_descriptor ) {
-            assert( false && "We probably don't handle eof well.");
-            return { std::monostate {}, static_cast<int16_t>(1+is_had_partial_match_temp + is_had_partial_hot_key_match + is_had_partial_i18n_key_match), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                                assert( false && "We probably don't handle eof well.");
+            return { std::monostate {}, static_cast<int16_t>(1+is_partial_temp_matches + is_partial_hot_key_matches + is_partial_i18n_key_matches), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        if ( timed_kcs == TIMED_GET_NULL )
-        {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
-            LOGGER_("Got a timed NULL.");
+        if ( timed_kcs == TIMED_GET_GOT_NULL )
+        {                       // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
+                                LOGGER_("Got a timed NULL.");
             file_status = File_status::timed_out;
-            chars_temp.push_back( NO_MORE_CHARS ); // add a flag value to show a singular ESC TODO: is this needed?? in superficial testing is seems not!  // TODO: MAGIC NUMBER.
-            cin.clear();                              // TODO: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
+            chars_temp.push_back( NO_MORE_CHARS );  // Add a flag value to match on a singular ESC, or else to cause a E_NO_MATCH failure below.  // TODO3: MAGIC NUMBER.
+            cin.clear();                            // TODO: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
         }
         else {
-            LOGGERS("Got a timed char.", timed_kcs);
-            // file_status = File_status::other_user_kb_char_data_HACK;  // grostig  just because we determined that we got a good char, doesn't change the file_status, so leave it alone! It was already set above after the get/read().
-            chars_temp.push_back( timed_kcs );   // We got another char, and we hope it may be part of a multi-byte sequence.
+            LOGGERS("We got a timed char.", timed_kcs);
+            chars_temp.push_back( timed_kcs );      // We got another char, and we hope it may be part of a multi-byte sequence.
         }
 
-        // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
-        Hot_key_o_errno   const hot_key_or_error  { consider_hot_key(  chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
-        // **ALSO* Let's see if we now have a single or multybyte i18n AND we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
-        // ******* TODO2: next line needs to be fully coded, it is just a stub at this point. Will likely include need to differntiate between hot_key case and i18n case overlaping logic.
+                                // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
+        Hot_key_o_errno  const hot_key_or_error  { consider_hot_key(  chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
+                                // **ALSO* Let's see if we now have a single or multybyte i18n AND we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
+                                // ******* TODO2: next line needs to be fully coded, it is just a stub at this point. Will likely include need to differntiate between hot_key case and i18n case overlaping logic.
         I18n_key_o_errno const i18n_key_or_error { consider_i18n_key( chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
         if ( std::holds_alternative< Hot_key_row >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* Hot_key
-            assert( timed_kcs != 0 && "Postcondition11.");
-            assert( not chars_temp.empty() && "Postcondition12.");
-            assert( File_status::initial_state != file_status && "Postcondition3.");
-            return { std::get< Hot_key_row >(hot_key_or_error), ++is_had_partial_hot_key_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+                                assert( timed_kcs != 0 && "Postcondition11.");
+                                assert( not chars_temp.empty() && "Postcondition12.");
+                                assert( File_status::initial_state != file_status && "Postcondition3.");
+                                return { std::get< Hot_key_row >(hot_key_or_error), ++is_partial_hot_key_matches, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
             LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
+                                //Hot_key_chars hkcs {chars_temp};   // TODO2: fix this hack
             switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
             case E_NO_MATCH:                                                // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
-                assert( is_potential_CSI_ALT && "Postcondition13.");
-                assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
-                assert( file_status != File_status::initial_state && "Postcondition4.");
-                //return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-                return { chars_temp, ++is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                                assert( is_potential_CSI_MANUAL_ENTRY && "Postcondition13.");
+                                assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
+                                assert( file_status != File_status::initial_state && "Postcondition4.");
+                                return { chars_temp, ++is_partial_hot_key_matches, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case I18N_MATCH:
-                assert( false && "Logic error: unimplemented logic.");  // TODO:
-                return { chars_temp, ++is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                                assert( false && "Logic error: unimplemented logic.");  // TODO:
+                return { chars_temp, ++is_partial_hot_key_matches, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
-                ++is_had_partial_hot_key_match;
+                ++is_partial_hot_key_matches;
                 continue;          // to the top of the while loop.
                 break;
             }
-        }
+        }   // **** repeat code from above? TODO??:  could I use templates right here in this function?
         if ( std::holds_alternative< I18n_key_row >( i18n_key_or_error ) ) {  // We have a real hot_key, so we are done!
-            // ******* Hot_key
-            assert( timed_kcs != 0 && "Postcondition11.");
-            assert( not chars_temp.empty() && "Postcondition12.");
-            assert( File_status::initial_state != file_status && "Postcondition3.");
-            //return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
-            return { std::get< I18n_key_row >(i18n_key_or_error), is_had_partial_i18n_key_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            // ******* I18n_key
+                                assert( timed_kcs != 0 && "Postcondition11.");
+                                assert( not chars_temp.empty() && "Postcondition15.");
+                                assert( File_status::initial_state != file_status && "Postcondition16.");
+                                return { std::get< I18n_key_row >(i18n_key_or_error), is_partial_i18n_key_matches, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
-            LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
+            LOGGERS("We have an Lt_errno on considering i18n_key_chars:", std::get< Lt_errno >( i18n_key_or_error ) );
+                                //I18n_key_chars ikcs {chars_temp};     // TODO2: fix this hack
             switch ( std::get< Lt_errno >( i18n_key_or_error ) ) {
             case E_NO_MATCH:                                                // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
-                assert( is_potential_CSI_ALT && "Postcondition13.");
-                assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
-                assert( file_status != File_status::initial_state && "Postcondition4.");
-                return { chars_temp, ++is_had_partial_i18n_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                                assert( is_potential_CSI_MANUAL_ENTRY && "Postcondition13.");
+                                assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
+                                assert( file_status != File_status::initial_state && "Postcondition4.");
+                                return { chars_temp, ++is_partial_i18n_key_matches, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case I18N_MATCH:
-                assert( false && "Logic error: unimplemented logic.");  // TODO:
-                return { chars_temp, ++is_had_partial_i18n_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                                assert( false && "Logic error: unimplemented logic.");  // TODO:
+                return { chars_temp, ++is_partial_i18n_key_matches, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
-                ++is_had_partial_i18n_key_match;
+                ++is_partial_i18n_key_matches;
                 continue;          // to the top of the while loop.
                 break;
             }
