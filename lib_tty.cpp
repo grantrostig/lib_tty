@@ -904,11 +904,11 @@ get_kb_keystroke_raw() {
     // AND
     File_status         file_status     {File_status::initial_state};
 
-    bool                is_had_partial_hot_key_match  { false };
-    bool                is_had_partial_key_i18n_match { false };
+    int16_t             is_had_partial_hot_key_match  { 0 };  // search matched characters less one 1, but incremented when returned.
+    int16_t             is_had_partial_key_i18n_match { 0 };
 
     Key_chars_i18n      chars_temp              {STRING_NULL.cbegin(),STRING_NULL.cend()};
-    bool                is_had_partial_match_temp   {false};
+    int16_t             is_had_partial_match_temp     {0};
     LOGGER_("Pre  cin.get():");
     cin.get( first_kcs );           // TODO: first_kcs == 0 // does this ever happen? TODO: 0 == the break character or what else could it mean?
     LOGGER_("Post cin.get():");
@@ -928,19 +928,25 @@ get_kb_keystroke_raw() {
     // ******* Handle the single simple regular char case first and return it.
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
         assert( chars_temp.size() == 1 && "Logic error.");
-        Hotkey_o_errno hot_key_candidate = consider_hot_key( chars_temp );  // TODO2: this context may also need to consider single char i18n chars, but for now we handle them as single key char ASCII.
-        if ( std::holds_alternative< Hot_key_row >( hot_key_candidate ) ) {
-            // ******* Handle hot_key that is a single ASCII char first and return it.
-            Key_chars_i18n hkc   { std::get< Hot_key_row >( hot_key_candidate ).characters };
+        Hotkey_o_errno   hot_key_candidate = consider_hot_key( chars_temp );
+        Key_i18n_o_errno key_i18n_candidate = consider_key_i18n( chars_temp );
+        if (        std::holds_alternative< Hot_key_row >(  hot_key_candidate ) ) {
+            // ******* Handle hot_key that is a single ASCII char first and return it, such as <TAB> <BS>? , but probably not 'h' for help.
+#ifndef NDEBUG
+            Key_chars_i18n hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };
             assert( not hkc.empty()                           && "Postcondition9.");
             assert( file_status != File_status::initial_state && "Postcondition1.");
-            return { std::get< Hot_key_row >( hot_key_candidate ), is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+#endif
+            return { std::get< Hot_key_row >( hot_key_candidate ), ++is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+        } else if ( std::holds_alternative< Key_i18n_row >( key_i18n_candidate ) ) {
+           // TODO2: Code/check this case. Similar to above.
+            return { std::get< Key_i18n_row >( key_i18n_candidate ), ++is_had_partial_key_i18n_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
             // ******* Handle single simple regular ASCII first and return it.
             assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
             assert( first_kcs   != 0                          && "Postcondition10.");
             assert( file_status != File_status::initial_state && "Postcondition2.");
-            return { first_kcs, is_had_partial_match_temp, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { first_kcs, ++is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     }
     LOGGER_("We have a CSI, so we'll loop to get the whole multi-byte sequence");
@@ -969,7 +975,7 @@ get_kb_keystroke_raw() {
 //            // TODO??: could I use peek() to improve this code?
         if ( file_status == File_status::eof_file_descriptor ) {
             assert( false && "We probably don't handle eof well.");
-            return { std::monostate {}, is_had_partial_match_temp || is_had_partial_hot_key_match || is_had_partial_key_i18n_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::monostate {}, static_cast<int16_t>(1+is_had_partial_match_temp + is_had_partial_hot_key_match + is_had_partial_key_i18n_match), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
         if ( timed_kcs == TIMED_GET_NULL )
         {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
@@ -994,8 +1000,7 @@ get_kb_keystroke_raw() {
             assert( timed_kcs != 0 && "Postcondition11.");
             assert( not chars_temp.empty() && "Postcondition12.");
             assert( File_status::initial_state != file_status && "Postcondition3.");
-            //return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
-            return { std::get< Hot_key_row >(hot_key_or_error), is_had_partial_hot_key_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            return { std::get< Hot_key_row >(hot_key_or_error), ++is_had_partial_hot_key_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
             LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
@@ -1005,14 +1010,14 @@ get_kb_keystroke_raw() {
                 assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
                 assert( file_status != File_status::initial_state && "Postcondition4.");
                 //return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-                return { chars_temp, is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, ++is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case I18N_MATCH:
                 assert( false && "Logic error: unimplemented logic.");  // TODO:
-                return { chars_temp, is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, ++is_had_partial_hot_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
-                is_had_partial_hot_key_match = true;
+                ++is_had_partial_hot_key_match;
                 continue;          // to the top of the while loop.
                 break;
             }
@@ -1032,15 +1037,14 @@ get_kb_keystroke_raw() {
                 assert( is_potential_CSI_ALT && "Postcondition13.");
                 assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
                 assert( file_status != File_status::initial_state && "Postcondition4.");
-                //return { hot_key_chars, File_status::unexpected_user_kb_char_data_HACK }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-                return { chars_temp, is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, ++is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case I18N_MATCH:
                 assert( false && "Logic error: unimplemented logic.");  // TODO:
-                return { chars_temp, is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, ++is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
-                is_had_partial_key_i18n_match = true;
+                ++is_had_partial_key_i18n_match;
                 continue;          // to the top of the while loop.
                 break;
             }
@@ -1146,7 +1150,8 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     assert( cin.good() && "Precondition.");
     assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     Key_chars_i18n 	    key_char_i18ns_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  /// The char(s) in the keystroke.
-    Hot_key_row		 	hot_key_result          {};  /// The hot_key that might have been found.
+    Key_i18n_row		key_i18n_result         {};  /// The i18n_key that might have been found.
+    Hot_key_row		 	hot_key_result          {};  /// The hot_key  that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
     size_t 		 		additional_keystrokes 	{length_in_keystrokes};  // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::none};			// reset some variables from prior loop if any, specifically old/prior hot_key.
@@ -1162,7 +1167,6 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         hot_key_result              = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat        = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
                                                                // TODO?: may not need this local, but not sure untill below TODOs are done.
-
         Kb_key_a_stati const kb_key_a_stati { get_kb_keystroke_raw() };  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
         file_status_result = kb_key_a_stati.file_status;
         LOGGERS("Just read a keystroke, file_status:", (int)kb_key_a_stati.file_status);
@@ -1179,7 +1183,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 }
             }
             else if ( std::holds_alternative< Key_i18n_row > ( kb_key_a_stati.kb_key_variant )) {
-                hot_key_result 			    = std::get < Hot_key_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
+                key_i18n_result 	    = std::get < Key_i18n_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
 
 
             }
@@ -1234,7 +1238,11 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
             cout<< "\aError: expecting a CR or other special completion key, try again."<<endl;
     }   //******* END   while *****************************************************************************************************************
     termio_restore( termios_orig );
-    // We RETURN either N regular char(s), OR both the N regular char(s) and the latest Hot_key, OR just a Hot_key
+    // We RETURN either N regular char(s),
+    //               OR
+    //                  both the N regular char(s) and the latest Hot_key,
+    //               OR
+    //                  just a Hot_key
     assert( file_status_result != File_status::initial_state && "Postcondition5.");
     if ( not key_char_i18ns_result.empty() ) {
         LOGGERS("My character(s) are/is:", key_char_i18ns_result);
