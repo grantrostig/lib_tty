@@ -259,7 +259,7 @@ using Key_i18n_o_errno  = std::variant< Key_i18n_row, Lt_errno >;
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */
 std::optional<Hot_key_row>
-find_hot_key(const Hot_key_table &hot_key_table, const Key_chars_i18n this_key);
+find_hot_key(const Hot_key_table &hot_key_table, const I18n_key_chars this_key);
 
 /*****************************************************************************/
 /**************** END   Application Level Declarations ***********************/

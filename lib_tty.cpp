@@ -140,7 +140,7 @@ void print_signal(int const signal) {
 
 ///  Debugging use only at this time.
 std::optional<Hot_key_row>
-find_hot_key(const Hot_key_table &hot_key_table, const Key_chars_i18n this_key) {
+find_hot_key(const Hot_key_table &hot_key_table, const I18n_key_chars this_key) {
     for (auto & hk : hot_key_table)
         if ( hk.characters == this_key )
             return hk;
@@ -530,7 +530,7 @@ char find_posix_char_from_posix_name(const Ascii_Posix_table &vec, const std::st
  *  Handles both single char hot_keys and multi-byte sequence hot_keys.
  *  Only used internally to lib_tty. */
 Hotkey_o_errno
-consider_hot_key( Key_chars_i18n const & candidate_hk_chars ) {
+consider_hot_key( I18n_key_chars const & candidate_hk_chars ) {
     assert( not candidate_hk_chars.empty() && "Precondition.");
     /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/termios.h.html
        https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap11.html#tag_11_01_09
@@ -882,7 +882,7 @@ xterm-256color|xterm with 256 colors,
 }
 
 Key_i18n_o_errno
-consider_key_i18n( Key_chars_i18n const & candidate_i18n_chars ) {
+consider_key_i18n( I18n_key_chars const & candidate_i18n_chars ) {
     // TODO2:  can delay untill we have actual keyboards to test, or peoople who know how a US keyboard is used to enter i18n chars/keystrokes.
     return Key_i18n_o_errno {};
 }
@@ -900,14 +900,14 @@ get_kb_keystroke_raw() {
     // OR
     Hot_key_chars       hot_key_chars   {STRING_NULL.cbegin(),STRING_NULL.cend()};
     // OR
-    Key_chars_i18n      key_chars_i18n  {STRING_NULL.cbegin(),STRING_NULL.cend()};
+    I18n_key_chars      i18n_key_chars  {STRING_NULL.cbegin(),STRING_NULL.cend()};
     // AND
     File_status         file_status     {File_status::initial_state};
 
     int16_t             is_had_partial_hot_key_match  { 0 };  // search matched characters less one 1, but incremented when returned.
     int16_t             is_had_partial_key_i18n_match { 0 };
 
-    Key_chars_i18n      chars_temp              {STRING_NULL.cbegin(),STRING_NULL.cend()};
+    I18n_key_chars      chars_temp              {STRING_NULL.cbegin(),STRING_NULL.cend()};
     int16_t             is_had_partial_match_temp     {0};
     LOGGER_("Pre  cin.get():");
     cin.get( first_kcs );           // TODO: first_kcs == 0 // does this ever happen? TODO: 0 == the break character or what else could it mean?
@@ -933,7 +933,7 @@ get_kb_keystroke_raw() {
         if (        std::holds_alternative< Hot_key_row >(  hot_key_candidate ) ) {
             // ******* Handle hot_key that is a single ASCII char first and return it, such as <TAB> <BS>? , but probably not 'h' for help.
 #ifndef NDEBUG
-            Key_chars_i18n hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };
+            I18n_key_chars hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };
             assert( not hkc.empty()                           && "Postcondition9.");
             assert( file_status != File_status::initial_state && "Postcondition1.");
 #endif
@@ -1149,7 +1149,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     using namespace Detail;
     assert( cin.good() && "Precondition.");
     assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
-    Key_chars_i18n 	    key_char_i18ns_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  /// The char(s) in the keystroke.
+    I18n_key_chars 	    key_char_i18ns_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  /// The char(s) in the keystroke.
     Key_i18n_row		key_i18n_result         {};  /// The i18n_key that might have been found.
     Hot_key_row		 	hot_key_result          {};  /// The hot_key  that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
