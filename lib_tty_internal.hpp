@@ -254,7 +254,7 @@ constexpr KbFundamentalUnit CSI_ALT = '`';  // others include hat ^, double quot
  *  TODO: consider renaming to Hot_key vs Hotkey.
  */
 using Hotkey_o_errno    = std::variant< Hot_key_row, Lt_errno >;
-using Key_i18n_o_errno  = std::variant< Key_i18n_row, Lt_errno >;
+using I18n_key_o_errno  = std::variant< I18n_key_row, Lt_errno >;
 
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */

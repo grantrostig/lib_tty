@@ -179,16 +179,16 @@ public:
  *  Here a "row" represents relalated data, like a row in a relational database.
  *  For multi-byte sequences that flow from one keystroke, it can start with a ???? or we allow for another other designated char being CSI_ALT.
  */
-class Key_i18n_row {
+class I18n_key_row {
 public:
   std::string          my_name            {STRING_NULL};                        // Name given by Lib_tty
   I18n_key_chars       characters         {STRING_NULL.cbegin(),STRING_NULL.cend()}; // See the type's documentation.
   //Keyi18nFunctionCat    function_cat       {HotKeyFunctionCat::initial_state};   // depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
   InteractionIntentNav interaction_intent_nav {InteractionIntentNav::na};       //
   FieldIntraNav        intra_f_nav        {FieldIntraNav::na};                  //
-  bool            operator<( Key_i18n_row const &) const;                 // Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
+  bool            operator<( I18n_key_row const &) const;                 // Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
   std::string     to_string()                 const;                            // Used for debugging only.
-}; using Key_i18n_table = std::vector< Key_i18n_row >;              // Stores all known international chars/keystrokes for internal library use.  Table like in the sense of a relational database.
+}; using I18n_key_table = std::vector< I18n_key_row >;              // Stores all known international chars/keystrokes for internal library use.  Table like in the sense of a relational database.
 
 namespace Design_speculation {            //experimental NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 class Chars_error {
@@ -244,8 +244,8 @@ class Kb_get_result2 {
  *  TODO: An international i18n char could look like a hotkey since it might start with <ESC> or something else special, this is not yet accounted for in this code.
  *  TODO: char does this include an EOF character?
  */
-using   Kb_key_variant =     std::variant< std::monostate, Key_char_singular, I18n_key_chars, Key_i18n_row, Hot_key_row >;
-using   Kb_key_row_variant = std::variant< std::monostate, Key_char_singular,                 Key_i18n_row, Hot_key_row >;
+using   Kb_key_variant =     std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_row, Hot_key_row >;
+using   Kb_key_row_variant = std::variant< std::monostate, Key_char_singular,                 I18n_key_row, Hot_key_row >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"

@@ -881,10 +881,10 @@ xterm-256color|xterm with 256 colors,
     return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 }
 
-Key_i18n_o_errno
-consider_key_i18n( I18n_key_chars const & candidate_i18n_chars ) {
+I18n_key_o_errno
+consider_i18n_key( I18n_key_chars const & candidate_i18n_chars ) {
     // TODO2:  can delay untill we have actual keyboards to test, or peoople who know how a US keyboard is used to enter i18n chars/keystrokes.
-    return Key_i18n_o_errno {};
+    return I18n_key_o_errno {};
 }
 
 }  // Detail namespace NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
@@ -905,7 +905,7 @@ get_kb_keystroke_raw() {
     File_status         file_status     {File_status::initial_state};
 
     int16_t             is_had_partial_hot_key_match  { 0 };  // search matched characters less one 1, but incremented when returned.
-    int16_t             is_had_partial_key_i18n_match { 0 };
+    int16_t             is_had_partial_i18n_key_match { 0 };
 
     I18n_key_chars      chars_temp              {STRING_NULL.cbegin(),STRING_NULL.cend()};
     int16_t             is_had_partial_match_temp     {0};
@@ -929,7 +929,7 @@ get_kb_keystroke_raw() {
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
         assert( chars_temp.size() == 1 && "Logic error.");
         Hotkey_o_errno   hot_key_candidate = consider_hot_key( chars_temp );
-        Key_i18n_o_errno key_i18n_candidate = consider_key_i18n( chars_temp );
+        I18n_key_o_errno i18n_key_candidate = consider_i18n_key( chars_temp );
         if (        std::holds_alternative< Hot_key_row >(  hot_key_candidate ) ) {
             // ******* Handle hot_key that is a single ASCII char first and return it, such as <TAB> <BS>? , but probably not 'h' for help.
 #ifndef NDEBUG
@@ -938,9 +938,9 @@ get_kb_keystroke_raw() {
             assert( file_status != File_status::initial_state && "Postcondition1.");
 #endif
             return { std::get< Hot_key_row >( hot_key_candidate ), ++is_had_partial_hot_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-        } else if ( std::holds_alternative< Key_i18n_row >( key_i18n_candidate ) ) {
+        } else if ( std::holds_alternative< I18n_key_row >( i18n_key_candidate ) ) {
            // TODO2: Code/check this case. Similar to above.
-            return { std::get< Key_i18n_row >( key_i18n_candidate ), ++is_had_partial_key_i18n_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::get< I18n_key_row >( i18n_key_candidate ), ++is_had_partial_i18n_key_match, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
             // ******* Handle single simple regular ASCII first and return it.
             assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
@@ -958,8 +958,8 @@ get_kb_keystroke_raw() {
 //            file_status = File_status::eof_file_descriptor;
 //            return { hot_key_chars, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 //        };
-        assert( ( (    is_had_partial_hot_key_match && not is_had_partial_key_i18n_match) ||
-                  (not is_had_partial_hot_key_match &&     is_had_partial_key_i18n_match)
+        assert( ( (    is_had_partial_hot_key_match && not is_had_partial_i18n_key_match) ||
+                  (not is_had_partial_hot_key_match &&     is_had_partial_i18n_key_match)
                         //&& is_had_partial_match_temp
                 ) && "Logic error:Invariant:of mixed hot_keys and i18n_keys partial parts.");
 
@@ -975,7 +975,7 @@ get_kb_keystroke_raw() {
 //            // TODO??: could I use peek() to improve this code?
         if ( file_status == File_status::eof_file_descriptor ) {
             assert( false && "We probably don't handle eof well.");
-            return { std::monostate {}, static_cast<int16_t>(1+is_had_partial_match_temp + is_had_partial_hot_key_match + is_had_partial_key_i18n_match), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::monostate {}, static_cast<int16_t>(1+is_had_partial_match_temp + is_had_partial_hot_key_match + is_had_partial_i18n_key_match), file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
         if ( timed_kcs == TIMED_GET_NULL )
         {                                             // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
@@ -994,7 +994,7 @@ get_kb_keystroke_raw() {
         Hotkey_o_errno   const hot_key_or_error  { consider_hot_key(  chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
         // **ALSO* Let's see if we now have a single or multybyte i18n AND we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
         // ******* TODO2: next line needs to be fully coded, it is just a stub at this point. Will likely include need to differntiate between hot_key case and i18n case overlaping logic.
-        Key_i18n_o_errno const key_i18n_or_error { consider_key_i18n( chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
+        I18n_key_o_errno const i18n_key_or_error { consider_i18n_key( chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
         if ( std::holds_alternative< Hot_key_row >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* Hot_key
             assert( timed_kcs != 0 && "Postcondition11.");
@@ -1022,29 +1022,29 @@ get_kb_keystroke_raw() {
                 break;
             }
         }
-        if ( std::holds_alternative< Key_i18n_row >( key_i18n_or_error ) ) {  // We have a real hot_key, so we are done!
+        if ( std::holds_alternative< I18n_key_row >( i18n_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* Hot_key
             assert( timed_kcs != 0 && "Postcondition11.");
             assert( not chars_temp.empty() && "Postcondition12.");
             assert( File_status::initial_state != file_status && "Postcondition3.");
             //return { std::get< Hot_key >(hot_key_or_error), File_status::other_user_kb_char_data_HACK };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
-            return { std::get< Key_i18n_row >(key_i18n_or_error), is_had_partial_key_i18n_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+            return { std::get< I18n_key_row >(i18n_key_or_error), is_had_partial_i18n_key_match, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
             LOGGERS("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
-            switch ( std::get< Lt_errno >( key_i18n_or_error ) ) {
+            switch ( std::get< Lt_errno >( i18n_key_or_error ) ) {
             case E_NO_MATCH:                                                // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
                 assert( is_potential_CSI_ALT && "Postcondition13.");
                 assert( not chars_temp.empty() && "Postcondition14.");   // we have the CSI and zero or more characters appropriate characters, which is what makes it bad.
                 assert( file_status != File_status::initial_state && "Postcondition4.");
-                return { chars_temp, ++is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, ++is_had_partial_i18n_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case I18N_MATCH:
                 assert( false && "Logic error: unimplemented logic.");  // TODO:
-                return { chars_temp, ++is_had_partial_key_i18n_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+                return { chars_temp, ++is_had_partial_i18n_key_match, file_status }; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
                 break;
             case E_PARTIAL_MATCH:  // lets get some more timed input chars to see if we get complete a hot_key.
-                ++is_had_partial_key_i18n_match;
+                ++is_had_partial_i18n_key_match;
                 continue;          // to the top of the while loop.
                 break;
             }
@@ -1150,7 +1150,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     assert( cin.good() && "Precondition.");
     assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     I18n_key_chars 	    key_char_i18ns_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  /// The char(s) in the keystroke.
-    Key_i18n_row		key_i18n_result         {};  /// The i18n_key that might have been found.
+    I18n_key_row		i18n_key_result         {};  /// The i18n_key that might have been found.
     Hot_key_row		 	hot_key_result          {};  /// The hot_key  that might have been found.
     File_status  		file_status_result      {File_status::initial_state};
     size_t 		 		additional_keystrokes 	{length_in_keystrokes};  // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
@@ -1182,8 +1182,8 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                     key_char_i18ns_result.push_back( kcs );
                 }
             }
-            else if ( std::holds_alternative< Key_i18n_row > ( kb_key_a_stati.kb_key_variant )) {
-                key_i18n_result 	    = std::get < Key_i18n_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
+            else if ( std::holds_alternative< I18n_key_row > ( kb_key_a_stati.kb_key_variant )) {
+                i18n_key_result 	    = std::get < I18n_key_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
 
 
             }
