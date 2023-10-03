@@ -243,31 +243,40 @@ class Kb_get_result2 {
  */
 using   Kb_key_variant =     std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_row, /*Hot_key_chars,*/ Hot_key_row >; // ???_key_chars present to allow for showing the failed multibyte match.
 using   Kb_key_row_variant = std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_row >;
+using Kb_key_variant_rows =  std::vector< Kb_key_variant >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
 */
 struct Kb_key_a_stati {
-  Kb_key_variant    kb_key_variant       {std::monostate {}};               // The key in some datatype
-  int16_t           failed_match_chars   {0};
-  File_status       file_status          {File_status::initial_state};      // Holds what is happening with cin: EOF etc.
+  Kb_key_variant    kb_key_variant          {std::monostate {}};               // The key in some datatype
+  int16_t           is_failed_match_chars   {0};
+  File_status       file_status             {File_status::initial_state};      // Holds what is happening with cin: EOF etc.
 };
 
 /** A return value which tells us if we got a Kb_key and?, or? a Hot_key, and, or?, if we got EOF. TODO?:
  *  Heavily used everywhere!
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
  */
-struct Kb_value_plus_old {
-  I18n_key_chars    i18n_key_chars  {STRING_NULL.cbegin(),STRING_NULL.cend()};
-  Hot_key_row       hot_key         {};
-  File_status       file_status     {File_status::initial_state};
+//struct Kb_value_plus_old {
+  //I18n_key_chars    i18n_key_chars  {STRING_NULL.cbegin(),STRING_NULL.cend()};
+  //Hot_key_row       hot_key         {};
+  //File_status       file_status     {File_status::initial_state};
+//};
+//struct Kb_key_a_stati_rows_old2 {  // XXXXX new
+  //std::vector<Kb_key_a_stati>   keystrokes      {std::monostate{}, 0, File_status::initial_state };
+  //std::vector<int16_t>              is_failed_match_chars   {0};
+  //File_status                       file_status     {File_status::initial_state};
+//};
+using Kb_key_a_stati_rows = std::vector< Kb_key_a_stati >;
+
+struct Kb_keys {
+  Kb_key_a_stati_rows   kb_key_a_stati_rows     {};
+  HotKeyFunctionCat     hot_key_final_nav        {HotKeyFunctionCat::initial_state};
+  File_status           file_status_final       {File_status::initial_state};
 };
-struct Kb_value_plus {  // XXXXX new
-  std::vector<Kb_key_row_variant>   keystrokes      {std::monostate{}};
-  bool                              is_partial      {false};
-  File_status                       file_status     {File_status::initial_state};
-};
+
 /** Gets one single keystroke from user keyboard, which may consist of multiple characters in a key's multi-byte sequence
  *  Relies on cin being in raw mode!
  *  Called by get_kb_keystrokes_raw().
@@ -330,7 +339,7 @@ get_kb_keystroke_raw();
  *
     // We RETURN either N regular char(s), OR both the N regular char(s) and the latest Hot_key, OR just a Hot_key
  */
-Kb_value_plus
+Kb_keys
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool const   is_require_field_completion,
                        bool const   is_echo_skc_to_tty,           /// skc == Key_char_singular
