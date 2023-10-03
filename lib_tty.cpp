@@ -529,7 +529,7 @@ char find_posix_char_from_posix_name(const Ascii_Posix_table &vec, const std::st
  *  Is called repetitively by caller to incrementally check the accumulated chars that are input from a single keystroke of the user.
  *  Handles both single char hot_keys and multi-byte sequence hot_keys.
  *  Only used internally to lib_tty. */
-Hotkey_o_errno
+Hot_key_o_errno
 consider_hot_key( I18n_key_chars const & candidate_hk_chars ) {
     assert( not candidate_hk_chars.empty() && "Precondition.");
     /* https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/termios.h.html
@@ -925,15 +925,15 @@ get_kb_keystroke_raw() {
     else
         chars_temp.push_back( first_kcs );
 
-    // ******* Handle the single simple regular char case first and return it.
+    // ******* Handle the single char case first and return it.
     if ( first_kcs != CSI_ESC && first_kcs != ESC_KEY ) {
         assert( chars_temp.size() == 1 && "Logic error.");
-        Hotkey_o_errno   hot_key_candidate = consider_hot_key( chars_temp );
+        Hot_key_o_errno   hot_key_candidate = consider_hot_key( chars_temp );
         I18n_key_o_errno i18n_key_candidate = consider_i18n_key( chars_temp );
         if (        std::holds_alternative< Hot_key_row >(  hot_key_candidate ) ) {
             // ******* Handle hot_key that is a single ASCII char first and return it, such as <TAB> <BS>? , but probably not 'h' for help.
 #ifndef NDEBUG
-            I18n_key_chars hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };
+            I18n_key_chars hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };  // TODO3:  this is probably not correct check
             assert( not hkc.empty()                           && "Postcondition9.");
             assert( file_status != File_status::initial_state && "Postcondition1.");
 #endif
@@ -991,7 +991,7 @@ get_kb_keystroke_raw() {
         }
 
         // ******* Let's see if we now have a single or multybyte Hot_key and can return, or we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
-        Hotkey_o_errno   const hot_key_or_error  { consider_hot_key(  chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
+        Hot_key_o_errno   const hot_key_or_error  { consider_hot_key(  chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
         // **ALSO* Let's see if we now have a single or multybyte i18n AND we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
         // ******* TODO2: next line needs to be fully coded, it is just a stub at this point. Will likely include need to differntiate between hot_key case and i18n case overlaping logic.
         I18n_key_o_errno const i18n_key_or_error { consider_i18n_key( chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
