@@ -273,7 +273,7 @@ using Kb_key_a_stati_rows = std::vector< Kb_key_a_stati >;
 
 struct Kb_keys {
   Kb_key_a_stati_rows   kb_key_a_stati_rows     {};
-  HotKeyFunctionCat     hot_key_final_nav        {HotKeyFunctionCat::initial_state};
+  HotKeyFunctionCat     hot_key_nav_final       {HotKeyFunctionCat::initial_state};
   File_status           file_status_final       {File_status::initial_state};
 };
 
