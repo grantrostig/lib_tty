@@ -1,9 +1,9 @@
-#TEMPLATE =  app                  # comment out TEMPLATE = lib 2 lines to make main.cpp
-#CONFIG +=   console
-#SOURCES  =  main.cpp
+TEMPLATE =  app                  # comment out TEMPLATE = lib 2 lines to make main.cpp
+CONFIG +=   console
+SOURCES  =  main.cpp
 
-TEMPLATE = lib                    # comment out main.cpp 3 lines to make the library for linker use, and at top turn on "+=console"
-CONFIG += staticlib
+#TEMPLATE = lib                    # comment out main.cpp 3 lines to make the library for linker use, and at top turn on "+=console"
+#CONFIG += staticlib
 
 CONFIG -= app_bundle
 CONFIG -= qt
