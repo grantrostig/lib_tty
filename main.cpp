@@ -141,6 +141,7 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << "~~~ argc,ar
         LOGGER_("nav:"<<fs);
 
         LOGGER_("We got this in 3 variables below:" );
+
         cout<<"MAIN():kb_regular_value,length:{"<< i18ns<<","<<i18ns.size()<<"}, hot_key:"<< hot_key_row.my_name << ", file_status:"<< (int) fs <<"."<<endl;
         cout << "Press RETURN to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
     } while ( i18ns != Q && hot_key_row.my_name != "f4");

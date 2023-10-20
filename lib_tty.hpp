@@ -3,7 +3,7 @@
 #pragma once
 #define _POSIX_C_SOURCE 200809L // warning: posix define might also be needed in here in future.
 #include <deque>
-#include <ios>
+#include <iomanip>
 #include <iostream>
 #include <locale>
 #include <optional>
