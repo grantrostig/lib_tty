@@ -46,30 +46,30 @@
 /// Concept definition - used by a template below.
 template <typename Container>
 concept Insertable = requires( std::ostream & out ) {
-    requires not std::same_as<std::string, Container>; // OR >std::is_same  <std::string, Container>::value OR std::is_same_v<std::string, Container>;
-    { out << typename Container::value_type {} } -> std::convertible_to<std::ostream & >;  // OR just >{ out << typename Container::value_type {} };
+    requires not std::same_as<std::string, Container>;                                    // OR $ std::is_same <std::string, Container>::value OR std::is_same_v<std::string, Container>;
+    { out << typename Container::value_type {} } -> std::convertible_to<std::ostream & >; // OR just $ { out << typename Container::value_type {} };
 };
 
-///// Prints contents of a container such as a vector of int's.
-///// Concept used by Templated Function definition
+/// Prints contents of a container such as a vector of int's.
+/// Concept used by Templated Function definition
 template<typename Container>                        //template<insertable Container>        // OR these 2 lines currently being used.
     requires Insertable<Container>
-std::ostream&
+std::ostream &
 operator<<( std::ostream & out, Container const & c) {
     if ( not c.empty()) {
         out << "[";   //out.width(9);  // TODO??: neither work, only space out first element. //out << std::setw(9);  // TODO??: neither work, only space out first element.
-        std::copy(c.begin(), c.end(), std::ostream_iterator< typename Container::value_type >(out, ","));
+        std::copy(c.begin(), c.end(), std::ostream_iterator< typename Container::value_type >( out, "," ));
         out << "\b]"; out.width(); out << std::setw(0);
     } else out << "[CONTAINTER IS EMPTY]";
     return out;
 }
 
-/////  Concept using Function Explicit instantiations that are required to generate code for linker.
-/////  TODO??: is the only used if definition is in *.cpp file?
-/////  https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
-/////  https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
+///  Concept using Function Explicit instantiations that are required to generate code for linker.
+///  TODO??: is the only used if definition is in *.cpp file?
+///  https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
+///  https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
 //template std::ostream & operator<<( std::ostream & , std::vector<std::string> const & );
-///// Concept using Function Explicit instantiations that are required to generate code for linker.
+/// Concept using Function Explicit instantiations that are required to generate code for linker.
 //template std::ostream & operator<<( std::ostream & , std::deque<int>          const & );
 
 namespace Lib_tty {

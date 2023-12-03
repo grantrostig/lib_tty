@@ -14,7 +14,7 @@ CONFIG += warn_on
 # ??CONFIG += QMAKE_CXXFLAGS_WARN_ON
 
 QMAKE_CXXFLAGS += \
-        #-std=gnu++2b		\
+        #-std=gnu++23		\
         -g3 		        \
         -O0 		        \
         -Wall   		\  # https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html

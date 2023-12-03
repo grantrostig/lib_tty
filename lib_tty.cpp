@@ -21,16 +21,18 @@
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
 
-/// TODO??: better alternative? >using namespace Lib_tty or each member? Lib_tty::IDENTIFIER ?
-namespace Lib_tty {
-/// define if asserts are NOT to be checked.  Put in *.h file not *.CPP
+/// TODO??: better alternative to access these names elsewhere? >using namespace Lib_tty or each member? Lib_tty::IDENTIFIER ?
+namespace Lib_tty {  // entire file ns
+/// define if asserts are NOT to be checked.
 //#define 	NDEBUG
-/// define I'm Debugging LT.  TODO??: Put in *.h file not *.CPP
+/// define I'm Debugging LT.
 //#define  	GR_DEBUG
 //#undef  	GR_DEBUG
 
-/********** START Hot_key Class specific code ********************************/
-/// Free function.  //TODO??: or should this be a member function? Why?
+/*****************************************************************************/
+/********** START Hot_key_row Class specific code ****************************/
+/*****************************************************************************/
+/// Free function.  // TODO??: or should this be a member function? Why? Note I use this as a STL predicate.
 bool is_hk_chars_equal( Hot_key_row const & left, Hot_key_row const & right ) {
     return ( left.characters == right.characters );
 }
@@ -44,9 +46,21 @@ Hot_key_row::to_string() const {  // found in lib_tty.h
     std::string s {my_name};  // TODO: finish this
     return s;
 }
-/********** END   Hot_key Class specific code ********************************/
+/*****************************************************************************/
+/********** END   Hot_key_row Class specific code ****************************/
+/*****************************************************************************/
+/********** START I18n_key_row Class specific code ****************************/
+/*****************************************************************************/
+std::string
+I18n_key_row::to_string() const {  // found in lib_tty.h
+    std::string s {my_name};  // TODO: finish this
+    return s;
+}
+/*****************************************************************************/
+/********** END   I18n_key_row Class specific code ****************************/
+/*****************************************************************************/
 
-namespace Detail {
+namespace Detail {  // nested ns
 /*****************************************************************************/
 /***************** START Debugging only section ******************************/
 /*****************************************************************************/
@@ -58,6 +72,7 @@ source_loc( ) {  // give more detail on error location, used by perror()
     string result {"\n"s+loc::current().file_name() +":"s +std::to_string(loc::current().line()) +std::to_string(loc::current().column())+"]`"s +loc::current().function_name()+"`."s};
     return result;
 }
+
 /*****************************************************************************/
 /********************** START of C++20 illustration **************************/
 /*****************************************************************************/
@@ -84,6 +99,7 @@ source_loc( ) {  // give more detail on error location, used by perror()
 /*****************************************************************************/
 /********************** END   of C++20 illustration **************************/
 /*****************************************************************************/
+
 ///  Debugging use only at this time.
 void print_signal(int const signal) {
     LOGGERS("Signal is:", signal);
@@ -148,6 +164,8 @@ find_hot_key(const Hot_key_table &hot_key_table, const I18n_key_chars this_key) 
 }
 /*****************************************************************************/
 /**************** END   Debugging only section ******************************/
+/*****************************************************************************/
+
 /*****************************************************************************/
 /**************** START POSIX level declarations *****************************/
 /*****************************************************************************/
@@ -308,6 +326,7 @@ void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_us
 
 /*****************************************************************************/
 /********************** END   POSIX OS signals level definitions *************/
+/*****************************************************************************/
 /********************** START POSIX OS termios level definitions *************/
 /*****************************************************************************/
 /// to show what is happening on standard-in/cin. Used for debugging. TODO??: how do I pass in cin or cout to this?
@@ -440,14 +459,15 @@ termio_set_timer( cc_t const time) {  // uses POSIX
     termio_set( termios_new );
     return termios_orig;
 }
-
 /*****************************************************************************/
 /********************** END   POSIX OS termios level definitions *************/
+/*****************************************************************************/
 /**************** END   POSIX level definitions ******************************/
+/*****************************************************************************/
+
 /*****************************************************************************/
 /**************** START Lib_tty specific code ********************************/
 /*****************************************************************************/
-
 
 /// Allows eof on fd, but aborts on all other stati.
 /// Utility function called only twice within lib_tty.
@@ -1185,9 +1205,9 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                     // key_char_i18ns_result += kcs; grostig
                     //hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
                     //i18n_key_chars_result.push_back( kcs );
-                    kb_key_a_stati.is_failed_match_chars            = 0; // redundant, but we like it for logic safety and or asserts()
+                    kb_key_a_stati.is_failed_match_chars            = 0;                 // redundant, but we like it for logic safety and or asserts()
                     kb_key_a_stati.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
-                    kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati );//.is_failed_match_chars,file_status_result);
+                    kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati );  // .is_failed_match_chars,file_status_result);
                 }
             }
             else if ( std::holds_alternative< I18n_key_row > ( kb_key_a_stati.kb_key_variant )) {
@@ -1241,12 +1261,12 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now throwing away other keystrokes.
     hot_key_nav_result = hot_key_function_cat;  // TODO: holds historical, perhaps not current??
     while (     is_require_field_completion_key                                         &&  // TODO: probably totally wrong, check it.
-                hot_key_row.function_cat != HotKeyFunctionCat::nav_field_completion  &&  // TODO: may need more cats like intra_field, editing_mode?
-                hot_key_row.function_cat != HotKeyFunctionCat::navigation_esc        &&
-                hot_key_row.function_cat != HotKeyFunctionCat::help_popup            &&  // XXXX new idea
+                hot_key_row.function_cat != HotKeyFunctionCat::nav_field_completion     &&  // TODO: may need more cats like intra_field, editing_mode?
+                hot_key_row.function_cat != HotKeyFunctionCat::navigation_esc           &&
+                hot_key_row.function_cat != HotKeyFunctionCat::help_popup               &&  // XXXX new idea
                 file_status_result       != File_status::eof_file_descriptor
-                //file_status_result          != File_status::eof_Key_char_singular       &&
-                //file_status_result          != File_status::eof_library                 &&
+                //file_status_result          != File_status::eof_Key_char_singular     &&
+                //file_status_result          != File_status::eof_library               &&
           )
     {
         kb_key_a_stati = get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
