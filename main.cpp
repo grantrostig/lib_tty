@@ -106,7 +106,16 @@ struct Visitee_print_key_name_fns {
 };
 
 Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys const & keys ) {
+    //using simple = Lib_tty::Kb_keys.kb_key_a_stati_rows.begin();
+    auto L = [keys] () { return *keys.kb_key_a_stati_rows.begin(); };
+    auto simple1 = L();
+    Lib_tty::Kb_key_variant variant1                 {simple1.kb_key_variant};
+    Lib_tty::Kb_key_variant variant2                 {keys.kb_key_a_stati_rows.begin()->kb_key_variant};
+    int16_t                 is_failed_match_chars   {keys.kb_key_a_stati_rows.begin()->is_failed_match_chars};
+    Lib_tty::File_status    file_status             {keys.kb_key_a_stati_rows.begin()->file_status};
     return {keys.kb_key_a_stati_rows.begin()->kb_key_variant};
+                //hot_key_row                             = std::get<    Lib_tty::Hot_key_row >(   my_kb_key_variant );
+                //hot_key_row_p                           = std::get_if< Lib_tty::Hot_key_row >( & my_kb_key_variant );
 }
 
 /**  This main() is used solely to test our linked shared library: lib_tty.o
@@ -129,7 +138,7 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << ":~~~ argc,a
     Lib_tty::Hot_key_row        hot_key_row         {};
     Lib_tty::HotKeyFunctionCat  nav                 {};
     Lib_tty::File_status        fs                  {};
-    string                      user_ack            {};
+    std::string                 user_ack            {};
 
     // Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
     do { cout << ">ENTER a single keyboard key press now! (q or F4 for next test):"; cout.flush();
@@ -140,7 +149,7 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << ":~~~ argc,a
                 //hot_key_row                             = std::get<    Lib_tty::Hot_key_row >(   my_kb_key_variant );
                 //hot_key_row_p                           = std::get_if< Lib_tty::Hot_key_row >( & my_kb_key_variant );
         for ( Lib_tty::Kb_key_a_stati const & ks : keys.kb_key_a_stati_rows ) {
-            std::visit( Visitee_print_key_name_fns {}, ks.kb_key_variant);  // Visiting, where the visitee fn will recieve the variant visitor var.
+            std::visit( Visitee_print_key_name_fns {}, ks.kb_key_variant);  // Visiting, where the visitee fn will recieve the variant visitor var.  OR visit the visitee with the variant.
         };
         nav = keys.hot_key_nav_final;
         LOGGER_("navigation:"<<nav);
