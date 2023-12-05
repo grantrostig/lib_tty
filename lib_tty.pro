@@ -20,6 +20,7 @@ QMAKE_CXXFLAGS += \
         -Wall   		\  # https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         -Wextra   		\
         #-Wno-comment 		\
+        -Wno-unused 		\
         #-Wno-unused-parameter 	\
         #-Wno-uninitialized 	\
         #-Wno-reorder 		\
