@@ -12,6 +12,7 @@
 #include <iostream>
 #include <variant>
 #include <deque>
+#include <any>
 //#include <bits/stdc++.h>
 //#include <bits/stdc++>  // TODO??: why is .h needed?
 using std::cin; using std::cout; using std::cerr; using std::clog; using std::endl; using std::string;  // using namespace std;
@@ -79,62 +80,70 @@ using namespace std::string_literals;;
 //    std::signal( SIGVTALRM, crash_tracer );
 //} */
 
-/// used for debugging in main()
-struct Visitee_print_key_name_fns {
-    int operator() ( std::monostate const & variant_target_acceptor ) {
-        LOGGER_("Here is the std::monostate.");
-        return EXIT_SUCCESS;
-    }
-    int operator() ( Lib_tty::Key_char_singular const & variant_target_acceptor ) {
-        LOGGERX("Here is the Lib_tty::Key_char_singular:", variant_target_acceptor);
-        return EXIT_SUCCESS;
-    }
-    int operator() ( Lib_tty::I18n_key_chars const & variant_target_acceptor ) {  // currently same as Lib_tty::Hot_key_chars.
-        LOGGERX("Here is the Lib_tty::I18n_key_chars:", variant_target_acceptor);
-        return EXIT_SUCCESS;
-    }
-    int operator() ( Lib_tty::I18n_key_row const & variant_target_acceptor ) {
-        LOGGERX("Here is the Lib_tty::I18n_key_row.my_name:", variant_target_acceptor.my_name);
-        LOGGERX("Here is the Lib_tty::I18n_key_row.characters:", variant_target_acceptor.characters);
-        return EXIT_SUCCESS;
-    }
-    int operator() ( Lib_tty::Hot_key_row const & variant_target_acceptor ) {
-        LOGGERX("Here is the Lib_tty::Hot_key_row.my_name:", variant_target_acceptor.my_name);
-        LOGGERX("Here is the Lib_tty::Hot_key_row.characters:", variant_target_acceptor.characters);
-        return EXIT_SUCCESS;
-    }
+/// Used for debugging in main()
+struct Visitee_kb_key_variant_name_print_fns {
+    int operator() ( std::monostate const &                                             ) {
+  //int operator() ( std::monostate const &                      variant_visitor_target ) {     // why doesn't the similar pattern work for std::monostate
+      //LOGGERX("Here is the std::monostate.",                   variant_visitor_target ); return EXIT_SUCCESS; }
+        LOGGER_("Here is the std::monostate."                                           ); return EXIT_SUCCESS; }
+    int operator() ( Lib_tty::Key_char_singular const &          variant_visitor_target ) {
+        LOGGERX("Here is the Lib_tty::Key_char_singular:",       variant_visitor_target ); return EXIT_SUCCESS; }
+    int operator() ( Lib_tty::I18n_key_chars const &             variant_visitor_target ) {  // currently same as Lib_tty::Hot_key_chars.
+        LOGGERX("Here is the Lib_tty::I18n_key_chars:",          variant_visitor_target ); return EXIT_SUCCESS; }
+    int operator() ( Lib_tty::I18n_key_row const &               variant_visitor_target ) {
+        LOGGERX("Here is the Lib_tty::I18n_key_row.my_name:",    variant_visitor_target.my_name);
+        LOGGERX("Here is the Lib_tty::I18n_key_row.characters:", variant_visitor_target.characters); return EXIT_SUCCESS; }
+    int operator() ( Lib_tty::Hot_key_row const &                variant_visitor_target ) {
+        LOGGERX("Here is the Lib_tty::Hot_key_row.my_name:",     variant_visitor_target.my_name);
+        LOGGERX("Here is the Lib_tty::Hot_key_row.characters:",  variant_visitor_target.characters); return EXIT_SUCCESS; }
 };
-/// used for debugging in main()
-struct Visitee_fns {
-    std::string operator() ( std::monostate const & variant_target_acceptor ) {
-        return  "std::monostate";
-    }
-    std::string operator() ( Lib_tty::Key_char_singular const & variant_target_acceptor ) {
-        return "Lib_tty::Key_char_singular";
-    }
-    std::string operator() ( Lib_tty::I18n_key_chars const & variant_target_acceptor ) {  // currently same as Lib_tty::Hot_key_chars.
-        return "Lib_tty::I18n_key_chars";
-    }
-    std::string operator() ( Lib_tty::I18n_key_row const & variant_target_acceptor ) {
-        return "Lib_tty::I18n_key_row";
-    }
-    std::string operator() ( Lib_tty::Hot_key_row const & variant_target_acceptor ) {
-        return "Lib_tty::Hot_key_row";
-    }
+/// Used for debugging in main()
+struct Visitee_kb_key_variant_name_string_fns {
+    std::string operator() ( std::monostate             const& variant_visitor_target ) { return "std::monostate"; }
+    std::string operator() ( Lib_tty::Key_char_singular const& variant_visitor_target ) { return "Lib_tty::Key_char_singular"; }
+    std::string operator() ( Lib_tty::I18n_key_chars    const& variant_visitor_target ) { return "Lib_tty::I18n_key_chars"; } // currently same as Lib_tty::Hot_key_chars.
+    std::string operator() ( Lib_tty::I18n_key_row      const& variant_visitor_target ) { return "Lib_tty::I18n_key_row"; }
+    std::string operator() ( Lib_tty::Hot_key_row       const& variant_visitor_target ) { return "Lib_tty::Hot_key_row"; }
+};
+/// Used for debugging in main()
+/// hot_key_row             = std::get<    Lib_tty::Hot_key_row >(   my_kb_key_variant );
+/// hot_key_row_p           = std::get_if< Lib_tty::Hot_key_row >( & my_kb_key_variant );
+auto get_kb_key_variant_ptr( Lib_tty::Kb_key_variant const & variant_visitor_target ) -> std::pair<std::string, std::any const >  // $ void const * works
+{
+    if ( auto p{std::get_if< std::monostate >(            & variant_visitor_target )}; p ) { return {"std::monostate", p}; };
+    if ( auto p{std::get_if< Lib_tty::Key_char_singular>( & variant_visitor_target )}; p ) { return {"Lib_tty::Key_char_singular", p}; };
+    if ( auto p{std::get_if< Lib_tty::I18n_key_chars>(    & variant_visitor_target )}; p ) { return {"Lib_tty::I18n_key_chars", p}; };
+    if ( auto p{std::get_if< Lib_tty::I18n_key_row>(      & variant_visitor_target )}; p ) { return {"Lib_tty::I18n_key_row", p}; };
+    if ( auto p{std::get_if< Lib_tty::Hot_key_row>(       & variant_visitor_target )}; p ) { return {"Lib_tty::Hot_key_row", p}; };
+    assert( false && "Logic Error: Should have found one.");
+};
+
+/// Used for debugging in main()
+auto get_kb_key_variant_value( Lib_tty::Kb_key_variant const & variant_visitor_target ) -> std::pair<std::string, std::any const >  // $ void const * works
+{
+    try { auto v{std::get< std::monostate >(              variant_visitor_target )}; { return {"std::monostate",             v}; } } catch (...){ };
+    try { auto v{std::get< Lib_tty::Key_char_singular>(   variant_visitor_target )}; { return {"Lib_tty::Key_char_singular", v}; } } catch (...){ };
+    try { auto v{std::get< Lib_tty::I18n_key_chars>(      variant_visitor_target )}; { return {"Lib_tty::I18n_key_chars",    v}; } } catch (...){ };
+    try { auto v{std::get< Lib_tty::I18n_key_row>(        variant_visitor_target )}; { return {"Lib_tty::I18n_key_row",      v}; } } catch (...){ };
+    try { auto v{std::get< Lib_tty::Hot_key_row>(         variant_visitor_target )}; { return {"Lib_tty::Hot_key_row",       v}; } } catch (...){ };
+    assert( false && "Logic Error: Should have found one.");
 };
 
 Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys const & keys ) {
-    // *** Increased Abstraction approach ***
-    //using simple = Lib_tty::Kb_keys.kb_key_a_stati_rows.begin();
-    //auto L = [keys] () { return *keys.kb_key_a_stati_rows.begin(); };
-    //auto simple1 = L();
-    auto simple1b =                                 [keys] () { return *keys.kb_key_a_stati_rows.begin(); }();
-    auto simple1c =                                 [keys] () { return *keys.kb_key_a_stati_rows.begin(); }();
-    Lib_tty::Kb_key_variant variant1                {simple1c.kb_key_variant};
+    // *** Increased Abstraction approach *** //using simple = Lib_tty::Kb_keys.kb_key_a_stati_rows.begin();
+    auto simple1c =                                 [&keys] () { return *keys.kb_key_a_stati_rows.begin(); }();
+    Lib_tty::Kb_key_variant kb_key_variant1         {simple1c.kb_key_variant};
     // *** The Explicit approach ***
-    Lib_tty::Kb_key_variant variant2                {keys.kb_key_a_stati_rows.begin()->kb_key_variant};
+    Lib_tty::Kb_key_variant kb_key_variant2         {keys.kb_key_a_stati_rows.begin()->kb_key_variant};
+    Lib_tty::Kb_key_variant kb_key_variant3         {keys.kb_key_a_stati_rows.at(0).kb_key_variant};
+    Lib_tty::Kb_key_variant kb_key_variant4         {keys.kb_key_a_stati_rows[0].kb_key_variant};
+    char                    kb_key1                 { std::get<1>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
+    auto                    kb_key2                 { std::get<2>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
+    int const i{1}; // TODO??: why must i be const for next line?
+    char                    kb_key3                 { std::get<i>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
+    char                    kb_key4                 { std::get<char>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
     LOGGERX("Name of variant type:",
-            std::visit( Visitee_fns {}, variant1));
+            std::visit( Visitee_kb_key_variant_name_string_fns {}, kb_key_variant1));
 
     int16_t                 is_failed_match_chars   {keys.kb_key_a_stati_rows.begin()->is_failed_match_chars};
     Lib_tty::File_status    file_status             {keys.kb_key_a_stati_rows.begin()->file_status};
@@ -153,31 +162,53 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << ":~~~ argc,a
             //cin.exceptions( std::istream::failbit);  // throw on fail of cin.
             //crash_signals_register();
 
+    std::string                 STRING_H            {"h"};
+    std::string                 STRING_I            {"i"};
     std::string                 STRING_Q            {"q"};
-    Lib_tty::I18n_key_chars     Q                   {STRING_Q.begin(),STRING_Q.end()};
+    std::string                 STRING_HHH          {"hhh"};
+    std::string                 STRING_III          {"iii"};
     std::string                 STRING_QQQ          {"qqq"};
+    Lib_tty::I18n_key_chars     Q                   {STRING_Q.begin(),  STRING_Q.end()};
     Lib_tty::I18n_key_chars     QQQ                 {STRING_QQQ.begin(),STRING_QQQ.end()};
+    Lib_tty::Hot_key_chars      H                   {STRING_H.begin(),  STRING_H.end()};
+    Lib_tty::Hot_key_chars      HHH                 {STRING_HHH.begin(),STRING_HHH.end()};
+    Lib_tty::I18n_key_chars     I                   {STRING_I.begin(),  STRING_I.end()};
+    Lib_tty::I18n_key_chars     III                 {STRING_III.begin(),STRING_III.end()};
 
+    Lib_tty::Hot_key_chars      hkc                 {};
     Lib_tty::I18n_key_chars     i18ns               {};
-    Lib_tty::Hot_key_row *      hot_key_row_p       {};
     Lib_tty::Hot_key_row        hot_key_row         {};
+    Lib_tty::Hot_key_row *      hot_key_row_p       {};
     Lib_tty::HotKeyFunctionCat  nav                 {};
     Lib_tty::File_status        fs                  {};
     std::string                 user_ack            {};
 
-    // Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
+Lib_tty::Kb_key_variant key_variant_kcs { Lib_tty::Key_char_singular    {'A'} };
+Lib_tty::Kb_key_variant key_variant_hkc { Lib_tty::Hot_key_chars        {'C','C','C','C',} };
+Lib_tty::Kb_key_variant key_variant_hkc2{ Lib_tty::Hot_key_chars        {HHH} };
+Lib_tty::Kb_key_variant key_variant_hkc3{ Lib_tty::Hot_key_chars        {} };
+Lib_tty::Kb_key_variant key_variant_hkr { Lib_tty::Hot_key_row          { "my_hot_key_row",  {STRING_H.cbegin(),STRING_H.cend() },
+                             Lib_tty::HotKeyFunctionCat::initial_state, Lib_tty::InteractionIntentNav::na, Lib_tty::FieldIntraNav::na } };
+Lib_tty::Kb_key_variant key_variant_ikc { Lib_tty::I18n_key_chars       {III} }; //{'h','I','I','I',} };
+Lib_tty::Kb_key_variant key_variant_ikr { Lib_tty::I18n_key_row         { "my_i18n_key_row", {STRING_I.cbegin(),STRING_I.cend() } } };
+Lib_tty::Kb_key_variant my_monostate    { std::monostate                {} };
+
+    LOGGERX("get_kb_key_variant_value:key_variant_kcs", std::get<0>( get_kb_key_variant_value( key_variant_kcs )) );
+    LOGGERX("get_kb_key_variant_value:key_variant_kcs", std::any_cast<Lib_tty::KbFundamentalUnit> ( std::get<1>( get_kb_key_variant_value( key_variant_kcs ))) );
+
+    LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::get<0>( get_kb_key_variant_value( key_variant_hkc )) );
+    LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::any_cast<Lib_tty::Hot_key_chars> ( std::get<1>( get_kb_key_variant_value( key_variant_hkc ))) );
+
+    LOGGERX("get_kb_key_variant_value:key_variant_hkl", std::get<0>( get_kb_key_variant_value( key_variant_hkr )) );
+    LOGGERX("get_kb_key_variant_value:key_variant_ikc", std::get<0>( get_kb_key_variant_value( key_variant_ikc )) );
+
+    // *** Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
     do { cout << ">ENTER a single keyboard key press now! (q or F4 for next test):"; cout.flush();
         Lib_tty::Kb_keys        keys                {Lib_tty::get_kb_keystrokes_raw( 1, false, true, true)};
-
-
         Lib_tty::Kb_key_variant my_kb_key_variant   {detail_get_1(keys)};  //Lib_tty::Kb_key_variant my_kb_key_variant   {keys.kb_key_a_stati_rows.begin()->kb_key_variant}; // Ugly way to get the first key value
-                //hot_key_row                             = std::get<    Lib_tty::Hot_key_row >(   my_kb_key_variant );
-                //hot_key_row_p                           = std::get_if< Lib_tty::Hot_key_row >( & my_kb_key_variant );
-
-        Lib_tty::Kb_key_variant my_variant  = detail_get_1(keys);
 
         for ( Lib_tty::Kb_key_a_stati const & ks : keys.kb_key_a_stati_rows ) {  // print all elements of keys.
-            auto a = std::visit( Visitee_print_key_name_fns {}, ks.kb_key_variant);  // Visiting, where the visitee fn will recieve the variant visitor var.  OR visit the visitee with the variant.
+            auto a = std::visit( Visitee_kb_key_variant_name_print_fns {}, ks.kb_key_variant);  // Visiting, where the visitee fn will recieve the variant visitor var.  OR visit the visitee with the variant.
             LOGGERX(":Visit returned this int?:", a );
         };
         nav = keys.hot_key_nav_final;

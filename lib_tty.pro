@@ -21,7 +21,7 @@ QMAKE_CXXFLAGS += \
         -Wextra   		\
         #-Wno-comment 		\
         -Wno-unused 		\
-        #-Wno-unused-parameter 	\
+        -Wno-unused-parameter 	\
         #-Wno-uninitialized 	\
         #-Wno-reorder 		\
 
