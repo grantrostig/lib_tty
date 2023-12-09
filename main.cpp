@@ -139,7 +139,7 @@ Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys const & keys ) {
     Lib_tty::Kb_key_variant kb_key_variant4         {keys.kb_key_a_stati_rows[0].kb_key_variant};
     char                    kb_key1                 { std::get<1>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
     auto                    kb_key2                 { std::get<2>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
-    int const i{1}; // TODO??: why must i be const for next line?
+    int const i{1}; // TODO??: why must i be const for next line or could I do it with templates?
     char                    kb_key3                 { std::get<i>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
     char                    kb_key4                 { std::get<char>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
     LOGGERX("Name of variant type:",
