@@ -82,9 +82,7 @@ using namespace std::string_literals;;
 
 /// Used for debugging in main()
 struct Visitee_kb_key_variant_name_print_fns {
-    int operator() ( std::monostate const &                                             ) {
-  //int operator() ( std::monostate const &                      variant_visitor_target ) {     // why doesn't the similar pattern work for std::monostate
-      //LOGGERX("Here is the std::monostate.",                   variant_visitor_target ); return EXIT_SUCCESS; }
+    int operator() ( std::monostate const &                                             ) { //int operator() ( std::monostate const &                      variant_visitor_target ) {     // why doesn't the similar pattern work for std::monostate //LOGGERX("Here is the std::monostate.",                   variant_visitor_target ); return EXIT_SUCCESS; }
         LOGGER_("Here is the std::monostate."                                           ); return EXIT_SUCCESS; }
     int operator() ( Lib_tty::Key_char_singular const &          variant_visitor_target ) {
         LOGGERX("Here is the Lib_tty::Key_char_singular:",       variant_visitor_target ); return EXIT_SUCCESS; }
@@ -109,23 +107,21 @@ struct Visitee_kb_key_variant_name_string_fns {
 /// hot_key_row             = std::get<    Lib_tty::Hot_key_row >(   my_kb_key_variant );
 /// hot_key_row_p           = std::get_if< Lib_tty::Hot_key_row >( & my_kb_key_variant );
 auto get_kb_key_variant_ptr( Lib_tty::Kb_key_variant const & variant_visitor_target ) -> std::pair<std::string, std::any const >  // $ void const * works
-{
-    if ( auto p{std::get_if< std::monostate >(            & variant_visitor_target )}; p ) { return {"std::monostate", p}; };
-    if ( auto p{std::get_if< Lib_tty::Key_char_singular>( & variant_visitor_target )}; p ) { return {"Lib_tty::Key_char_singular", p}; };
-    if ( auto p{std::get_if< Lib_tty::I18n_key_chars>(    & variant_visitor_target )}; p ) { return {"Lib_tty::I18n_key_chars", p}; };
-    if ( auto p{std::get_if< Lib_tty::I18n_key_row>(      & variant_visitor_target )}; p ) { return {"Lib_tty::I18n_key_row", p}; };
-    if ( auto p{std::get_if< Lib_tty::Hot_key_row>(       & variant_visitor_target )}; p ) { return {"Lib_tty::Hot_key_row", p}; };
+{   if ( auto ptr{std::get_if< std::monostate >(            & variant_visitor_target )}; ptr ) { return {"std::monostate", ptr}; };
+    if ( auto ptr{std::get_if< Lib_tty::Key_char_singular>( & variant_visitor_target )}; ptr ) { return {"Lib_tty::Key_char_singular", ptr}; };
+    if ( auto ptr{std::get_if< Lib_tty::I18n_key_chars>(    & variant_visitor_target )}; ptr ) { return {"Lib_tty::I18n_key_chars", ptr}; };
+    if ( auto ptr{std::get_if< Lib_tty::I18n_key_row>(      & variant_visitor_target )}; ptr ) { return {"Lib_tty::I18n_key_row", ptr}; };
+    if ( auto ptr{std::get_if< Lib_tty::Hot_key_row>(       & variant_visitor_target )}; ptr ) { return {"Lib_tty::Hot_key_row", ptr}; };
     assert( false && "Logic Error: Should have found one.");
 };
 
 /// Used for debugging in main()
 auto get_kb_key_variant_value( Lib_tty::Kb_key_variant const & variant_visitor_target ) -> std::pair<std::string, std::any const >  // $ void const * works
-{
-    try { auto v{std::get< std::monostate >(              variant_visitor_target )}; { return {"std::monostate",             v}; } } catch (...){ };
-    try { auto v{std::get< Lib_tty::Key_char_singular>(   variant_visitor_target )}; { return {"Lib_tty::Key_char_singular", v}; } } catch (...){ };
-    try { auto v{std::get< Lib_tty::I18n_key_chars>(      variant_visitor_target )}; { return {"Lib_tty::I18n_key_chars",    v}; } } catch (...){ };
-    try { auto v{std::get< Lib_tty::I18n_key_row>(        variant_visitor_target )}; { return {"Lib_tty::I18n_key_row",      v}; } } catch (...){ };
-    try { auto v{std::get< Lib_tty::Hot_key_row>(         variant_visitor_target )}; { return {"Lib_tty::Hot_key_row",       v}; } } catch (...){ };
+{   try { auto var{std::get< std::monostate >(              variant_visitor_target )}; { return {"std::monostate",             var}; } } catch (...){ };
+    try { auto var{std::get< Lib_tty::Key_char_singular>(   variant_visitor_target )}; { return {"Lib_tty::Key_char_singular", var}; } } catch (...){ };
+    try { auto var{std::get< Lib_tty::I18n_key_chars>(      variant_visitor_target )}; { return {"Lib_tty::I18n_key_chars",    var}; } } catch (...){ };
+    try { auto var{std::get< Lib_tty::I18n_key_row>(        variant_visitor_target )}; { return {"Lib_tty::I18n_key_row",      var}; } } catch (...){ };
+    try { auto var{std::get< Lib_tty::Hot_key_row>(         variant_visitor_target )}; { return {"Lib_tty::Hot_key_row",       var}; } } catch (...){ };
     assert( false && "Logic Error: Should have found one.");
 };
 
@@ -197,6 +193,7 @@ Lib_tty::Kb_key_variant my_monostate    { std::monostate                {} };
     LOGGERX("get_kb_key_variant_value:key_variant_kcs", std::any_cast<Lib_tty::KbFundamentalUnit> ( std::get<1>( get_kb_key_variant_value( key_variant_kcs ))) );
 
     LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::get<0>( get_kb_key_variant_value( key_variant_hkc )) );
+  //LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::get<1>( get_kb_key_variant_value( key_variant_hkc )));
     LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::any_cast<Lib_tty::Hot_key_chars> ( std::get<1>( get_kb_key_variant_value( key_variant_hkc ))) );
 
     LOGGERX("get_kb_key_variant_value:key_variant_hkl", std::get<0>( get_kb_key_variant_value( key_variant_hkr )) );
