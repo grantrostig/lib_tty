@@ -1,5 +1,5 @@
 /* Copyright (c) 2019 Grant Rostig all rights reserved,  grantrostig.com
- *
+ *  WARNING enable this main.cpp file in qmake ONLY if you want to run this test, but to build the libary DON'T enable this file to be linked into the *.so
  *  Used to test lib_tty.so
  *  Testing should be expanded considerably.
  *  We test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keystrokes_raw.
@@ -125,21 +125,73 @@ auto get_kb_key_variant_value( Lib_tty::Kb_key_variant const & variant_visitor_t
     assert( false && "Logic Error: Should have found one.");
 };
 
-Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys const & keys ) {
-    // *** Increased Abstraction approach *** //using simple = Lib_tty::Kb_keys.kb_key_a_stati_rows.begin();
+class Get_row_fo {  // Function object acting like lambda
+        Lib_tty::Kb_keys_result kb_keys_result_;
+public: Get_row_fo( Lib_tty::Kb_keys_result const & kb_keys_result ): kb_keys_result_{kb_keys_result} {};
+    Lib_tty::Kb_key_a_stati_row operator()(    ) {
+            return *kb_keys_result_.kb_key_a_stati_rows.begin();
+        }
+};
+
+/// Detail helper api function to get variable from parameter. pre( nth must be valid )
+//auto
+//Lib_tty::Kb_key_a_stati_row
+Lib_tty::Kb_key_variant
+Get_row_kb_key_vrnt( Lib_tty::Kb_keys_result kb_keys_result, size_t nth ) {
+        //static auto nth_{nth};
+        //static auto itr_ { kb_keys_result.kb_key_a_stati_rows.begin() };
+        auto itr2 { kb_keys_result.kb_key_a_stati_rows.begin() };
+        std::advance( itr2, nth );
+        Lib_tty::Kb_key_variant varnt;
+        varnt = itr2->kb_key_variant;
+        return varnt;
+};
+
+Lib_tty::Kb_key_variant
+Get_next_row_kb_key_vrnt( Lib_tty::Kb_key_a_stati_row kb_key_a_stati_row ) {
+        return kb_key_a_stati_row.kb_key_variant;
+}
+
+/// Detail helper api function to get next variable from parameter. pre( next must be valid )
+class
+Get_next_row_kb_key_vrnt_fo {  // Function object
+    Lib_tty::Kb_keys_result kb_keys_result_{};
+    using My_iterator = decltype(kb_keys_result_.kb_key_a_stati_rows.begin());
+    My_iterator         itr { kb_keys_result_.kb_key_a_stati_rows.begin() };                          // TODO??: what does {} do here if anything beyond prior line?  Beaks what it we want?
+                                                    // alternative code: decltype(kb_keys_result_.kb_key_a_stati_rows.begin()) itr1{};
+  //std::iterator itr1 { kb_keys_result_.kb_key_a_stati_rows.begin() };  TODO??: How to make this compile?
+                                                    //Lib_tty::Kb_key_variant varnt{};
+                                                    //varnt = my_iterator->kb_key_variant;  // TODO??: compile error:must say type of variant with <>  How to fix that to be a "generic" variant
+public:
+                            Get_next_row_kb_key_vrnt_fo( Lib_tty::Kb_keys_result kb_keys_result ): kb_keys_result_ {kb_keys_result} {};
+    Lib_tty::Kb_key_variant operator()() {
+        My_iterator     save_iterator{itr};
+        itr++;
+        position++;
+        Lib_tty::Kb_key_variant result {Get_next_row_kb_key_vrnt( *save_iterator )};
+        return result;
+    }
+    size_t              position{0};
+};
+
+Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys_result const & keys ) {
+    // *** Increased Abstraction Approach *** // TODO??: This would be nice: $ using simple = Lib_tty::Kb_keys.kb_key_a_stati_rows.begin();
     auto simple1c =                                 [&keys] () { return *keys.kb_key_a_stati_rows.begin(); }();
-    Lib_tty::Kb_key_variant kb_key_variant1         {simple1c.kb_key_variant};
-    // *** The Explicit approach ***
-    Lib_tty::Kb_key_variant kb_key_variant2         {keys.kb_key_a_stati_rows.begin()->kb_key_variant};
-    Lib_tty::Kb_key_variant kb_key_variant3         {keys.kb_key_a_stati_rows.at(0).kb_key_variant};
-    Lib_tty::Kb_key_variant kb_key_variant4         {keys.kb_key_a_stati_rows[0].kb_key_variant};
+    Lib_tty::Kb_key_variant kb_key_variant1         { simple1c.kb_key_variant };
+    Lib_tty::Kb_key_variant kb_key_variant5         { Get_row_fo{keys}().kb_key_variant };
+    // *** The Explicit Approach ***
+  //Lib_tty::Kb_key_variant kb_key_variant2         {keys.kb_key_a_stati_rows.begin()->kb_key_variant};
+  //Lib_tty::Kb_key_variant kb_key_variant3         {keys.kb_key_a_stati_rows.at(0).kb_key_variant};
+  //Lib_tty::Kb_key_variant kb_key_variant4         {keys.kb_key_a_stati_rows[0].kb_key_variant};
+
     char                    kb_key1                 { std::get<1>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
-    auto                    kb_key2                 { std::get<2>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
+  //auto                    kb_key2                 { std::get<2>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
     int const i{1}; // TODO??: why must i be const for next line or could I do it with templates?
     char                    kb_key3                 { std::get<i>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
     char                    kb_key4                 { std::get<char>(keys.kb_key_a_stati_rows.at(0).kb_key_variant) };
-    LOGGERX("Name of variant type:",
-            std::visit( Visitee_kb_key_variant_name_string_fns {}, kb_key_variant1));
+    LOGGERX("Name of variant type:", std::visit( Visitee_kb_key_variant_name_string_fns {}, kb_key_variant1) );
+  //LOGGERX("Int index() of variant type:", (int)kb_key_variant5);
+    LOGGERX("Int index() of variant type:",      kb_key_variant5.index());
 
     int16_t                 is_failed_match_chars   {keys.kb_key_a_stati_rows.begin()->is_failed_match_chars};
     Lib_tty::File_status    file_status             {keys.kb_key_a_stati_rows.begin()->file_status};
@@ -153,8 +205,6 @@ Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys const & keys ) {
  */
 int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << ":~~~ argc,argv:"<<argc<<","<<my_arv<<"."<<endl;
             //using namespace Lib_tty;
-    // Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
-    LOGGER_("Prepare for several tests of lib_tty");
             //cin.exceptions( std::istream::failbit);  // throw on fail of cin.
             //crash_signals_register();
 
@@ -171,13 +221,6 @@ int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << ":~~~ argc,a
     Lib_tty::I18n_key_chars     I                   {STRING_I.begin(),  STRING_I.end()};
     Lib_tty::I18n_key_chars     III                 {STRING_III.begin(),STRING_III.end()};
 
-    Lib_tty::Hot_key_chars      hkc                 {};
-    Lib_tty::I18n_key_chars     i18ns               {};
-    Lib_tty::Hot_key_row        hot_key_row         {};
-    Lib_tty::Hot_key_row *      hot_key_row_p       {};
-    Lib_tty::HotKeyFunctionCat  nav                 {};
-    Lib_tty::File_status        fs                  {};
-    std::string                 user_ack            {};
 
 Lib_tty::Kb_key_variant key_variant_kcs { Lib_tty::Key_char_singular    {'A'} };
 Lib_tty::Kb_key_variant key_variant_hkc { Lib_tty::Hot_key_chars        {'C','C','C','C',} };
@@ -188,34 +231,48 @@ Lib_tty::Kb_key_variant key_variant_hkr { Lib_tty::Hot_key_row          { "my_ho
 Lib_tty::Kb_key_variant key_variant_ikc { Lib_tty::I18n_key_chars       {III} }; //{'h','I','I','I',} };
 Lib_tty::Kb_key_variant key_variant_ikr { Lib_tty::I18n_key_row         { "my_i18n_key_row", {STRING_I.cbegin(),STRING_I.cend() } } };
 Lib_tty::Kb_key_variant my_monostate    { std::monostate                {} };
+LOGGERX("                           key_variant_kcs.index()", key_variant_kcs.index());
+LOGGERX("get_0_kb_key_variant_value:key_variant_kcs/string", std::get<0>( get_kb_key_variant_value( key_variant_kcs )) );
+LOGGERX("get_1_kb_key_variant_value:key_variant_kcs/value", std::any_cast<Lib_tty::KbFundamentalUnit> ( std::get<1>( get_kb_key_variant_value( key_variant_kcs ))) );
+LOGGERX("get_0_kb_key_variant_value:key_variant_hkc", std::get<0>( get_kb_key_variant_value( key_variant_hkc )) );
+//LOGGERX("get_1_kb_key_variant_value:key_variant_hkc", std::get<1>( get_kb_key_variant_value( key_variant_hkc )));
+LOGGERX("get_1_kb_key_variant_value:key_variant_hkc", std::any_cast<Lib_tty::Hot_key_chars> ( std::get<1>( get_kb_key_variant_value( key_variant_hkc ))) );
+LOGGERX("get_0_kb_key_variant_value:key_variant_hkr", std::get<0>( get_kb_key_variant_value( key_variant_hkr )) );
+LOGGERX("get_0_kb_key_variant_value:key_variant_ikc", std::get<0>( get_kb_key_variant_value( key_variant_ikc )) );
+LOGGERX("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_variant_value( key_variant_ikr )) );
 
-    LOGGERX("get_kb_key_variant_value:key_variant_kcs", std::get<0>( get_kb_key_variant_value( key_variant_kcs )) );
-    LOGGERX("get_kb_key_variant_value:key_variant_kcs", std::any_cast<Lib_tty::KbFundamentalUnit> ( std::get<1>( get_kb_key_variant_value( key_variant_kcs ))) );
-
-    LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::get<0>( get_kb_key_variant_value( key_variant_hkc )) );
-  //LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::get<1>( get_kb_key_variant_value( key_variant_hkc )));
-    LOGGERX("get_kb_key_variant_value:key_variant_hkc", std::any_cast<Lib_tty::Hot_key_chars> ( std::get<1>( get_kb_key_variant_value( key_variant_hkc ))) );
-
-    LOGGERX("get_kb_key_variant_value:key_variant_hkl", std::get<0>( get_kb_key_variant_value( key_variant_hkr )) );
-    LOGGERX("get_kb_key_variant_value:key_variant_ikc", std::get<0>( get_kb_key_variant_value( key_variant_ikc )) );
+    Lib_tty::Hot_key_chars      hkc                 {};
+    Lib_tty::I18n_key_chars     i18ns               {};
+    Lib_tty::Hot_key_row        hot_key_row         {};
+    Lib_tty::Hot_key_row *      hot_key_row_p       {};
+    Lib_tty::HotKeyFunctionCat  nav                 {};
+    Lib_tty::File_status        fs                  {};
+    std::string                 user_ack            {};
 
     // *** Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
     do { cout << ">ENTER a single keyboard key press now! (q or F4 for next test):"; cout.flush();
-        Lib_tty::Kb_keys        keys                {Lib_tty::get_kb_keystrokes_raw( 1, false, true, true)};
-        Lib_tty::Kb_key_variant my_kb_key_variant   {detail_get_1(keys)};  //Lib_tty::Kb_key_variant my_kb_key_variant   {keys.kb_key_a_stati_rows.begin()->kb_key_variant}; // Ugly way to get the first key value
+        Lib_tty::Kb_keys_result kb_keys_result      { Lib_tty::get_kb_keystrokes_raw( 1, false, true, true) };
+        Lib_tty::Kb_key_variant kb_key_variant1     { detail_get_1(kb_keys_result) };
+        Lib_tty::Kb_key_variant kb_key_variant2     { kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant}; // Ugly way to get the first key value
+        Lib_tty::Kb_key_variant kb_key_variant3     { Get_row_fo { kb_keys_result } ().kb_key_variant };
 
-        for ( Lib_tty::Kb_key_a_stati const & ks : keys.kb_key_a_stati_rows ) {  // print all elements of keys.
+        for ( Lib_tty::Kb_key_a_stati_row const & ks : kb_keys_result.kb_key_a_stati_rows ) {  // Print the typename of all elements of all keys.
             auto a = std::visit( Visitee_kb_key_variant_name_print_fns {}, ks.kb_key_variant);  // Visiting, where the visitee fn will recieve the variant visitor var.  OR visit the visitee with the variant.
-            LOGGERX(":Visit returned this int?:", a );
+            LOGGERX("Visit returned this bool:", a );
         };
-        nav = keys.hot_key_nav_final;
+
+        for ( Lib_tty::Kb_key_a_stati_row const & ks : kb_keys_result.kb_key_a_stati_rows ) {  // Print the typename of all elements of all keys.
+            auto a = std::visit( Visitee_kb_key_variant_name_print_fns {}, ks.kb_key_variant);  // Visiting, where the visitee fn will recieve the variant visitor var.  OR visit the visitee with the variant.
+            LOGGERX("Visit returned this bool:", a );
+        };
+
+        nav = kb_keys_result.hot_key_nav_final;
         LOGGERX("navigation enum:", (int)nav);
-        fs  = keys.file_status_final;
+        fs  = kb_keys_result.file_status_final;
         LOGGERX("file_status enum:",(int)fs);
 
         LOGGER_("We got this in 3 variables below:" );
-
-        cout<<":MAIN():i18ns,length:{"<< i18ns<<","<<i18ns.size()<<"}, hot_key:"<< hot_key_row.my_name << ", file_status:"<< (int) fs <<"."<<endl;
+        cout<<":MAIN():i18ns,length:{"<< i18ns<<","<<i18ns.size()<<"}, hot_key:{"<< hot_key_row.my_name << "}, file_status:{"<< (int)fs <<"}."<<endl;
         cout << ">Press RETURN to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
     } while ( i18ns != Q && hot_key_row.my_name != "f4");
 

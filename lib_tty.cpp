@@ -910,7 +910,7 @@ consider_i18n_key( I18n_key_chars const & candidate_i18n_chars ) {
 
 }  // Detail namespace NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
-Kb_key_a_stati
+Kb_key_a_stati_row
 get_kb_keystroke_raw() {
     using namespace Detail;
     assert( true && "std::cin must be in RAW or CBREAK mode.");  // TODO3: how would I check that?  Complicated tsgetattr() stuff.
@@ -1157,12 +1157,11 @@ bool is_ignore_kcs( Key_char_singular const skc,
 }
 }
 
-Kb_keys
+Kb_keys_result
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool   const is_require_field_completion_key,
                        bool   const is_echo_skc_to_tty,
-                       bool   const is_allow_control_chars
-                     ) {
+                       bool   const is_allow_control_chars ) {
     using namespace Detail;
                                         assert( cin.good() && "Precondition.");
                                         assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
@@ -1172,12 +1171,12 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     size_t 		 		additional_keystrokes 	{length_in_keystrokes};         // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::initial_state}; // reset some variables from prior loop if any, specifically old/prior hot_key.
 
-    //Kb_key_a_stati	    kb_key_a_stati_row     {};                             // The i18n_key that might have been found.
-    Kb_keys	            kb_keys_result          {};                             // The i18n_key that might have been found.
+  //Kb_key_a_stati_row      kb_key_a_stati_row      {};                             // The i18n_key that might have been found.
+    Kb_keys_result      kb_keys_result          {};                             //
     File_status  		file_status_result      {File_status::initial_state};
     HotKeyFunctionCat   hot_key_nav_result      {HotKeyFunctionCat::initial_state};
 
-    Kb_key_a_stati kb_key_a_stati {};  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+    Kb_key_a_stati_row kb_key_a_stati_row {};  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
 
     //unsigned 			int value_index			{0};                            // Note: Points to the character beyond the current character (presuming zero origin), like an STL iterator it.end(), hence 0 == empty field.
     //bool 		 		is_editing_mode_insert  {true};
@@ -1192,35 +1191,35 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         hot_key_row                 = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat        = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
                                                                // TODO?: may not need this local, but not sure untill below TODOs are done.
-        kb_key_a_stati = get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
-        file_status_result = kb_key_a_stati.file_status;
-                                        LOGGERX("Just read a keystroke, file_status:", (int)kb_key_a_stati.file_status);
+        kb_key_a_stati_row = get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+        file_status_result = kb_key_a_stati_row.file_status;
+                                        LOGGERX("Just read a keystroke, file_status:", (int)kb_key_a_stati_row.file_status);
         if ( ( is_adequate_fs_local = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
                                         LOGGERX("is_ignore_key_fd:", is_adequate_fs_local);
-            if      ( std::holds_alternative< Key_char_singular >( kb_key_a_stati.kb_key_variant )) {
-                Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_stati.kb_key_variant ) };
+            if      ( std::holds_alternative< Key_char_singular >( kb_key_a_stati_row.kb_key_variant )) {
+                Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_stati_row.kb_key_variant ) };
                                         LOGGERX("is kcs:", kcs);
                 if ( not ( is_ignore_kcs_local = is_ignore_kcs( kcs, is_allow_control_chars, true, is_echo_skc_to_tty))) {  // TODO: parameterize is_ring_bell_on_ignore, just true here.
                                         LOGGERX("is kcs:", kcs);
                     // key_char_i18ns_result += kcs; grostig
                     //hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
                     //i18n_key_chars_result.push_back( kcs );
-                    kb_key_a_stati.is_failed_match_chars            = 0;                 // redundant, but we like it for logic safety and or asserts()
-                    kb_key_a_stati.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
-                    kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati );  // .is_failed_match_chars,file_status_result);
+                    kb_key_a_stati_row.is_failed_match_chars            = 0;                 // redundant, but we like it for logic safety and or asserts()
+                    kb_key_a_stati_row.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
+                    kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati_row );  // .is_failed_match_chars,file_status_result);
                 }
             }
-            else if ( std::holds_alternative< I18n_key_row > ( kb_key_a_stati.kb_key_variant )) {
+            else if ( std::holds_alternative< I18n_key_row > ( kb_key_a_stati_row.kb_key_variant )) {
                 hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
-                //i18n_key_row 	     = std::get < I18n_key_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
-                //kb_keys_result.kb_key_a_stati_rows.push_back(kb_key_a_stati);//.is_failed_match_chars,file_status_result);
-                //kb_key_a_stati.is_failed_match_chars            = 0; // redundant, but we like it for logic safety and or asserts()
-                //kb_key_a_stati.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
-                kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati );//.is_failed_match_chars,file_status_result);
+                //i18n_key_row 	     = std::get < I18n_key_row >( kb_key_a_stati_row.kb_key_variant );  // TODO:?? is this a copy?
+                //kb_keys_result.kb_key_a_stati_rows.push_back(kb_key_a_stati_row);//.is_failed_match_chars,file_status_result);
+                //kb_key_a_stati_row.is_failed_match_chars            = 0; // redundant, but we like it for logic safety and or asserts()
+                //kb_key_a_stati_row.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
+                kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati_row );//.is_failed_match_chars,file_status_result);
             }
-            else if ( std::holds_alternative< Hot_key_row > ( kb_key_a_stati.kb_key_variant )) {
-                hot_key_row 			    = std::get < Hot_key_row >( kb_key_a_stati.kb_key_variant );  // TODO:?? is this a copy?
+            else if ( std::holds_alternative< Hot_key_row > ( kb_key_a_stati_row.kb_key_variant )) {
+                hot_key_row 			    = std::get < Hot_key_row >( kb_key_a_stati_row.kb_key_variant );  // TODO:?? is this a copy?
                 hot_key_function_cat        = hot_key_row.function_cat;
                                         LOGGERX("is hk:", hot_key_row.my_name);
                                         LOGGERX("is hot_key_function_cat:", (int)hot_key_row.function_cat);
@@ -1229,9 +1228,9 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 //     cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
                 // }
 
-                //kb_key_a_stati.is_failed_match_chars            = 0; // redundant, but we like it for logic safety and or asserts()
-                //kb_key_a_stati.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
-                kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati );//.is_failed_match_chars,file_status_result);
+                //kb_key_a_stati_row.is_failed_match_chars            = 0; // redundant, but we like it for logic safety and or asserts()
+                //kb_key_a_stati_row.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
+                kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati_row );//.is_failed_match_chars,file_status_result);
 
                 is_ignore_hot_key_local            = is_ignore_hot_key( hot_key_function_cat );    // TODO: refactor to use within applicable tests and while 123.
             }
@@ -1259,7 +1258,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                                         //file_status_result          != File_status::eof_library                 &&
             );      // TODO: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
     //******* END   do_while ****************************************************************************************************************
-    //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now throwing away other keystrokes.
+    //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now.
     hot_key_nav_result = hot_key_function_cat;  // TODO: holds historical, perhaps not current??
     while (     is_require_field_completion_key                                         &&  // TODO: probably totally wrong, check it.
                 hot_key_row.function_cat != HotKeyFunctionCat::nav_field_completion     &&  // TODO: may need more cats like intra_field, editing_mode?
@@ -1270,16 +1269,16 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 //file_status_result          != File_status::eof_library               &&
           )
     {
-        kb_key_a_stati = get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
-        kb_keys_result.kb_key_a_stati_rows.push_back(  kb_key_a_stati );  // We store even the chars beyond the requested N parameter, because it might be useful, we do need nav_field_completion.
-        file_status_result                           = kb_key_a_stati.file_status;
-        if ( Kb_key_variant const kb_key_variant { kb_key_a_stati.kb_key_variant };
+        kb_key_a_stati_row =        get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+        kb_keys_result.kb_key_a_stati_rows.push_back(  kb_key_a_stati_row );  // We store even the chars beyond the requested N parameter, because it might be useful, we do need nav_field_completion.
+        file_status_result =    kb_key_a_stati_row.file_status;
+        if ( Kb_key_variant const kb_key_variant { kb_key_a_stati_row.kb_key_variant };
              std::holds_alternative< Hot_key_row >( kb_key_variant ))
         {
             hot_key_row  = std::get< Hot_key_row >( kb_key_variant );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
             hot_key_nav_result = hot_key_row.function_cat;  // We can't get out of this loop untill the function cat is NAV or ESC or F1 or similar.
             //hot_key_row.function_cat  is set above.
-            //hot_key_row.function_cat                     = kb_key_a_stati.kb_key_variant.row.function_cat;
+            //hot_key_row.function_cat                     = kb_key_a_stati_row.kb_key_variant.row.function_cat;
         }
         else {
             cout<< "\aError: expecting a CR or other special completion key, try again."<<endl;
@@ -1287,37 +1286,15 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     }   //******* END   while *****************************************************************************************************************
     termio_restore( termios_orig );
     //  ************ Prepare to RETURN *********************
-                                    assert( file_status_result != File_status::initial_state && "Postcondition5.");
-                                    assert( hot_key_nav_result != HotKeyFunctionCat::initial_state && "Postcondition18.");
-                                    assert( hot_key_nav_result == HotKeyFunctionCat::nav_field_completion ||
+                                    assert( file_status_result != File_status::initial_state                && "Postcondition5.");
+                                    assert( hot_key_nav_result != HotKeyFunctionCat::initial_state          && "Postcondition18.");
+                                    assert(( not is_require_field_completion_key ||
+                                            hot_key_nav_result == HotKeyFunctionCat::nav_field_completion ||
                                             hot_key_nav_result == HotKeyFunctionCat::navigation_esc ||
-                                            hot_key_nav_result == HotKeyFunctionCat::help_popup && "Postcondition19."
-                                          );
-                                    assert( kb_keys_result.kb_key_a_stati_rows.size() != 0  && "Postcondition20.");
+                                            hot_key_nav_result == HotKeyFunctionCat::help_popup)            && "Postcondition19." );
+                                    assert( kb_keys_result.kb_key_a_stati_rows.size() != 0                  && "Postcondition20.");
     kb_keys_result.hot_key_nav_final = hot_key_nav_result;
     kb_keys_result.file_status_final = file_status_result;
-
     return kb_keys_result;  // RETURN RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-
-//    if ( not i18n_key_chars_result.empty() ) {
-//                                    LOGGERX("My character(s) are/is:", i18n_key_chars_result);
-//                                    LOGGERX("My character(s) length is:", i18n_key_chars_result.size());
-//        if (            hot_key_row.my_name == STRING_NULL ) {  // XXXXX wrong, need to result vector.
-//                                    assert(     hot_key_row.my_name == STRING_NULL && "Postcondition6: result not set.");
-//                                    assert( not i18n_key_chars_result.empty() && "Postcondition16: result not set.");
-//            return { kb_keys_result};  // RETURN RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-//        } else {
-//                                    assert(     hot_key_row.my_name != STRING_NULL && "Postcondition6: result not set.");
-//                                    assert( not i18n_key_chars_result.empty() && "Postcondition16: result not set.");
-//            return { kb_keys_result };  // RETURN RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-//        }
-//    } else {
-//                                    LOGGERX("Hot_key name is:", hot_key_row.my_name );
-//                                    assert(         hot_key_row.my_name != STRING_NULL  && "Postcondition7: result not set.");
-//                                    assert(         i18n_key_chars_result.empty() && "Postcondition7: result not set.");
-//        return     { kb_keys_result };  // RETURN RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-//    }
-
 }
-
-}  // namespace end Lib_tty
+}  // namespace end Lib_tty NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN

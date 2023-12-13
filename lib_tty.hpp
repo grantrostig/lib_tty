@@ -259,7 +259,7 @@ using Kb_key_row_variant =  std::variant< std::monostate, Key_char_singular,    
  *  _a_ == "and"
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
 */
-struct Kb_key_a_stati {
+struct Kb_key_a_stati_row {
   Kb_key_variant    kb_key_variant          {std::monostate {}};               // The keyboard key in some datatype
   int16_t           is_failed_match_chars   {0};  // If non-zero, indicates how many inital chars were correct?? for the request.
                                                   // AND OR: ???_key_chars present to allow for showing the failed multibyte match.
@@ -277,13 +277,13 @@ struct Kb_key_a_stati {
   //File_status       file_status     {File_status::initial_state};
 //};
 //struct Kb_key_a_stati_rows_old2 {  // XXXXX new
-  //std::vector<Kb_key_a_stati>   keystrokes      {std::monostate{}, 0, File_status::initial_state };
+  //std::vector<Kb_key_a_stati_row>   keystrokes      {std::monostate{}, 0, File_status::initial_state };
   //std::vector<int16_t>              is_failed_match_chars   {0};
   //File_status                       file_status     {File_status::initial_state};
 //};
-using Kb_key_a_stati_rows = std::vector< Kb_key_a_stati >;
+using Kb_key_a_stati_rows = std::vector< Kb_key_a_stati_row >;
 
-struct Kb_keys {
+struct Kb_keys_result {
   Kb_key_a_stati_rows   kb_key_a_stati_rows     {};
   HotKeyFunctionCat     hot_key_nav_final       {HotKeyFunctionCat::initial_state};
   File_status           file_status_final       {File_status::initial_state};
@@ -294,7 +294,7 @@ struct Kb_keys {
  *  Called by get_kb_keystrokes_raw().
  *  PUBLIC FUNCTION could it be that also? Can be called by end user, but not used in the client "file_maintenance_*" programs.
  *  Probably needs much more debugging, if it is to be called directly. */
-Kb_key_a_stati
+Kb_key_a_stati_row
 get_kb_keystroke_raw();
 
 /** Seeks to get n Key_char_singular(s) from keyboard in raw stty mode.
@@ -351,7 +351,7 @@ get_kb_keystroke_raw();
  *
     // We RETURN either N regular char(s), OR both the N regular char(s) and the latest Hot_key, OR just a Hot_key
  */
-Kb_keys
+Kb_keys_result
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool const   is_require_field_completion,
                        bool const   is_echo_skc_to_tty,           /// skc == Key_char_singular
