@@ -30,24 +30,24 @@ namespace Lib_tty {  // entire file ns
 //#undef  	GR_DEBUG
 
 /*****************************************************************************/
-/********** START Hot_key_row Class specific code ****************************/
+/********** START Hot_key_table_row Class specific code ****************************/
 /*****************************************************************************/
 /// Free function.  // TODO??: or should this be a member function? Why? Note I use this as a STL predicate.
-bool is_hk_chars_equal( Hot_key_row const & left, Hot_key_row const & right ) {
+bool is_hk_chars_equal( Hot_key_table_row const & left, Hot_key_table_row const & right ) {
     return ( left.characters == right.characters );
 }
 
-bool Hot_key_row::operator< ( Hot_key_row const  & in ) const {
+bool Hot_key_table_row::operator< ( Hot_key_table_row const  & in ) const {
     return ( characters < in.characters );
 }
 
 std::string
-Hot_key_row::to_string() const {  // found in lib_tty.h
+Hot_key_table_row::to_string() const {  // found in lib_tty.h
     std::string s {my_name};  // TODO: finish this
     return s;
 }
 /*****************************************************************************/
-/********** END   Hot_key_row Class specific code ****************************/
+/********** END   Hot_key_table_row Class specific code ****************************/
 /*****************************************************************************/
 /********** START I18n_key_row Class specific code ****************************/
 /*****************************************************************************/
@@ -155,7 +155,7 @@ void print_signal(int const signal) {
 }
 
 ///  Debugging use only at this time.
-std::optional<Hot_key_row>
+std::optional<Hot_key_table_row>
 find_hot_key(const Hot_key_table &hot_key_table, const I18n_key_chars this_key) {
     for (auto & hk : hot_key_table)
         if ( hk.characters == this_key )
@@ -869,7 +869,7 @@ xterm-256color|xterm with 256 colors,
 #endif
     }
     LOGGERX("Candidate_hk_chars:", candidate_hk_chars);
-    Hot_key_row const candidate_hk_search_target { {}, candidate_hk_chars };
+    Hot_key_table_row const candidate_hk_search_target { {}, candidate_hk_chars };
     auto    const firstmatch_o_prior_itr            { std::lower_bound( hot_key_table.begin(), hot_key_table.end(), candidate_hk_search_target )};  // first that matches, or the prior value (ie before the next too big number).
     if ( firstmatch_o_prior_itr != hot_key_table.end() ) {
         LOGGERX("First match or prior hot_key_table entry:",   firstmatch_o_prior_itr->my_name);
@@ -946,14 +946,14 @@ get_kb_keystroke_raw() {
                                 assert( chars_temp.size() == 1 && "Logic error.");
         Hot_key_o_errno   hot_key_candidate = consider_hot_key(  chars_temp );
         I18n_key_o_errno i18n_key_candidate = consider_i18n_key( chars_temp );
-        if (        std::holds_alternative< Hot_key_row >(  hot_key_candidate ) ) {
+        if (        std::holds_alternative< Hot_key_table_row >(  hot_key_candidate ) ) {
             // ******* CASE: Handle hot_key that is a single char, and return it, such as <TAB> <BS>? , but probably not 'h' for help.
 #ifndef NDEBUG
-                                Hot_key_chars hkc { std::get< Hot_key_row >( hot_key_candidate ).characters };  // TODO3:  this is probably not correct check
+                                Hot_key_chars hkc { std::get< Hot_key_table_row >( hot_key_candidate ).characters };  // TODO3:  this is probably not correct check
                                 assert( not hkc.empty()                           && "Postcondition9.");
                                 assert( file_status != File_status::initial_state && "Postcondition1.");
 #endif
-            return { std::get< Hot_key_row >(  hot_key_candidate  ), is_partial_hot_key_matches,  file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::get< Hot_key_table_row >(  hot_key_candidate  ), is_partial_hot_key_matches,  file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else if ( std::holds_alternative< I18n_key_row >( i18n_key_candidate ) ) {
             // ******* CASE: Handle i18n_key that is a single char, and return it.
                                 // TODO2: Code/check this case. Similar to above.
@@ -1012,12 +1012,12 @@ get_kb_keystroke_raw() {
                                 // **ALSO* Let's see if we now have a single or multybyte i18n AND we need to loop again to finalize our the hot_key or error on an unrecognized key sequence.
                                 // ******* TODO2: next line needs to be fully coded, it is just a stub at this point. Will likely include need to differntiate between hot_key case and i18n case overlaping logic.
         I18n_key_o_errno const i18n_key_or_error { consider_i18n_key( chars_temp )};  // We may have a single char, or multi-byte sequence, which is either complete, or only partially read.
-        if ( std::holds_alternative< Hot_key_row >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
+        if ( std::holds_alternative< Hot_key_table_row >( hot_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* Hot_key
                                 assert( timed_kcs != 0 && "Postcondition11.");
                                 assert( not chars_temp.empty() && "Postcondition12.");
                                 assert( File_status::initial_state != file_status && "Postcondition3.");
-                                return { std::get< Hot_key_row >(hot_key_or_error), ++is_partial_hot_key_matches, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+                                return { std::get< Hot_key_table_row >(hot_key_or_error), ++is_partial_hot_key_matches, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
             LOGGERX("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
@@ -1167,7 +1167,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                                         assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     I18n_key_chars 	    i18n_key_chars_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  // The char(s) in the keystroke.
     I18n_key_row		i18n_key_row            {};                             // The i18n_key that might have been found.
-    Hot_key_row		 	hot_key_row             {};                             // The hot_key  that might have been found.
+    Hot_key_table_row		 	hot_key_table_row             {};                             // The hot_key  that might have been found.
     size_t 		 		additional_keystrokes 	{length_in_keystrokes};         // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::initial_state}; // reset some variables from prior loop if any, specifically old/prior hot_key.
 
@@ -1188,7 +1188,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         bool is_ignore_hot_key_local{false};                 /// In case editing mode is toggled. TODO: not implemented yet.  TODO: I may not need these locals set by function calls, but I'm not sure until all TODO S are done
         bool is_adequate_fs_local   {false};                 /// Don't worry about these file_descriptor stati.  TODO: I may not need these locals set by function calls, but I'm not sure until all TODO S are done
         i18n_key_row                = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
-        hot_key_row                 = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
+        hot_key_table_row                 = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat        = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
                                                                // TODO?: may not need this local, but not sure untill below TODOs are done.
         kb_key_a_stati_row = get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
@@ -1218,11 +1218,11 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 //kb_key_a_stati_row.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
                 kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati_row );//.is_failed_match_chars,file_status_result);
             }
-            else if ( std::holds_alternative< Hot_key_row > ( kb_key_a_stati_row.kb_key_variant )) {
-                hot_key_row 			    = std::get < Hot_key_row >( kb_key_a_stati_row.kb_key_variant );  // TODO:?? is this a copy?
-                hot_key_function_cat        = hot_key_row.function_cat;
-                                        LOGGERX("is hk:", hot_key_row.my_name);
-                                        LOGGERX("is hot_key_function_cat:", (int)hot_key_row.function_cat);
+            else if ( std::holds_alternative< Hot_key_table_row > ( kb_key_a_stati_row.kb_key_variant )) {
+                hot_key_table_row 			    = std::get < Hot_key_table_row >( kb_key_a_stati_row.kb_key_variant );  // TODO:?? is this a copy?
+                hot_key_function_cat        = hot_key_table_row.function_cat;
+                                        LOGGERX("is hk:", hot_key_table_row.my_name);
+                                        LOGGERX("is hot_key_function_cat:", (int)hot_key_table_row.function_cat);
                 // if ( ( hot_key_function_cat = hot_key_rv.function_cat ) == HotKeyFunctionCat::editing_mode ) {
                 //     is_editing_mode_insert 	= ! is_editing_mode_insert;  // TODO: Do we use this value here, or down the call stack?
                 //     cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
@@ -1261,9 +1261,9 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now.
     hot_key_nav_result = hot_key_function_cat;  // TODO: holds historical, perhaps not current??
     while (     is_require_field_completion_key                                         &&  // TODO: probably totally wrong, check it.
-                hot_key_row.function_cat != HotKeyFunctionCat::nav_field_completion     &&  // TODO: may need more cats like intra_field, editing_mode?
-                hot_key_row.function_cat != HotKeyFunctionCat::navigation_esc           &&
-                hot_key_row.function_cat != HotKeyFunctionCat::help_popup               &&  // XXXX new idea
+                hot_key_table_row.function_cat != HotKeyFunctionCat::nav_field_completion     &&  // TODO: may need more cats like intra_field, editing_mode?
+                hot_key_table_row.function_cat != HotKeyFunctionCat::navigation_esc           &&
+                hot_key_table_row.function_cat != HotKeyFunctionCat::help_popup               &&  // XXXX new idea
                 file_status_result       != File_status::eof_file_descriptor
                 //file_status_result          != File_status::eof_Key_char_singular     &&
                 //file_status_result          != File_status::eof_library               &&
@@ -1273,12 +1273,12 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         kb_keys_result.kb_key_a_stati_rows.push_back(  kb_key_a_stati_row );  // We store even the chars beyond the requested N parameter, because it might be useful, we do need nav_field_completion.
         file_status_result =    kb_key_a_stati_row.file_status;
         if ( Kb_key_variant const kb_key_variant { kb_key_a_stati_row.kb_key_variant };
-             std::holds_alternative< Hot_key_row >( kb_key_variant ))
+             std::holds_alternative< Hot_key_table_row >( kb_key_variant ))
         {
-            hot_key_row  = std::get< Hot_key_row >( kb_key_variant );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
-            hot_key_nav_result = hot_key_row.function_cat;  // We can't get out of this loop untill the function cat is NAV or ESC or F1 or similar.
-            //hot_key_row.function_cat  is set above.
-            //hot_key_row.function_cat                     = kb_key_a_stati_row.kb_key_variant.row.function_cat;
+            hot_key_table_row  = std::get< Hot_key_table_row >( kb_key_variant );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
+            hot_key_nav_result = hot_key_table_row.function_cat;  // We can't get out of this loop untill the function cat is NAV or ESC or F1 or similar.
+            //hot_key_table_row.function_cat  is set above.
+            //hot_key_table_row.function_cat                     = kb_key_a_stati_row.kb_key_variant.row.function_cat;
         }
         else {
             cout<< "\aError: expecting a CR or other special completion key, try again."<<endl;

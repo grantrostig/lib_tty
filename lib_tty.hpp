@@ -170,16 +170,16 @@ using I18n_key_chars 	= std::vector< Key_char_singular >; // One or a sequence o
  *  Here a "row" represents relalated data of a Hot_key, like a row in a relational database.
  *  For multi-byte sequences that flow from one keystroke, it can start with a CSI_ESC or we allow for another other designated char being CSI_ALT.
  */
-class Hot_key_row {
+class Hot_key_table_row {
 public:
   std::string           my_name            {STRING_NULL};                        // Name given by Lib_tty
   Hot_key_chars         characters         {STRING_NULL.cbegin(),STRING_NULL.cend()}; // See the type's documentation.
   HotKeyFunctionCat     function_cat       {HotKeyFunctionCat::initial_state};   // depending on this value, one or both of the following two data members are used. ::na is the case for ::job_control,::help_popup,::editing_mode,::other.
   InteractionIntentNav  interaction_intent_nav {InteractionIntentNav::na};       // Gets a value if HotKeyFunctionCat::nav_field_completion, or HotKeyFunctionCat::navigation_esc
   FieldIntraNav         intra_f_nav        {FieldIntraNav::na};                  // Gets a value if HotKeyFunctionCat::nav_intra_field
-  bool            operator<( Hot_key_row const &) const;                        // Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
+  bool            operator<( Hot_key_table_row const &) const;                        // Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
   std::string     to_string()                 const;                            // Used for debugging only.
-}; using Hot_key_table = std::vector< Hot_key_row >;                            // Stores all known Hot_key_rows for internal library use.  Table like in the sense of a relational database.
+}; using Hot_key_table = std::vector< Hot_key_table_row >;                            // Stores all known Hot_key_table_rows for internal library use.  Table like in the sense of a relational database.
 
 /** A "I18n_key_chars" is one keystroke of a international keyboard of a non-ascii key, that is one or more chars/bytes long.
  *  Here a "row" represents relalated data, like a row in a relational database.
@@ -225,7 +225,7 @@ class Key_char_singular_get_result            : public Kb_get_result {
     Key_char_singular   kcs             {};
 };                // The most basic character that a keyboard can generate like ASCII or UNICODE 8? or 16? or 32?, which does not generate a multi-btye burst of characters, like F1
 class Hot_key_multi_char_get_result            : public Kb_get_result {  // TODO??: tag-dispatching type if empty body ie. {};
-    Hot_key_row         hot_key_row     {};
+    Hot_key_table_row         hot_key_table_row     {};
 };
 class I18n_multi_char_get_result               : public Kb_get_result {
     I18n_key_chars      characters      {};
@@ -251,9 +251,9 @@ class Kb_get_result2 {
  *         this is not yet accounted for in this code.
  *  TODO: char does this include an EOF character?
  */
-using Kb_key_variant =      std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_row, /*Hot_key_chars,*/ Hot_key_row >;
+using Kb_key_variant =      std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_row, /*Hot_key_chars,*/ Hot_key_table_row >;
 using Kb_key_variant_rows = std::vector< Kb_key_variant >;
-using Kb_key_row_variant =  std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_row >;
+using Kb_key_row_variant =  std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_table_row >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"
@@ -273,7 +273,7 @@ struct Kb_key_a_stati_row {
  */
 //struct Kb_value_plus_old {
   //I18n_key_chars    i18n_key_chars  {STRING_NULL.cbegin(),STRING_NULL.cend()};
-  //Hot_key_row       hot_key         {};
+  //Hot_key_table_row       hot_key         {};
   //File_status       file_status     {File_status::initial_state};
 //};
 //struct Kb_key_a_stati_rows_old2 {  // XXXXX new

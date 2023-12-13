@@ -256,12 +256,12 @@ constexpr KbFundamentalUnit CSI_MANUAL_ENTRY = '`';
  *  Used only as return value by one function, with only one caller (at several locations) which is internal.
  *  TODO: consider renaming to Hot_key vs Hotkey.
  */
-using Hot_key_o_errno    = std::variant< Hot_key_row, Lt_errno >;
+using Hot_key_o_errno    = std::variant< Hot_key_table_row, Lt_errno >;
 using I18n_key_o_errno  = std::variant< I18n_key_row, Lt_errno >;
 
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */
-std::optional<Hot_key_row>
+std::optional<Hot_key_table_row>
 find_hot_key(const Hot_key_table &hot_key_table, const I18n_key_chars this_key);
 
 /*****************************************************************************/
