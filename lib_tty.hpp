@@ -253,7 +253,7 @@ class Kb_get_result2 {
  */
 using Kb_key_variant =      std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_row, /*Hot_key_chars,*/ Hot_key_table_row >;
 using Kb_key_variant_rows = std::vector< Kb_key_variant >;
-using Kb_key_row_variant =  std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_table_row >;
+//using Kb_key_row_variant =  std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_table_row >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"

@@ -200,6 +200,14 @@ Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys_result const & keys ) {
                 //hot_key_table_row_p                           = std::get_if< Lib_tty::Hot_key_table_row >( & my_kb_key_variant );
 }
 
+//bool finished_fn( Lib_tty::Kb_keys_result & kb_keys_result, Lib_tty::Hot_key_chars  Q, Lib_tty::Hot_key_chars  QQQ ) {
+bool   finished_fn( Lib_tty::Kb_keys_result & kb_keys_result, Lib_tty::I18n_key_chars Q, Lib_tty::I18n_key_chars QQQ ) {
+    if ( auto ptr = std::get_if< Lib_tty::Key_char_singular >( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == *Q.begin() ) return true;
+    if ( auto ptr = std::get_if< Lib_tty::Hot_key_chars >    ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == QQQ )        return true;
+    if ( auto ptr = std::get_if< Lib_tty::I18n_key_chars >   ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == QQQ )        return true;
+    return false;
+};
+
 /**  This main() is used solely to test our linked shared library: lib_tty.o
  *   WARNING enable this main.cpp file in qmake ONLY if you want to run this test, but to build the libary DON'T enable this file to be linked into the *.so
  */
@@ -241,6 +249,7 @@ LOGGERX("get_0_kb_key_variant_value:key_variant_hkr", std::get<0>( get_kb_key_va
 LOGGERX("get_0_kb_key_variant_value:key_variant_ikc", std::get<0>( get_kb_key_variant_value( key_variant_ikc )) );
 LOGGERX("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_variant_value( key_variant_ikr )) );
 
+    Lib_tty::Key_char_singular  hks                 {};
     Lib_tty::Hot_key_chars      hkc                 {};
     Lib_tty::I18n_key_chars     i18ns               {};
     Lib_tty::Hot_key_table_row        hot_key_table_row         {};
@@ -249,7 +258,15 @@ LOGGERX("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_va
     Lib_tty::File_status        fs                  {};
     std::string                 user_ack            {};
 
+    /*auto finished = []( Lib_tty::Kb_keys_result & kb_keys_result, string Q, Lib_tty::Hot_key_chars HHH) -> bool {
+        if ( auto ptr = std::get_if< Lib_tty::Key_char_singular >( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == *Q.begin() ) return true;
+        if ( auto ptr = std::get_if< Lib_tty::Hot_key_chars >    ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == HHH )        return true;
+        if ( auto ptr = std::get_if< Lib_tty::I18n_key_chars >   ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == HHH )        return true;
+        return false;
+    };*/
+
     // *** Test raw character input, grabbing individual keyboard key presses, including multi-character sequences like F1 and Insert keys.
+    Lib_tty::Kb_keys_result kb_keys_result{};
     do { cout << ">ENTER a single keyboard key press now! (q or F4 for next test):"; cout.flush();
         Lib_tty::Kb_keys_result kb_keys_result      { Lib_tty::get_kb_keystrokes_raw( 1, false, true, true) };
         Lib_tty::Kb_key_variant kb_key_variant1     { detail_get_1(kb_keys_result) };
@@ -271,10 +288,24 @@ LOGGERX("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_va
         fs  = kb_keys_result.file_status_final;
         LOGGERX("file_status enum:",(int)fs);
 
+        /* auto finished2 = [& kb_keys_result, &Q, &QQQ]() -> bool {
+            if ( auto ptr = std::get_if< Lib_tty::Key_char_singular >( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == *Q.begin() )    return true;
+            if ( auto ptr = std::get_if< Lib_tty::Hot_key_chars >( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant);     *ptr == QQQ )    return true;
+            return false;
+        }; */
+
+        hks = std::get<Lib_tty::Key_char_singular> (kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant);
+        hkc = std::get<Lib_tty::Hot_key_chars>     (kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant);
+
         LOGGER_("We got this in 3 variables below:" );
         cout<<":MAIN():i18ns,length:{"<< i18ns<<","<<i18ns.size()<<"}, hot_key:{"<< hot_key_table_row.my_name << "}, file_status:{"<< (int)fs <<"}."<<endl;
         cout << ">Press RETURN to continue (q to exit(0)):"; getline( cin, user_ack); cin.clear(); cout <<"got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(0);
-    } while ( i18ns != Q && hot_key_table_row.my_name != "f4");
+    } while ( nav != Lib_tty::HotKeyFunctionCat::nav_field_completion &&
+              nav != Lib_tty::HotKeyFunctionCat::navigation_esc       &&
+              not finished_fn(kb_keys_result, Q, QQQ )
+              //i18ns != Q                                            &&
+              //hot_key_table_row.my_name != "f4"
+            );
 
     /* do { cout << "ENTER a sequence of 3 key strokes, including possibly some function_keys INTERSPERSED. (qqq or ??F4 for next test):"; cout.flush();
         Lib_tty::Kb_keys kvp { Lib_tty::get_kb_keystrokes_raw( 3, false, true, true)};
