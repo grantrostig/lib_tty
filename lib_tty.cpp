@@ -17,9 +17,12 @@
 #include <source_location>
 // POSIX headers
 #include <termios.h>
-
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
+//#define LOGGER_( );
+//#define LOGGERX( );
+//#define LOGGER_R( );
+//#define LOGGERXR( );
 
 /// TODO??: better alternative to access these names elsewhere? >using namespace Lib_tty or each member? Lib_tty::IDENTIFIER ?
 namespace Lib_tty {  // entire file ns
@@ -52,7 +55,7 @@ Hot_key_table_row::to_string() const {  // found in lib_tty.h
 /********** START I18n_key_row Class specific code ****************************/
 /*****************************************************************************/
 std::string
-I18n_key_row::to_string() const {  // found in lib_tty.h
+I18n_key_table_row::to_string() const {  // found in lib_tty.h
     std::string s {my_name};  // TODO: finish this
     return s;
 }
@@ -102,7 +105,7 @@ source_loc( ) {  // give more detail on error location, used by perror()
 
 ///  Debugging use only at this time.
 void print_signal(int const signal) {
-    LOGGERX("Signal is:", signal);
+    LOGGERXR("Signal is:", signal);
     switch (signal) {
     //                  ISO C99 signals. see inital comments in lib_tty.h
     case ( SIGINT):		/* Interactive attention signal.  */
@@ -139,10 +142,10 @@ void print_signal(int const signal) {
     case ( SIGWINCH):	/* Window size change (4.3 BSD, Sun).  */
     case ( SIGSTKFLT):	/* Stack fault (obsolete).  */
     case ( SIGPWR):		/* Power failure imminent.  */
-        LOGGER_("Above is a typical POSIX signal");
+        LOGGER_R("Above is a typical POSIX signal");
         break;
     default:
-        LOGGER_("Above is a non-typical POSIX signal");
+        LOGGER_R("Above is a non-typical POSIX signal");
     }
     /* also note: SIGRTMIN,SIGRTMAX
      * non signals
@@ -174,7 +177,7 @@ find_hot_key(const Hot_key_table &hot_key_table, const I18n_key_chars this_key) 
 
 Sigaction_termination_return
 set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // TODO: why does const have no effect here?
-    //LOGGER_ ("Starting.");
+    //LOGGER_R ("Starting.");
     struct sigaction action 		{};    			 // TODO:  TODO??: why is struct required by compiler.  TODO??: does this initialize deeply in c++ case?
     sigemptyset( &action.sa_mask );  				 // Isn't this already empty because of declaration? We do it just to be safe.
     action.sa_flags 				|= ~SA_SIGINFO;  // Invoke signal-catching function with three arguments instead of one.
@@ -191,7 +194,7 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // TODO: wh
          != reinterpret_cast<
                             void *
                             >(SIG_IGN)) {  // we avoid setting a signal on those that are already ignored. TODO: why is this different from My_sighandler_t?
-        LOGGER_("SIGINT going to be set");
+        LOGGER_R("SIGINT going to be set");
         if ( sigaction( SIGINT, &action, nullptr) == POSIX_ERROR ) { perror( source_loc().data()); exit(1); }
     }
     // ******* Repeat for other Signals.
@@ -202,28 +205,28 @@ set_sigaction_for_termination( Sigaction_handler_fn_t handler_in) {  // TODO: wh
          != reinterpret_cast<
                             void(*) (int, siginfo_t *, void *)
                             >(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
-        LOGGER_("SIGQUIT going to be set");
+        LOGGER_R("SIGQUIT going to be set");
         if ( sigaction( SIGQUIT, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // TODO: Would this only be used if there was a serial line that could generate a HUP signal?
     }
 
     static struct sigaction action_prior_SIGTERM 	{};
     if ( sigaction( SIGTERM , nullptr, /*out*/ &action_prior_SIGTERM ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
     if ( action_prior_SIGTERM.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
-        LOGGER_("SIGTERM going to be set");
+        LOGGER_R("SIGTERM going to be set");
         if ( sigaction( SIGTERM, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }  // TODO: Does not seem to work. BUG: Ctrl-\ causes a immediate dump.
     }
 
     static struct sigaction action_prior_SIGTSTP 	{};
     if ( sigaction( SIGTSTP , nullptr, /*out*/ &action_prior_SIGTSTP ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
     if ( action_prior_SIGTSTP.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
-        LOGGER_("SIGTSTP going to be set");
+        LOGGER_R("SIGTSTP going to be set");
         if ( sigaction( SIGTSTP, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
     }
 
     static struct sigaction action_prior_SIGHUP 	{};
     if ( sigaction( SIGHUP , nullptr, /*out*/ &action_prior_SIGHUP ) == POSIX_ERROR) { perror(source_loc().data()); exit(1); }  // just doing a get()
     if ( action_prior_SIGHUP.sa_sigaction != reinterpret_cast<void(*)(int, siginfo_t *, void *)>(SIG_IGN)) { // we avoid setting a signal on those that are already ignored.
-        LOGGER_("SIGHUP going to be set" );
+        LOGGER_R("SIGHUP going to be set" );
         if ( sigaction( SIGHUP, &action, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
     }
     return { action_prior_SIGINT, action_prior_SIGQUIT, action_prior_SIGTERM, action_prior_SIGTSTP, action_prior_SIGHUP };
@@ -235,7 +238,7 @@ set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in );
 
 /// signal handler function to be called when a timeout alarm goes off via a user defined signal is received
 void handler_inactivity(int const sig, Siginfo_t *, void *) {  // TODO: why can't I add const here without compiler error?
-    LOGGERX("This signal got us here:", sig);
+    LOGGERXR("This signal got us here:", sig);
     print_signal( sig );
     set_sigaction_for_inactivity( handler_inactivity );  //  re-create the handler we are in so we can get here again when handling is called for!?!? // TODO: WHY, since it seems to have been used-up/invalidated somehow?
     // TODO: ?? raise (sig);
@@ -243,7 +246,7 @@ void handler_inactivity(int const sig, Siginfo_t *, void *) {  // TODO: why can'
 }
 
 void handler_termination(int const sig, Siginfo_t *, void *) {
-    LOGGERX("This signal # got us here:", sig);
+    LOGGERXR("This signal # got us here:", sig);
     print_signal( sig );
     set_sigaction_for_termination( handler_termination );  // re-create the handler we are in so we can get here again when handling is called for!?!? // TODO: WHY, since it seems to have been used-up/invalidated somehow?
 }
@@ -251,15 +254,15 @@ void handler_termination(int const sig, Siginfo_t *, void *) {
 /// put signal handling back? TODO:
 void sigaction_restore_for_termination( Sigaction_termination_return const & actions_prior ) {
     if (sigaction( SIGINT,  &actions_prior.action_prior1, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
-    else {LOGGER_("SIGINT set to original state" )};
+    else {LOGGER_R("SIGINT set to original state" )};
     if (sigaction( SIGQUIT, &actions_prior.action_prior2, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
-    else {LOGGER_("SIGQUIT set to original state" )};
+    else {LOGGER_R("SIGQUIT set to original state" )};
     if (sigaction( SIGTERM, &actions_prior.action_prior3, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
-    else {LOGGER_("SIGTERM set to original state" )};
+    else {LOGGER_R("SIGTERM set to original state" )};
     if (sigaction( SIGTSTP, &actions_prior.action_prior4, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
-    else {LOGGER_("SIGTSTP set to original state" )};
+    else {LOGGER_R("SIGTSTP set to original state" )};
     if (sigaction( SIGHUP,  &actions_prior.action_prior5, nullptr) == POSIX_ERROR ) { perror(source_loc().data()); exit(1); }
-    else {LOGGER_("SIGHUP set to original state" )};
+    else {LOGGER_R("SIGHUP set to original state" )};
     return;
 }
 
@@ -277,7 +280,7 @@ set_sigaction_for_inactivity( Sigaction_handler_fn_t handler_in ) {
 
     int 				signal_for_user  	 { SIGRTMIN }; /// from Linux source code: Return number of available real-time signal with highest priority.  */
     struct 	sigaction 	action_prior {};
-    LOGGERX("Signal going to be set is int SIGRTMIN, which is:", signal_for_user);
+    LOGGERXR("Signal going to be set is int SIGRTMIN, which is:", signal_for_user);
     if ( sigaction( signal_for_user , &action, /* out */ &action_prior ) == POSIX_ERROR )
     {
         perror(source_loc().data()); exit(1);
@@ -319,7 +322,7 @@ enable_inactivity_handler(const int seconds) {
 
 /// TODO:verify> stop waiting for additional keyboard characters from the user? delete the CSI/ESC timer
 void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_user, const struct sigaction old_action) {
-    LOGGERX("disable inactivity handler on signal: ", sig_user);
+    LOGGERXR("disable inactivity handler on signal: ", sig_user);
     if ( timer_delete( inactivity_timer) 			    == POSIX_ERROR) { perror( source_loc().data()); exit(1); } // should print out message based on ERRNO // TODO: fix this up. TODO: this throws in c lang???
     if ( sigaction(    sig_user, &old_action, nullptr) 	== POSIX_ERROR) { perror( source_loc().data()); exit(1); } // should print out message based on ERRNO // TODO: fix this up.  TODO: __THROW ???
 }
@@ -331,12 +334,12 @@ void disable_inactivity_handler(const timer_t inactivity_timer, const int sig_us
 /*****************************************************************************/
 /// to show what is happening on standard-in/cin. Used for debugging. TODO??: how do I pass in cin or cout to this?
 void print_iostate(const std::istream &stream) {
-    LOGGER_("Is:");
-    if (stream.rdstate() == std::ios_base::goodbit) {LOGGER_("goodbit only, ")};
-    if (stream.rdstate() &  std::ios_base::goodbit) {LOGGER_("goodbit, ")};
-    if (stream.rdstate() &  std::ios_base::eofbit)  {LOGGER_("eofbit, ")};
-    if (stream.rdstate() &  std::ios_base::failbit) {LOGGER_("failbit, ")};
-    if (stream.rdstate() &  std::ios_base::badbit)  {LOGGER_("badbit,")};
+    LOGGER_R("Is:");
+    if (stream.rdstate() == std::ios_base::goodbit) {LOGGER_R("goodbit only, ")};
+    if (stream.rdstate() &  std::ios_base::goodbit) {LOGGER_R("goodbit, ")};
+    if (stream.rdstate() &  std::ios_base::eofbit)  {LOGGER_R("eofbit, ")};
+    if (stream.rdstate() &  std::ios_base::failbit) {LOGGER_R("failbit, ")};
+    if (stream.rdstate() &  std::ios_base::badbit)  {LOGGER_R("badbit,")};
 }
 
 /// created as a "hack" since operator== doesn't work reliably? on structs.
@@ -364,11 +367,10 @@ Termios & termio_get() { // uses POSIX  // TODO TODO: what are advantages of oth
     static Termios termios;
     if (auto result = tcgetattr( fileno(stdin), &termios); result == POSIX_ERROR) { // TODO: throw() in signature?
         int errno_save = errno;
-        LOGGERX("Standard-in is not a tty keyboard??",errno_save);
-        errno = errno_save;
+        LOGGERXR("FATAL: Standard-in is not a tty keyboard??",errno_save);
         perror( source_loc().data() );
-        LOGGER_("We will exit(1) for this error");
-        exit(1);
+        errno = errno_save;
+        exit(EXIT_FAILURE);
     }
     return termios;  // copy of POD?
 }
@@ -382,7 +384,7 @@ void termio_set( Termios const & termios_new ) { // uses POSIX
     if ( auto result = tcsetattr( fileno(stdin), TCSADRAIN, /*IN*/ &termios_new );
         result == POSIX_ERROR ) {
         int errno_save = errno;
-        LOGGERX("Standard in is not a tty keyboard with errno of:", errno_save);
+        LOGGERXR("Standard in is not a tty keyboard with errno of:", errno_save);
         errno = errno_save;
         perror( source_loc().data() );
         exit(1);
@@ -476,7 +478,7 @@ get_successfull_iostate_cin() {
     File_status file_status {File_status::initial_state};
     if ( cin.eof() ) {
         file_status = File_status::eof_file_descriptor;
-        LOGGER_("CIN is eof")
+        LOGGER_R("CIN is eof")
     } else {
         if ( cin.fail() ) {
             file_status = File_status::fail;
@@ -488,7 +490,7 @@ get_successfull_iostate_cin() {
             } else {
                 file_status = File_status::good; // grostig
                 // TODO?: might be good, but what if a timed get timed out with an alarm signal? Needs to be checked and possible reworking of logic.
-                LOGGER_("Cin is good.")
+                LOGGER_R("Cin is good.")
                 assert( cin.good() && "Logic error:Should be good by exclusion.");
             }
         }
@@ -502,13 +504,13 @@ get_successfull_iostate_cin() {
 bool is_adequate_file_status( File_status const file_status )  { // **** CASE on File Status
     static_assert( std::is_enum_v< File_status > , "Precondition/Logic_error, should be an enum class.");
     switch (file_status) {
-    case File_status::good :                        LOGGER_("File_status is: good"); // TODO fix relationship to "other"
+    case File_status::good :                        LOGGER_R("File_status is: good"); // TODO fix relationship to "other"
         return true;
-//    case File_status::other_user_kb_char_data_HACK :LOGGER_("File_status is: other"); //
+//    case File_status::other_user_kb_char_data_HACK :LOGGER_R("File_status is: other"); //
 //        return true;
-    //case File_status::eof_Key_char_singular :       LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
+    //case File_status::eof_Key_char_singular :       LOGGER_R("File_status is: keyboard eof, which is a hotkey"); //
         //return true;
-    //case File_status::eof_library :                 LOGGER_("File_status is: keyboard eof, which is a hotkey"); //
+    //case File_status::eof_library :                 LOGGER_R("File_status is: keyboard eof, which is a hotkey"); //
         //return true;
 //    case File_status::unexpected_user_kb_char_data_HACK :
 //        cout << "\ais_ignore_key_file_status: bad keyboard character sequence, try again."; // we throw away bad character sequence or char // TODO: handle scrolling and dialog
@@ -520,11 +522,11 @@ bool is_adequate_file_status( File_status const file_status )  { // **** CASE on
         assert( false && "File descriptor is at eof.");  // TODO: is this correct, or should we not ignore it?
         break;
     case File_status::bad :
-        LOGGER_("File_status is bad"); //
+        LOGGER_R("File_status is bad"); //
         assert( false && "File descriptor is bad.");  // TODO: is this correct, or should we not ignore it?
         break;
     case File_status::fail :
-        LOGGER_("File_status is fail"); //
+        LOGGER_R("File_status is fail"); //
         assert( false && "File descriptor is fail.");  // TODO: is this correct, or should we not ignore it?
         break;
     case File_status::initial_state :
@@ -856,27 +858,27 @@ xterm-256color|xterm with 256 colors,
         assert ( !hot_key_table.empty() && "We don't allow empty hotkeys set.");
         std::sort( hot_key_table.begin(), hot_key_table.end() );
         if ( auto dup = std::adjacent_find( hot_key_table.begin(), hot_key_table.end(), is_hk_chars_equal ); dup != hot_key_table.end() ) {
-            LOGGERX("Duplicate hot_key:", dup->my_name);
+            LOGGERXR("Duplicate hot_key:", dup->my_name);
             assert( false && "We don't allow duplicate hotkey character sequences.");
         }
 #ifdef GR_DEBUG
-        // TODO??: make it accept operator<< : LOGGERX("Run once only now, here are the hot_key_table,characters:",hot_key_table)
-        //LOGGER_("Run once only now, here are the hot_key_table,characters:")
+        // TODO??: make it accept operator<< : LOGGERXR("Run once only now, here are the hot_key_table,characters:",hot_key_table)
+        //LOGGER_R("Run once only now, here are the hot_key_table,characters:")
         for (auto & i : hot_key_table) {
-            LOGGERX("hot_key:   ", i.my_name);
-            LOGGERX("it's chars:", i.characters);
+            LOGGERXR("hot_key:   ", i.my_name);
+            LOGGERXR("it's chars:", i.characters);
         }
 #endif
     }
-    LOGGERX("Candidate_hk_chars:", candidate_hk_chars);
+    LOGGERXR("Candidate_hk_chars:", candidate_hk_chars);
     Hot_key_table_row const candidate_hk_search_target { {}, candidate_hk_chars };
     auto    const firstmatch_o_prior_itr            { std::lower_bound( hot_key_table.begin(), hot_key_table.end(), candidate_hk_search_target )};  // first that matches, or the prior value (ie before the next too big number).
     if ( firstmatch_o_prior_itr != hot_key_table.end() ) {
-        LOGGERX("First match or prior hot_key_table entry:",   firstmatch_o_prior_itr->my_name);
-        LOGGERX("Characters within that hot_key_table entry:", firstmatch_o_prior_itr->characters);
+        LOGGERXR("First match or prior hot_key_table entry:",   firstmatch_o_prior_itr->my_name);
+        LOGGERXR("Characters within that hot_key_table entry:", firstmatch_o_prior_itr->characters);
     }
     if ( firstmatch_o_prior_itr == hot_key_table.end() ) {
-        LOGGER_("Return:No match")
+        LOGGER_R("Return:No match")
         return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
     }
     bool is_full_or_partial_match {false};
@@ -886,19 +888,19 @@ xterm-256color|xterm with 256 colors,
                      std::next( firstmatch_o_prior_itr->characters.begin(), candidate_hk_chars.size() )  // Points to character beyond (ie. end()) of the entry in hot_key_table.  Note we check this a the function is called for each subsequent character, so we should not run off the end of the hot_key_table entry.
                    ) ) { // We checked at most the minimum number of characters (ie. size) of the lengths of either.  See above line and comment.
         is_full_or_partial_match = true;
-        LOGGER_("Is_full_or_partial_match, but is it a full?");
+        LOGGER_R("Is_full_or_partial_match, but is it a full?");
     }
     if ( is_full_or_partial_match ) {
         if ( firstmatch_o_prior_itr->characters.size() == candidate_hk_chars.size() ) {
-            LOGGER_("Return:A match!")
+            LOGGER_R("Return:A match!")
             return *firstmatch_o_prior_itr;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
         else {
-            LOGGER_("Return:Partial match, must check for next input character");
+            LOGGER_R("Return:Partial match, must check for next input character");
             return E_PARTIAL_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     }
-    LOGGER_("Return:No match");
+    LOGGER_R("Return:No match");
     return E_NO_MATCH;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 }
 
@@ -924,9 +926,9 @@ get_kb_keystroke_raw() {
     int16_t             is_partial_temp_matches         { 0 };
     File_status         file_status                     {File_status::initial_state};
 
-                                LOGGER_("Pre  cin.get():");
+                                LOGGER_R("Pre  cin.get():");
     cin.get( first_kcs );           // TODO: first_kcs == 0 // does this ever happen? TODO: 0 == the break character or what else could it mean?
-                                LOGGER_("Post cin.get():");
+                                LOGGER_R("Post cin.get():");
                                 assert( cin && "Logic error: cin is not good.");
                                 assert( first_kcs != 0 && "Logic error: Got a zero from cin.get().");  // Note: here we consider a zero as a failed cin.get(), below on a timed get we start with a magic number and we expect to get a zero 0 if the timer expires. TODO verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
     file_status = get_successfull_iostate_cin();
@@ -949,15 +951,15 @@ get_kb_keystroke_raw() {
         if (        std::holds_alternative< Hot_key_table_row >(  hot_key_candidate ) ) {
             // ******* CASE: Handle hot_key that is a single char, and return it, such as <TAB> <BS>? , but probably not 'h' for help.
 #ifndef NDEBUG
-                                Hot_key_chars hkc { std::get< Hot_key_table_row >( hot_key_candidate ).characters };  // TODO3:  this is probably not correct check
-                                assert( not hkc.empty()                           && "Postcondition9.");
+                                Hot_key_chars hkcs { std::get< Hot_key_table_row >( hot_key_candidate ).characters };  // TODO3:  this is probably not correct check
+                                assert( not hkcs.empty()                           && "Postcondition9.");
                                 assert( file_status != File_status::initial_state && "Postcondition1.");
 #endif
             return { std::get< Hot_key_table_row >(  hot_key_candidate  ), is_partial_hot_key_matches,  file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-        } else if ( std::holds_alternative< I18n_key_row >( i18n_key_candidate ) ) {
+        } else if ( std::holds_alternative< I18n_key_table_row >( i18n_key_candidate ) ) {
             // ******* CASE: Handle i18n_key that is a single char, and return it.
                                 // TODO2: Code/check this case. Similar to above.
-            return { std::get< I18n_key_row >( i18n_key_candidate ), is_partial_i18n_key_matches, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            return { std::get< I18n_key_table_row >( i18n_key_candidate ), is_partial_i18n_key_matches, file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         } else {
             // ******* CASE: Handle single simple regular char, and return it.
                                 assert( std::holds_alternative< Lt_errno >( hot_key_candidate ));
@@ -966,7 +968,7 @@ get_kb_keystroke_raw() {
             return { first_kcs, 0,                                                                  file_status}; //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
     }
-    LOGGER_("We have a CSI or ESC, so we'll loop to get the whole multi-byte sequence");
+    LOGGER_R("We have a CSI or ESC, so we'll loop to get the whole multi-byte sequence");
     // ******* CSI or ESC: If it does, it will manifest as either: 1) a multibyte sequence of hot_key (like F1}, or 2) i18n sequence, or a singlebyte hot_key such as ESC (others too? We think not).
     while ( true ) {
 //        if ( cin.eof() || first_kcs == 0) {             // ????????????????????? does this evern happen? TODO: 0 == the break character or what else could it mean?
@@ -985,9 +987,9 @@ get_kb_keystroke_raw() {
         // ******* so let's get another char within a potential multibyte sequence, which would come very quickly before our timer on the get() expires.
         Key_char_singular   timed_kcs       {TIMED_GET_NOT_SET};  // TODO: verify and refactor relationship between TIMED_GET_NOT_SET, TIMED_GET_NULL and CHAR_NULL.
         Termios const       termios_orig    { termio_set_timer( VTIME_ESC )}; // Set stdin to return with no char if not arriving within timer interval, meaning it is not a multicharacter ESC sequence. Or, a mulitchar ESC seq will provide characters within the interval.
-                                LOGGER_("Pre  cin.get():");
+                                LOGGER_R("Pre  cin.get():");
         cin.get( timed_kcs );  				// see if we get chars too quickly to come from a human, but instead is a multibyte sequence.
-                                LOGGER_("Post cin.get():");
+                                LOGGER_R("Post cin.get():");
         termio_restore( termios_orig );
                                 // TODO??: could I use peek() to improve this code?
         file_status = get_successfull_iostate_cin();  // We could exit here with an abort().  ????????EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE??????
@@ -997,13 +999,13 @@ get_kb_keystroke_raw() {
         }
         if ( timed_kcs == TIMED_GET_GOT_NULL )
         {                       // no kbc immediately available within waiting time. NOTE: Must do this check first! if we didn't get another char within prescribed time, it is just a single ESC!// TODO: MAGIC NUMBER
-                                LOGGER_("Got a timed NULL.");
+                                LOGGER_R("Got a timed NULL.");
             file_status = File_status::timed_out;
             chars_temp.push_back( NO_MORE_CHARS );  // Add a flag value to match on a singular ESC, or else to cause a E_NO_MATCH failure below.  // TODO3: MAGIC NUMBER.
             cin.clear();                            // TODO: required after a timer failure has been triggered? Seems to be, why? // note: we have no char to "putback"!
         }
         else {
-            LOGGERX("We got a timed char.", timed_kcs);
+            LOGGERXR("We got a timed char.", timed_kcs);
             chars_temp.push_back( timed_kcs );      // We got another char, and we hope it may be part of a multi-byte sequence.
         }
 
@@ -1020,7 +1022,7 @@ get_kb_keystroke_raw() {
                                 return { std::get< Hot_key_table_row >(hot_key_or_error), ++is_partial_hot_key_matches, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
-            LOGGERX("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
+            LOGGERXR("We have an Lt_errno on considering hot_key_chars:", std::get< Lt_errno >( hot_key_or_error ) );
                                 //Hot_key_chars hkcs {chars_temp};   // TODO2: fix this hack
             switch ( std::get< Lt_errno >( hot_key_or_error ) ) {
             case E_NO_MATCH:                                                // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
@@ -1039,15 +1041,15 @@ get_kb_keystroke_raw() {
                 break;
             }
         }   // **** repeat code from above? TODO??:  could I use templates right here in this function?
-        if ( std::holds_alternative< I18n_key_row >( i18n_key_or_error ) ) {  // We have a real hot_key, so we are done!
+        if ( std::holds_alternative< I18n_key_table_row >( i18n_key_or_error ) ) {  // We have a real hot_key, so we are done!
             // ******* I18n_key
                                 assert( timed_kcs != 0 && "Postcondition11.");
                                 assert( not chars_temp.empty() && "Postcondition15.");
                                 assert( File_status::initial_state != file_status && "Postcondition16.");
-                                return { std::get< I18n_key_row >(i18n_key_or_error), is_partial_i18n_key_matches, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
+                                return { std::get< I18n_key_table_row >(i18n_key_or_error), is_partial_i18n_key_matches, file_status };  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR // TODO: file_status is what? might be EOF or other?
         }
         else {
-            LOGGERX("We have an Lt_errno on considering i18n_key_chars:", std::get< Lt_errno >( i18n_key_or_error ) );
+            LOGGERXR("We have an Lt_errno on considering i18n_key_chars:", std::get< Lt_errno >( i18n_key_or_error ) );
                                 //I18n_key_chars ikcs {chars_temp};     // TODO2: fix this hack
             switch ( std::get< Lt_errno >( i18n_key_or_error ) ) {
             case E_NO_MATCH:                                                // we got a CSI, but what followed didn't match any of the subsequent chars of a multi-byte sequence.
@@ -1076,7 +1078,7 @@ namespace Detail {  // TODO: what is best nameing convention for these?: support
 /// Doesn't ignore TODO:
 /// Only used once as a helper function, internally to lib_tty
 bool is_ignore_hot_key( HotKeyFunctionCat const hot_key_function_cat ) {
-    LOGGERX("hot_key_function_cat: ", (int)hot_key_function_cat);
+    LOGGERXR("hot_key_function_cat: ", (int)hot_key_function_cat);
     // **** CASE on hot key Function Category
     switch ( hot_key_function_cat ) {
     case HotKeyFunctionCat::initial_state :
@@ -1086,31 +1088,31 @@ bool is_ignore_hot_key( HotKeyFunctionCat const hot_key_function_cat ) {
         break;
     case HotKeyFunctionCat::editing_mode :
         // TODO: how do we use this?  do we ignore the character?? is_editing_mode_insert = ! is_editing_mode_insert;
-        LOGGER_("Editing mode toggled");
+        LOGGER_R("Editing mode toggled");
         return true;
         break;
     // All subsequent cases appear to be exactly the same except for debugging messages.
     case HotKeyFunctionCat::nav_field_completion :
-        LOGGER_("Navigation completion");
+        LOGGER_R("Navigation completion");
         break;
     case HotKeyFunctionCat::navigation_esc :
-        LOGGER_("Navigation ESC");
+        LOGGER_R("Navigation ESC");
         break;
     case HotKeyFunctionCat::nav_intra_field :
-        LOGGER_("Nav_intra_field mode");
+        LOGGER_R("Nav_intra_field mode");
         // TODO:  clarify comment: only done for get_value_raw() above, here we let the caller do it: nav_intra_field( hot_key, value, value_index, echo_skc_to_tty);
         break;
     case HotKeyFunctionCat::job_control :
-        LOGGER_("Job control");
+        LOGGER_R("Job control");
         break;
     case HotKeyFunctionCat::help_popup :
-        LOGGER_("Help Pop-Up");
+        LOGGER_R("Help Pop-Up");
         break;
     case HotKeyFunctionCat::none :
-        LOGGER_("HotKeyFunctionCat::none");
+        LOGGER_R("HotKeyFunctionCat::none");
         break;
     case HotKeyFunctionCat::none_i18n :
-        LOGGER_("HotKeyFunctionCat::none_i18n");
+        LOGGER_R("HotKeyFunctionCat::none_i18n");
         assert( false && "Logic error: not implemented yet.");
         break;
     }
@@ -1122,7 +1124,7 @@ bool is_ignore_hot_key( HotKeyFunctionCat const hot_key_function_cat ) {
 /// Only used once as a helper function, internally to lib_tty
 bool is_usable_char( Key_char_singular const skc, bool const is_allow_control_chars ) {
     assert( skc != '\0' && "Precondition: Did not expect char of 0, but maybe it is acceptable and this assert needs to change." );
-    LOGGERX("Char is:", static_cast< int >( skc ));
+    LOGGERXR("Char is:", static_cast< int >( skc ));
     int const i	{ static_cast<int>(skc) };
     return is_allow_control_chars ? ( isprint(i) || iscntrl(i) ) && // allowing control chars, in for example in a password ;)
                                       not( i==17 || i==19 ) 	    // except not: XON & XOFF,  TODO: what about SCROLL LOCK? is that even a character??
@@ -1139,7 +1141,7 @@ bool is_ignore_kcs( Key_char_singular const skc,
                     bool              const is_echo_skc_to_tty )
 {
     assert( skc != '\0' && "Precondition: Did not expect char of 0, but maybe it is acceptable and this assert needs to change." );
-    LOGGERX("Char is:", static_cast< int >( skc ));
+    LOGGERXR("Char is:", static_cast< int >( skc ));
     if ( is_usable_char( skc, is_allow_control_chars )) {
         if ( is_echo_skc_to_tty ) {
             cout << skc <<endl;
@@ -1166,7 +1168,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                                         assert( cin.good() && "Precondition.");
                                         assert( length_in_keystrokes > 0 && "Precondition: Length must be greater than 0." );   // TODO: must debug n>1 case later.
     I18n_key_chars 	    i18n_key_chars_result 	{STRING_NULL.cbegin(),STRING_NULL.cend()};  // The char(s) in the keystroke.
-    I18n_key_row		i18n_key_row            {};                             // The i18n_key that might have been found.
+                                        I18n_key_table_row		i18n_key_row            {};                             // The i18n_key that might have been found.
     Hot_key_table_row		 	hot_key_table_row             {};                             // The hot_key  that might have been found.
     size_t 		 		additional_keystrokes 	{length_in_keystrokes};         // TODO: we presume that bool is worth one and it is added for the CR we require to end the value of specified length.
     HotKeyFunctionCat   hot_key_function_cat  	{HotKeyFunctionCat::initial_state}; // reset some variables from prior loop if any, specifically old/prior hot_key.
@@ -1193,15 +1195,15 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                                                                // TODO?: may not need this local, but not sure untill below TODOs are done.
         kb_key_a_stati_row = get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
         file_status_result = kb_key_a_stati_row.file_status;
-                                        LOGGERX("Just read a keystroke, file_status:", (int)kb_key_a_stati_row.file_status);
+                                        LOGGERXR("Just read a keystroke, file_status:", (int)kb_key_a_stati_row.file_status);
         if ( ( is_adequate_fs_local = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
-                                        LOGGERX("is_ignore_key_fd:", is_adequate_fs_local);
+                                        LOGGERXR("is_ignore_key_fd:", is_adequate_fs_local);
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_stati_row.kb_key_variant )) {
                 Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_stati_row.kb_key_variant ) };
-                                        LOGGERX("is kcs:", kcs);
+                                        LOGGERXR("is kcs:", kcs);
                 if ( not ( is_ignore_kcs_local = is_ignore_kcs( kcs, is_allow_control_chars, true, is_echo_skc_to_tty))) {  // TODO: parameterize is_ring_bell_on_ignore, just true here.
-                                        LOGGERX("is kcs:", kcs);
+                                        LOGGERXR("is kcs:", kcs);
                     // key_char_i18ns_result += kcs; grostig
                     //hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
                     //i18n_key_chars_result.push_back( kcs );
@@ -1210,7 +1212,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                     kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati_row );  // .is_failed_match_chars,file_status_result);
                 }
             }
-            else if ( std::holds_alternative< I18n_key_row > ( kb_key_a_stati_row.kb_key_variant )) {
+            else if ( std::holds_alternative< I18n_key_table_row > ( kb_key_a_stati_row.kb_key_variant )) {
                 hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
                 //i18n_key_row 	     = std::get < I18n_key_row >( kb_key_a_stati_row.kb_key_variant );  // TODO:?? is this a copy?
                 //kb_keys_result.kb_key_a_stati_rows.push_back(kb_key_a_stati_row);//.is_failed_match_chars,file_status_result);
@@ -1221,8 +1223,8 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
             else if ( std::holds_alternative< Hot_key_table_row > ( kb_key_a_stati_row.kb_key_variant )) {
                 hot_key_table_row 			    = std::get < Hot_key_table_row >( kb_key_a_stati_row.kb_key_variant );  // TODO:?? is this a copy?
                 hot_key_function_cat        = hot_key_table_row.function_cat;
-                                        LOGGERX("is hk:", hot_key_table_row.my_name);
-                                        LOGGERX("is hot_key_function_cat:", (int)hot_key_table_row.function_cat);
+                                        LOGGERXR("is hk:", hot_key_table_row.my_name);
+                                        LOGGERXR("is hot_key_function_cat:", (int)hot_key_table_row.function_cat);
                 // if ( ( hot_key_function_cat = hot_key_rv.function_cat ) == HotKeyFunctionCat::editing_mode ) {
                 //     is_editing_mode_insert 	= ! is_editing_mode_insert;  // TODO: Do we use this value here, or down the call stack?
                 //     cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;
@@ -1235,7 +1237,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                 is_ignore_hot_key_local            = is_ignore_hot_key( hot_key_function_cat );    // TODO: refactor to use within applicable tests and while 123.
             }
             else {
-                                        LOGGER_("Throwing away this key stroke, trying again to get one" )
+                                        LOGGER_R("Throwing away this key stroke, trying again to get one" )
                                         cout<<"\aError:Throwing away this key stroke, trying again to get one."<<endl;
                 hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
                 assert( false && "Logic error:Not sure why we got here, we require that either a Key_char_singular or a Hot_key entered.");
@@ -1247,7 +1249,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         }  // ******* end file_status if
 
         if ( is_adequate_fs_local || not is_ignore_kcs_local || not is_ignore_hot_key_local  ) {
-                                        LOGGER_("Got a good single regular char key stroke ");
+                                        LOGGER_R("Got a good single regular char key stroke ");
             --additional_keystrokes;           // TODO??: do we need to, or can we check for underflow on size_t?
         }
         assert(true && "Logic error: nav and nav_eof and file_status::eof_Key_char_singular are not consistent");  // TODO: might be worthwhile to add?

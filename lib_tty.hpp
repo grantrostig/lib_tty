@@ -11,6 +11,11 @@
 #include <variant>
 #include <vector>
 
+//#define LOGGER_( );
+//#define LOGGERX( );
+//#define LOGGER_R( );
+//#define LOGGERXR( );
+
 /** Lib_tty README (aka LT and Lt)
  *  A C++ library used to read keyboard(aka kb) / tty input from the user on a character by character basis, as single raw characters like ASCI,
  *  even when they occur within a multibyte sequence such as with kb functions keys such as F1. Noteably it is able to react to a
@@ -185,13 +190,13 @@ public:
  *  Here a "row" represents relalated data, like a row in a relational database.
  *  For multi-byte sequences that flow from one keystroke, it can start with a ???? or we allow for another other designated char being CSI_ALT.
  */
-class I18n_key_row {
+class I18n_key_table_row {
 public:
   std::string           my_name            {STRING_NULL};                               // Name given by Lib_tty
   I18n_key_chars        characters         {STRING_NULL.cbegin(),STRING_NULL.cend()};   // See the type's documentation.
-  bool              operator<( I18n_key_row const &) const;                         // Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
+  bool              operator<( I18n_key_table_row const &) const;                         // Used to sort the members of a table to enable easy algorithmic lookup by the characters field, within the table.
   std::string       to_string()        const;                                       // Used for debugging only.
-}; using I18n_key_table = std::vector< I18n_key_row >; // Stores all known international chars/keystrokes for internal library use.  Table like in the sense of a relational database.
+}; using I18n_key_table = std::vector< I18n_key_table_row >; // Stores all known international chars/keystrokes for internal library use.  Table like in the sense of a relational database.
 
 /* namespace Design_speculation {            //experimental NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 // *** Ignore this for now
@@ -251,9 +256,9 @@ class Kb_get_result2 {
  *         this is not yet accounted for in this code.
  *  TODO: char does this include an EOF character?
  */
-using Kb_key_variant =      std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_row, /*Hot_key_chars,*/ Hot_key_table_row >;
+using Kb_key_variant =      std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_table_row, /*Hot_key_chars,*/ Hot_key_table_row >;
+//using Kb_key_row_variant= std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_table_row >;
 using Kb_key_variant_rows = std::vector< Kb_key_variant >;
-//using Kb_key_row_variant =  std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_table_row >;
 
 /** A return value of either a regular char(s) OR a Hot_key AND if we "are at"/"or got?" EOF.
  *  _a_ == "and"
@@ -266,11 +271,11 @@ struct Kb_key_a_stati_row {
                                                   // TODO: I have forgotten original intent in detail, but may be documented elsewhere.
   File_status       file_status             {File_status::initial_state};      // Holds what is happening/happened with cin: EOF etc.
 };
+using Kb_key_a_stati_rows = std::vector< Kb_key_a_stati_row >;
 
 /** A return value which tells us if we got a Kb_key and?, or? a Hot_key, and, or?, if we got EOF. TODO?:
  *  Heavily used everywhere!
  *  TODO: Need to rework the types/structs that contain Hot_key and other related values, there are TOO many similar ones.
- */
 //struct Kb_value_plus_old {
   //I18n_key_chars    i18n_key_chars  {STRING_NULL.cbegin(),STRING_NULL.cend()};
   //Hot_key_table_row       hot_key         {};
@@ -281,7 +286,7 @@ struct Kb_key_a_stati_row {
   //std::vector<int16_t>              is_failed_match_chars   {0};
   //File_status                       file_status     {File_status::initial_state};
 //};
-using Kb_key_a_stati_rows = std::vector< Kb_key_a_stati_row >;
+ */
 
 struct Kb_keys_result {
   Kb_key_a_stati_rows   kb_key_a_stati_rows     {};

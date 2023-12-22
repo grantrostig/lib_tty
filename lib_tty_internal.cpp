@@ -9,6 +9,10 @@
 //#include <ncurses.h>
 //#include <ncurses/term.h>
 
+//#define LOGGER_( );
+//#define LOGGERX( );
+//#define LOGGER_R( );
+//#define LOGGERXR( );
 
 
 

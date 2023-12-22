@@ -38,11 +38,15 @@
 
 
 //#define NDEBUG   // define if asserts are NOT to be checked.
-// Some crude logging that provides source location.
-//#define   LOGGER_( msg )   using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<    "["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:{" <<#msg<<          "}."    <<endl;cout.flush();cerr.flush();
-#define LOGGER_( msg )   using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<"\r\n["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:{" <<#msg<<          "}.\r\n"<<endl;cout.flush();cerr.flush();
-//#define   LOGGERX( msg, x )using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<    "["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:{" <<#msg<<"},{"<<x<<"}."    <<endl;cout.flush();cerr.flush();
-#define LOGGERX( msg, x )using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<"\r\n["<<loc::current().file_name()<<':'<<std::setw(3)<<loc::current().line()<<','<<std::setw(2)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:{" <<#msg<<"},{"<<x<<"}.\r\n"<<endl;cout.flush();cerr.flush();
+// Some crude logging that prints source location, where X prints a variable, and R adds \n\r (which is usefull when tty in in RAW or CBREAK mode. Requires C++20.
+  #define LOGGER_(  msg )  using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<    "["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<           "."    <<endl;cout.flush();cerr.flush();
+  #define LOGGER_R( msg )  using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<"\r\n["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<           ".\r\n"<<endl;cout.flush();cerr.flush();
+  #define LOGGERX(  msg, x)using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<    "["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".:{"<<x<<"}."    <<endl;cout.flush();cerr.flush();
+  #define LOGGERXR( msg, x)using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<"\r\n["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".:{"<<x<<"}.\r\n"<<endl;cout.flush();cerr.flush();
+//#define LOGGER_( );
+//#define LOGGERX( );
+//#define LOGGER_R( );
+//#define LOGGERXR( );
 
 /// Requires that a type has insertion operator
 /// Concept definition - used by a template below.
@@ -66,13 +70,6 @@ operator<<( std::ostream & out, Container const & c) {
     return out;
 }
 
-///  Concept using Function Explicit instantiations that are required to generate code for linker.
-///  TODO??: is the only used if definition is in *.cpp file?
-///  https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
-///  https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
-//template std::ostream & operator<<( std::ostream & , std::vector<std::string> const & );
-/// Concept using Function Explicit instantiations that are required to generate code for linker.
-//template std::ostream & operator<<( std::ostream & , std::deque<int>          const & );
 
 namespace Lib_tty {
 namespace Detail {
@@ -257,7 +254,7 @@ constexpr KbFundamentalUnit CSI_MANUAL_ENTRY = '`';
  *  TODO: consider renaming to Hot_key vs Hotkey.
  */
 using Hot_key_o_errno    = std::variant< Hot_key_table_row, Lt_errno >;
-using I18n_key_o_errno  = std::variant< I18n_key_row, Lt_errno >;
+using I18n_key_o_errno  = std::variant< I18n_key_table_row, Lt_errno >;
 
 /** Give it "CSI [ A" get back the end user understandable string name of the hot_key, ie. "right arrow"
  *  Debugging use only at this time. */
