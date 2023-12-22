@@ -17,11 +17,6 @@
 //#include <bits/stdc++>  // TODO??: why is .h needed?
 using std::cin; using std::cout; using std::cerr; using std::clog; using std::endl; using std::string;  // using namespace std;
 using namespace std::string_literals;;
-// Some crude logging that prints source location, where X prints a variable, and R adds \n\r (which is usefull when tty in in RAW or CBREAK mode. Requires C++20.
-  #define LOGGER_(  msg )  using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<    "["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<           "."    <<endl;cout.flush();cerr.flush();
-  #define LOGGER_R( msg )  using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<"\r\n["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<           ".\r\n"<<endl;cout.flush();cerr.flush();
-  #define LOGGERX(  msg, x)using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<    "["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".:{"<<x<<"}."    <<endl;cout.flush();cerr.flush();
-  #define LOGGERXR( msg, x)using loc = std::source_location;std::cout.flush();std::cerr.flush();std::cerr<<"\r\n["<<loc::current().file_name()<<':'<<std::setw(4)<<loc::current().line()<<','<<std::setw(3)<<loc::current().column()<<"]`"<<loc::current().function_name()<<"`:" <<#msg<<".:{"<<x<<"}.\r\n"<<endl;cout.flush();cerr.flush();
 //#define LOGGER_( );
 //#define LOGGERX( );
 //#define LOGGER_R( );
@@ -94,7 +89,14 @@ bool is_completed_char_input( Lib_tty::Kb_keys_result & kb_keys_result, Lib_tty:
     if ( auto ptr = std::get_if< Lib_tty::I18n_key_chars >   ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == QQQ )        return true;
     return false;
 };
-struct Visitee_fns { //differentiated by parameters ONLY:
+/* As above but as: Lambda TODO??: We need to consider which is better for which situation.
+    auto is_completed_char_input = []( Lib_tty::Kb_keys_result & kb_keys_result, string Q, Lib_tty::Hot_key_chars HHH) -> bool {
+    if ( auto ptr = std::get_if< Lib_tty::Key_char_singular >( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == *Q.begin() ) return true;
+    if ( auto ptr = std::get_if< Lib_tty::Hot_key_chars >    ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == HHH )        return true;
+    if ( auto ptr = std::get_if< Lib_tty::I18n_key_chars >   ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == HHH )        return true;
+    return false;
+};*/
+/* Speculation ONLY: struct Visitee_fns { //differentiated by parameters ONLY:
     // Members in one! parameter
         // data_type in
         // strategy_fns ?
@@ -105,29 +107,21 @@ struct Visitor_target_variant {
 };
 struct Visitee_return {
     // not a variant, but a struct with all types, perhaps same as/similar to target
-
 };
-/** Lambda as opposed to similar function above.  TODO??: We need to consider which is better for which situation.
-    auto is_completed_char_input = []( Lib_tty::Kb_keys_result & kb_keys_result, string Q, Lib_tty::Hot_key_chars HHH) -> bool {
-    if ( auto ptr = std::get_if< Lib_tty::Key_char_singular >( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == *Q.begin() ) return true;
-    if ( auto ptr = std::get_if< Lib_tty::Hot_key_chars >    ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == HHH )        return true;
-    if ( auto ptr = std::get_if< Lib_tty::I18n_key_chars >   ( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == HHH )        return true;
-    return false;
-};*/
-struct Visitee_string_kb_key_variant_name {
-    auto operator() ( std::monostate             const& variant_visitor_target ) { return "std::monostate"; }
-    auto operator() ( Lib_tty::Key_char_singular const& variant_visitor_target ) { return "Lib_tty::Key_char_singular"; }
-    auto operator() ( Lib_tty::I18n_key_chars    const& variant_visitor_target ) { return "Lib_tty::I18n_key_chars"; } // currently same as Lib_tty::Hot_key_chars.
-    auto operator() ( Lib_tty::I18n_key_table_row      const& variant_visitor_target ) { return "Lib_tty::I18n_key_row"; }
-    auto operator() ( Lib_tty::Hot_key_table_row const& variant_visitor_target ) { return "Lib_tty::Hot_key_table_row"; }
-};
-/** Used for debugging in main()
 */
+struct Visitee_string_kb_key_variant_name {
+    auto operator() (std::monostate             const& variant_visitor_target ) { return "std::monostate"; }
+    auto operator() (Lib_tty::Key_char_singular const& variant_visitor_target ) { return "Lib_tty::Key_char_singular"; }
+    auto operator() (Lib_tty::I18n_key_chars    const& variant_visitor_target ) { return "Lib_tty::I18n_key_chars"; } // currently same as Lib_tty::Hot_key_chars.
+    auto operator() (Lib_tty::I18n_key_table_row const&variant_visitor_target ) { return "Lib_tty::I18n_key_row"; }
+    auto operator() (Lib_tty::Hot_key_table_row const& variant_visitor_target ) { return "Lib_tty::Hot_key_table_row"; }
+};
+/** Used for debugging in main() */
 auto get_kb_key_variant_ptr( Lib_tty::Kb_key_variant const & variant_visitor_target ) -> std::pair<string, std::any const >  // $ void const * works
 {   if ( auto ptr{std::get_if< std::monostate >(            & variant_visitor_target )}; ptr ) { return {"std::monostate",              ptr}; };
     if ( auto ptr{std::get_if< Lib_tty::Key_char_singular>( & variant_visitor_target )}; ptr ) { return {"Lib_tty::Key_char_singular",  ptr}; };
     if ( auto ptr{std::get_if< Lib_tty::I18n_key_chars>(    & variant_visitor_target )}; ptr ) { return {"Lib_tty::I18n_key_chars",     ptr}; };
-    if ( auto ptr{std::get_if< Lib_tty::I18n_key_table_row>(      & variant_visitor_target )}; ptr ) { return {"Lib_tty::I18n_key_row",       ptr}; };
+    if ( auto ptr{std::get_if< Lib_tty::I18n_key_table_row>(& variant_visitor_target )}; ptr ) { return {"Lib_tty::I18n_key_row",       ptr}; };
     if ( auto ptr{std::get_if< Lib_tty::Hot_key_table_row>( & variant_visitor_target )}; ptr ) { return {"Lib_tty::Hot_key_table_row",  ptr}; };
     assert( false && "Logic Error: Should have found one.");
 };
@@ -136,7 +130,7 @@ auto get_kb_key_variant_value( Lib_tty::Kb_key_variant const & variant_visitor_t
 {   try { auto var{std::get< std::monostate >(              variant_visitor_target )}; { return {"std::monostate",             var}; } } catch (...){ };
     try { auto var{std::get< Lib_tty::Key_char_singular>(   variant_visitor_target )}; { return {"Lib_tty::Key_char_singular", var}; } } catch (...){ };
     try { auto var{std::get< Lib_tty::I18n_key_chars>(      variant_visitor_target )}; { return {"Lib_tty::I18n_key_chars",    var}; } } catch (...){ };
-    try { auto var{std::get< Lib_tty::I18n_key_table_row>(        variant_visitor_target )}; { return {"Lib_tty::I18n_key_row",      var}; } } catch (...){ };
+    try { auto var{std::get< Lib_tty::I18n_key_table_row>(  variant_visitor_target )}; { return {"Lib_tty::I18n_key_row",      var}; } } catch (...){ };
     try { auto var{std::get< Lib_tty::Hot_key_table_row>(   variant_visitor_target )}; { return {"Lib_tty::Hot_key_table_row", var}; } } catch (...){ };
     assert( false && "Logic Error: Should have found one.");
 };
@@ -290,19 +284,25 @@ LOGGERXR("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_v
         i18ns_p =           std::get_if<Lib_tty::I18n_key_chars>(       &kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
         hk_table_row_p =    std::get_if<Lib_tty::Hot_key_table_row>(    &kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
         i18n_table_row_p =  std::get_if<Lib_tty::I18n_key_table_row>(   &kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
-        if (ms_p != nullptr ) cout <<               "nullptr";
-        if (hks_p != nullptr ) cout <<              *hks_p;
-        if (hkcs_p != nullptr ) cout <<             *hkcs_p;
-        if (i18ns_p != nullptr ) cout <<            *i18ns_p;
-        if (hk_table_row_p != nullptr ) cout <<     hk_table_row_p->to_string();
-        if (i18n_table_row_p != nullptr ) cout <<   i18n_table_row_p->to_string();
+        if (ms_p != nullptr )           cout <<  "nullptr";
+        if (hks_p != nullptr )          cout <<  *hks_p;
+        if (hkcs_p != nullptr )         cout <<  *hkcs_p;
+        if (i18ns_p != nullptr )        cout <<  *i18ns_p;
+        if (hk_table_row_p != nullptr ) cout <<  hk_table_row_p->to_string();
+        if (i18n_table_row_p != nullptr)cout <<  i18n_table_row_p->to_string();
+        if (ms_p != nullptr )           ms =                *ms_p;
+        if (hks_p != nullptr )          hks =               *hks_p;
+        if (hkcs_p != nullptr )         hkcs =              *hkcs_p;
+        if (i18ns_p != nullptr )        i18ns =             *i18ns_p;
+        if (hk_table_row_p != nullptr ) hk_table_row =      *hk_table_row_p;
+        if (i18n_table_row_p != nullptr)i18n_table_row =    *i18n_table_row_p;
 
-        ms =                std::get<std::monostate>(                 kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
+      /*ms =                std::get<std::monostate>(                 kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
         hks =               std::get<Lib_tty::Key_char_singular>(     kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
         hkcs =              std::get<Lib_tty::Hot_key_chars>(         kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
         i18ns =             std::get<Lib_tty::I18n_key_chars>(        kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
         hk_table_row =      std::get<Lib_tty::Hot_key_table_row>(     kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
-        i18n_table_row =    std::get<Lib_tty::I18n_key_table_row>(    kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
+        i18n_table_row =    std::get<Lib_tty::I18n_key_table_row>(    kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant ); */
 
         LOGGER_R("We got this in 3 variables below:>" );
         cout<<":MAIN():i18ns,length:{"<< i18ns<<","<<i18ns.size()<<"}, hot_key:{"<< hk_table_row.my_name << "}, file_status:{"<< (int)fs <<"}."<<endl;
