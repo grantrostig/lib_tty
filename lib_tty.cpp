@@ -892,7 +892,7 @@ xterm-256color|xterm with 256 colors,
     }
     if ( is_full_or_partial_match ) {
         if ( firstmatch_o_prior_itr->characters.size() == candidate_hk_chars.size() ) {
-            LOGGER_R("Return:A match!")
+            LOGGER_R("Returning:WE HAVE A MATCH!")
             return *firstmatch_o_prior_itr;  //RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
         }
         else {
@@ -1198,7 +1198,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                                         LOGGERXR("Just read a keystroke, file_status:", (int)kb_key_a_stati_row.file_status);
         if ( ( is_adequate_fs_local = is_adequate_file_status( file_status_result )))   // file_status is OK
         {
-                                        LOGGERXR("is_ignore_key_fd:", is_adequate_fs_local);
+                                        LOGGERXR("./is_adequate_fs_local:", is_adequate_file_status);
             if      ( std::holds_alternative< Key_char_singular >( kb_key_a_stati_row.kb_key_variant )) {
                 Key_char_singular const kcs { std::get < Key_char_singular >( kb_key_a_stati_row.kb_key_variant ) };
                                         LOGGERXR("is kcs:", kcs);
@@ -1223,8 +1223,10 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
             else if ( std::holds_alternative< Hot_key_table_row > ( kb_key_a_stati_row.kb_key_variant )) {
                 hot_key_table_row 			    = std::get < Hot_key_table_row >( kb_key_a_stati_row.kb_key_variant );  // TODO:?? is this a copy?
                 hot_key_function_cat        = hot_key_table_row.function_cat;
-                                        LOGGERXR("is hk:", hot_key_table_row.my_name);
-                                        LOGGERXR("is hot_key_function_cat:", (int)hot_key_table_row.function_cat);
+                                        LOGGERXR( hot_key_table_row.my_name,
+                                                    hot_key_table_row.my_name);
+                                        LOGGERXR( (int)hot_key_table_row.function_cat,
+                                                    (int)hot_key_table_row.function_cat);
                 // if ( ( hot_key_function_cat = hot_key_rv.function_cat ) == HotKeyFunctionCat::editing_mode ) {
                 //     is_editing_mode_insert 	= ! is_editing_mode_insert;  // TODO: Do we use this value here, or down the call stack?
                 //     cerr << "Function_cat: Editing mode is insert: "<<is_editing_mode_insert << endl;

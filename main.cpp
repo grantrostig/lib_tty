@@ -82,6 +82,20 @@ using namespace std::string_literals;;
 //    std::signal( SIGXFSZ, crash_tracer );
 //    std::signal( SIGVTALRM, crash_tracer );
 //} */
+/* Some values we use to ease comparisons with user input strings.
+ */
+constexpr string                      STRING_H            {"h"};
+constexpr string                      STRING_I            {"i"};
+constexpr string                      STRING_Q            {"q"};
+constexpr string                      STRING_HHH          {"hhh"};
+constexpr string                      STRING_III          {"iii"};
+constexpr string                      STRING_QQQ          {"qqq"};
+const     Lib_tty::I18n_key_chars     Q                   {STRING_Q.cbegin(),  STRING_Q.cend()};  // TODO??: Why can't this be constexper since string and iterator is.
+const     Lib_tty::I18n_key_chars     QQQ                 {STRING_QQQ.begin(),STRING_QQQ.end()};
+const     Lib_tty::Hot_key_chars      H                   {STRING_H.begin(),  STRING_H.end()};
+const     Lib_tty::Hot_key_chars      HHH                 {STRING_HHH.begin(),STRING_HHH.end()};
+const     Lib_tty::I18n_key_chars     I                   {STRING_I.begin(),  STRING_I.end()};
+const     Lib_tty::I18n_key_chars     III                 {STRING_III.begin(),STRING_III.end()};
 /** User indicates their completion of this input field. */
 bool is_completed_char_input( Lib_tty::Kb_keys_result & kb_keys_result, Lib_tty::I18n_key_chars Q, Lib_tty::I18n_key_chars QQQ ) {
     if ( auto ptr = std::get_if< Lib_tty::Key_char_singular >( & kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant); *ptr == *Q.begin() ) return true;
@@ -209,18 +223,6 @@ Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys_result const & keys ) {
  *   WARNING enable this main.cpp file in qmake ONLY if you want to run this test, but to build the libary DON'T enable this file to be linked into the *.so
  */
 int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << ":~~~ argc,argv:"<<argc<<","<<my_arv<<"."<<endl; //using namespace Lib_tty; //cin.exceptions( std::istream::failbit);  // throw on fail of cin. //crash_signals_register();
-    string                 STRING_H            {"h"};
-    string                 STRING_I            {"i"};
-    string                 STRING_Q            {"q"};
-    string                 STRING_HHH          {"hhh"};
-    string                 STRING_III          {"iii"};
-    string                 STRING_QQQ          {"qqq"};
-    Lib_tty::I18n_key_chars     Q                   {STRING_Q.begin(),  STRING_Q.end()};
-    Lib_tty::I18n_key_chars     QQQ                 {STRING_QQQ.begin(),STRING_QQQ.end()};
-    Lib_tty::Hot_key_chars      H                   {STRING_H.begin(),  STRING_H.end()};
-    Lib_tty::Hot_key_chars      HHH                 {STRING_HHH.begin(),STRING_HHH.end()};
-    Lib_tty::I18n_key_chars     I                   {STRING_I.begin(),  STRING_I.end()};
-    Lib_tty::I18n_key_chars     III                 {STRING_III.begin(),STRING_III.end()};
 
 /*Lib_tty::Kb_key_variant key_variant_kcs  { Lib_tty::Key_char_singular    {'A'} };
 Lib_tty::Kb_key_variant key_variant_hkcs { Lib_tty::Hot_key_chars        {'C','C','C','C',} };
@@ -262,7 +264,7 @@ LOGGERXR("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_v
     string                          user_ack            {};
     Lib_tty::Kb_keys_result         kb_keys_result      {};
     do { cout << ">ENTER a single keyboard key press now! (q or F4 for next test):"; cout.flush();
-        Lib_tty::Kb_keys_result kb_keys_result      { Lib_tty::get_kb_keystrokes_raw( 1, false, true, true) };
+        Lib_tty::Kb_keys_result kb_keys_result      { Lib_tty::get_kb_keystrokes_raw( 1, false, true, true) };  // READ one.
 
         Lib_tty::Kb_key_variant kb_key_variant2     { kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant}; // Ugly way to get the first key value
         Lib_tty::Kb_key_variant kb_key_variant1     { detail_get_1(kb_keys_result) };
@@ -274,9 +276,9 @@ LOGGERXR("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_v
         };
 
         nav = kb_keys_result.hot_key_nav_final;
-        LOGGERXR("navigation enum:", (int)nav);
+        LOGGERXR("result navigation enum as int", (int)nav);
         fs  = kb_keys_result.file_status_final;
-        LOGGERXR("file_status enum:",(int)fs);
+        LOGGERXR("result file_status enum as int",(int)fs);
 
         ms_p =              std::get_if<std::monostate>(                &kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
         hks_p =             std::get_if<Lib_tty::Key_char_singular>(    &kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant );
@@ -305,12 +307,14 @@ LOGGERXR("get_1_kb_key_variant_value:key_variant_ikr", std::get<0>( get_kb_key_v
         i18n_table_row =    std::get<Lib_tty::I18n_key_table_row>(    kb_keys_result.kb_key_a_stati_rows.begin()->kb_key_variant ); */
 
         LOGGER_R("We got this in 3 variables below:>" );
-        cout<<":MAIN():i18ns,length:{"<< i18ns<<","<<i18ns.size()<<"}, hot_key:{"<< hk_table_row.my_name << "}, file_status:{"<< (int)fs <<"}."<<endl;
+
+        //cout<<"\n\r:MAIN():i18ns,length:{"<< i18ns<<","<<i18ns.size()<<"}, hot_key:{"<< hk_table_row.my_name << "}, file_status:{"<< (int)fs <<"}."<<endl;
+
         LOGGER_R(">Press RETURN to continue (q to exit(0)):>");
         getline( cin, user_ack ); cin.clear(); cout <<":Got this from continue:"<<user_ack<<endl; if ( user_ack == "q") exit(EXIT_SUCCESS);
     } while ( nav != Lib_tty::HotKeyFunctionCat::nav_field_completion &&
               nav != Lib_tty::HotKeyFunctionCat::navigation_esc       &&
-              hk_table_row.my_name != "f4"                       &&        // This line is redundant with above 2 lines, but shown for example completeness.
+              hk_table_row.my_name != "f4"                            &&        // This line is currently redundant with above 2 lines, but shown for example completeness.
               not is_completed_char_input(kb_keys_result, Q, QQQ )
               //i18ns != Q                                            &&
             );
