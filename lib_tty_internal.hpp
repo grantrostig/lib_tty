@@ -48,6 +48,8 @@
 //#define LOGGER_R( );
 //#define LOGGERXR( );
 
+template<class... Ts> struct Overloaded : Ts... { using Ts::operator()...; };
+
 /// Requires that a type has insertion operator
 /// Concept definition - used by a template below.
 template <typename Container>

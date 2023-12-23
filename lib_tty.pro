@@ -7,7 +7,7 @@ SOURCES  =  main.cpp
 
 CONFIG -= app_bundle
 CONFIG -= qt
-CONFIG += c++latest
+#CONFIG += c++latest
 #CONFIG += c++20
 CONFIG += warn_on
 # ??CONFIG += QMAKE_CFLAGS_WARN_ON
@@ -15,6 +15,7 @@ CONFIG += warn_on
 
 QMAKE_CXXFLAGS += \
         #-std=gnu++23		\
+        -std=c++23		\
         -g3 		        \
         -O0 		        \
         -Wall   		\  # https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html

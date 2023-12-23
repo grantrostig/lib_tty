@@ -19,10 +19,10 @@
 #include <termios.h>
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
-//#define LOGGER_( );
-//#define LOGGERX( );
-//#define LOGGER_R( );
-//#define LOGGERXR( );
+#define LOGGER_( true );
+#define LOGGERX( true,false );
+#define LOGGER_R( true );
+#define LOGGERXR( true,false);
 
 /// TODO??: better alternative to access these names elsewhere? >using namespace Lib_tty or each member? Lib_tty::IDENTIFIER ?
 namespace Lib_tty {  // entire file ns
@@ -1214,8 +1214,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
     Kb_keys_result      kb_keys_result          {};                             //
     File_status  		file_status_result      {File_status::initial_state};
     HotKeyFunctionCat   hot_key_nav_result      {HotKeyFunctionCat::initial_state};
-
-    Kb_key_a_stati_row kb_key_a_stati_row {};  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+    Kb_key_a_stati_row  kb_key_a_stati_row      {};
 
     //unsigned 			int value_index			{0};                            // Note: Points to the character beyond the current character (presuming zero origin), like an STL iterator it.end(), hence 0 == empty field.
     //bool 		 		is_editing_mode_insert  {true};
@@ -1227,7 +1226,7 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         bool is_ignore_hot_key_local{false};                 /// In case editing mode is toggled. TODO: not implemented yet.  TODO: I may not need these locals set by function calls, but I'm not sure until all TODO S are done
         bool is_adequate_fs_local   {false};                 /// Don't worry about these file_descriptor stati.  TODO: I may not need these locals set by function calls, but I'm not sure until all TODO S are done
         i18n_key_row                = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
-        hot_key_table_row                 = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
+        hot_key_table_row           = {};  				     // reset some variables from prior loop if any, specifically old/prior hot_key.
         hot_key_function_cat        = HotKeyFunctionCat::none; // reset some variables from prior loop if any, specifically old/prior hot_key.
                                                                // TODO?: may not need this local, but not sure untill below TODOs are done.
         kb_key_a_stati_row = get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
@@ -1271,25 +1270,25 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
 
                 //kb_key_a_stati_row.is_failed_match_chars            = 0; // redundant, but we like it for logic safety and or asserts()
                 //kb_key_a_stati_row.file_status                      = File_status::good; // redundant, but we like it for logic safety and or asserts()
-                kb_keys_result.kb_key_a_stati_rows.push_back(     kb_key_a_stati_row );//.is_failed_match_chars,file_status_result);
+                kb_keys_result.kb_key_a_stati_rows.push_back( kb_key_a_stati_row );//.is_failed_match_chars,file_status_result);
 
                 is_ignore_hot_key_local            = is_ignore_hot_key( hot_key_function_cat );    // TODO: refactor to use within applicable tests and while 123.
             }
             else {
                                         LOGGER_R("Throwing away this key stroke, trying again to get one" )
                                         cout<<"\aError:Throwing away this key stroke, trying again to get one."<<endl;
-                hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
+                hot_key_function_cat = HotKeyFunctionCat::none;     // redundant, but we like it for logic safety and or asserts()
                 assert( false && "Logic error:Not sure why we got here, we require that either a Key_char_singular or a Hot_key entered.");
             }  // ******* end key alternatives if
         }
         else {
                 hot_key_function_cat = HotKeyFunctionCat::none; // redundant, but we like it for logic safety and or asserts()
-                assert( false &&"Logic error/omission: on file_status we need to handle this case!");  // TODO3: file_status is NOT ACCEPTABLE  or is NOT ADEQUATE, which might be different, not sure.
+                assert( false && "Logic error/omission: on file_status we need to handle this case!");  // TODO3: file_status is NOT ACCEPTABLE  or is NOT ADEQUATE, which might be different, not sure.
         }  // ******* end file_status if
 
         if ( is_adequate_fs_local || not is_ignore_kcs_local || not is_ignore_hot_key_local  ) {
-                                        LOGGER_R("Got a good single regular char key stroke ");
-            --additional_keystrokes;           // TODO??: do we need to, or can we check for underflow on size_t?
+                                        LOGGER_R("Got a good single regular char or hot_key key stroke ");
+            --additional_keystrokes;                                                                    // TODO??: do we need to, or can we check for underflow on size_t?
         }
         assert(true && "Logic error: nav and nav_eof and file_status::eof_Key_char_singular are not consistent");  // TODO: might be worthwhile to add?
     } while (   additional_keystrokes       >  0                                        &&
@@ -1300,14 +1299,14 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
             );      // TODO: also NEED TO HANDLE hot_key_chars alone?  eof of both types?  intrafield?  editing mode? monostate alone
     //******* END   do_while ****************************************************************************************************************
     //******* START while    Either we already got a "completion" hot_key (if required) or we shall enter the loop and get one now.
-    hot_key_nav_result = hot_key_function_cat;  // TODO: holds historical, perhaps not current??
-    while (     is_require_field_completion_key                                         &&  // TODO: probably totally wrong, check it.
-                hot_key_table_row.function_cat != HotKeyFunctionCat::nav_field_completion     &&  // TODO: may need more cats like intra_field, editing_mode?
-                hot_key_table_row.function_cat != HotKeyFunctionCat::navigation_esc           &&
-                hot_key_table_row.function_cat != HotKeyFunctionCat::help_popup               &&  // XXXX new idea
-                file_status_result       != File_status::eof_file_descriptor
-                //file_status_result          != File_status::eof_Key_char_singular     &&
-                //file_status_result          != File_status::eof_library               &&
+    hot_key_nav_result = hot_key_function_cat;                                                // TODO: holds historical, perhaps not current??
+    while (     is_require_field_completion_key                                           &&  // TODO: probably totally wrong, check it.
+                hot_key_table_row.function_cat != HotKeyFunctionCat::nav_field_completion &&  // TODO: may need more cats like intra_field, editing_mode?
+                hot_key_table_row.function_cat != HotKeyFunctionCat::navigation_esc       &&
+                hot_key_table_row.function_cat != HotKeyFunctionCat::help_popup           &&
+                file_status_result             != File_status::eof_file_descriptor
+                //file_status_result          != File_status::eof_Key_char_singular       &&
+                //file_status_result          != File_status::eof_library                 &&
           )
     {
         kb_key_a_stati_row =        get_kb_keystroke_raw();  // GET GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
@@ -1316,8 +1315,8 @@ get_kb_keystrokes_raw( size_t const length_in_keystrokes,
         if ( Kb_key_variant const kb_key_variant { kb_key_a_stati_row.kb_key_variant };
              std::holds_alternative< Hot_key_table_row >( kb_key_variant ))
         {
-            hot_key_table_row  = std::get< Hot_key_table_row >( kb_key_variant );          // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
-            hot_key_nav_result = hot_key_table_row.function_cat;  // We can't get out of this loop untill the function cat is NAV or ESC or F1 or similar.
+            hot_key_table_row  = std::get< Hot_key_table_row >( kb_key_variant );   // We are not stepping on a usable completion hot_key from n-length loop due to the check for this while loop.
+            hot_key_nav_result = hot_key_table_row.function_cat;                    // We can't get out of this loop untill the function cat is NAV or ESC or F1 or similar.
             //hot_key_table_row.function_cat  is set above.
             //hot_key_table_row.function_cat                     = kb_key_a_stati_row.kb_key_variant.row.function_cat;
         }

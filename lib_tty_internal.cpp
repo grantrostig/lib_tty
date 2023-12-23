@@ -14,8 +14,6 @@
 //#define LOGGER_R( );
 //#define LOGGERXR( );
 
-
-
 //template<typename Container>            // utility f() to print vectors
 //    requires Insertable<Container>
 //std::ostream&
