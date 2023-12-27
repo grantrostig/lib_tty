@@ -142,9 +142,22 @@ enum class FieldIntraNav {
   delete_char,          // delete char to right of cursor
   goto_begin,
   goto_end,
-  kill, // remove content of entire line.
+  kill,                 // remove content of entire line.
   na
-    //initial_state         // TODO:
+  //initial_state      // TODO:
+};
+
+const std::vector<std::string> enum_FieldIntraNav{
+  "move_left",
+  "move_right",
+  "backspace_left_erase",
+  "erase_left",
+  "delete_char",
+  "goto_begin",
+  "goto_end",
+  "kill",
+  "na"
+  //initial_state
 };
 
 /** Is one keystroke of a ANSI keyboard of a non-special key like 'a' or '6' or '+', that is a "char"
@@ -257,6 +270,7 @@ class Kb_get_result2 {
  *  TODO: char does this include an EOF character?
  */
 using Kb_key_variant =      std::variant< std::monostate, Key_char_singular, I18n_key_chars, I18n_key_table_row, /*Hot_key_chars,*/ Hot_key_table_row >;
+const std::vector<std::string> index_Kb_key_variant{ "std::monostate", "Key_char_singular", "I18n_key_chars", "I18n_key_table_row", /*Hot_key_chars,*/ "Hot_key_table_row" };
 //using Kb_key_row_variant= std::variant< std::monostate, Key_char_singular,                 I18n_key_row,                    Hot_key_table_row >;
 using Kb_key_variant_rows = std::vector< Kb_key_variant >;
 

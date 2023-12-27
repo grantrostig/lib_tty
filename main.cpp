@@ -225,6 +225,10 @@ Lib_tty::Kb_key_variant detail_get_1( Lib_tty::Kb_keys_result const & keys ) {
 int main ( int argc, char* arv[] ) { string my_arv { *arv}; cout << ":~~~ argc,argv:"<<argc<<","<<my_arv<<"."<<endl;  //cin.exceptions( std::istream::failbit);  // throw on fail of cin.
     crash_signals_register();
 
+    // test this
+    cout << Lib_tty::enum_FieldIntraNav << endl << Lib_tty::index_Kb_key_variant <<endl;
+    cout<< Lib_tty::enum_FieldIntraNav[(int)Lib_tty::FieldIntraNav::erase_left] << endl;
+
 /*Lib_tty::Kb_key_variant key_variant_kcs  { Lib_tty::Key_char_singular    {'A'} };
 Lib_tty::Kb_key_variant key_variant_hkcs { Lib_tty::Hot_key_chars        {'C','C','C','C',} };
 Lib_tty::Kb_key_variant key_variant_hkcs2{ Lib_tty::Hot_key_chars        {HHH} };
