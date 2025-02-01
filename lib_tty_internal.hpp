@@ -36,6 +36,7 @@
 // TODO?:X   the X programmer is not sure about something, that should be addressed.
 // TODO??:   is a question for verbal discussion at CppMSG.com meetup meetings.
 
+//constexpr std::string    STRING_NULL{"NULL"};    // Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
 
 //#define NDEBUG   // define if asserts are NOT to be checked.
 // Some crude logging that prints source location, where X prints a variable, and R adds \n\r (which is usefull when tty in in RAW or CBREAK mode. Requires C++20.

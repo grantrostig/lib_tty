@@ -19,10 +19,6 @@
 #include <termios.h>
 using std::endl, std::cin, std::cout, std::cerr, std::string;
 using namespace std::string_literals;
-#define LOGGER_( true );
-#define LOGGERX( true,false );
-#define LOGGER_R( true );
-#define LOGGERXR( true,false);
 
 /// TODO??: better alternative to access these names elsewhere? >using namespace Lib_tty or each member? Lib_tty::IDENTIFIER ?
 namespace Lib_tty {  // entire file ns

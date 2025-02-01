@@ -1,8 +1,9 @@
-TEMPLATE =  app                  # comment out TEMPLATE = lib 2 lines to make main.cpp
+# Either these three or the next 2, for app or lib, respectively.
+TEMPLATE =  app                 # comment out these 3,
 CONFIG +=   console
 SOURCES  =  main.cpp
 
-#TEMPLATE = lib                    # comment out main.cpp 3 lines to make the library for linker use, and at top turn on "+=console"
+#TEMPLATE = lib                 # OR comment out these 2.
 #CONFIG += staticlib
 
 CONFIG -= app_bundle
@@ -27,8 +28,9 @@ QMAKE_CXXFLAGS += \
         #-Wno-reorder 		\
 
 LIBS += \
-        -lpthread \
-        -lstdc++_libbacktrace \
+        -lpthread                   \
+        -lstdc++exp                 \
+       #-lstdc++_libbacktrace       \
         -lrt
 
 SOURCES += \

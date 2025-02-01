@@ -15,6 +15,7 @@
 //#define LOGGERX( );
 //#define LOGGER_R( );
 //#define LOGGERXR( );
+constexpr std::string    STRING_NULL{"NULL"};    // Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
 
 /** Lib_tty README (aka LT and Lt)
  *  A C++ library used to read keyboard(aka kb) / tty input from the user on a character by character basis, as single raw characters like ASCI,

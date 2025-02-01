@@ -23,10 +23,6 @@
 
 using std::cin; using std::cout; using std::cerr; using std::clog; using std::endl; using std::string;  // using namespace std;
 using namespace std::string_literals;;
-//#define LOGGER_( );
-//#define LOGGERX( );
-//#define LOGGER_R( );
-//#define LOGGERXR( );
 
 string source_loc() {
    using loc = std::source_location;
