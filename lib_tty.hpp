@@ -37,7 +37,7 @@ namespace Lib_tty {
 /*****************************************************************************/
 /**************** START Lib_tty     Level Declarations ***********************/
 /*****************************************************************************/
-inline constexpr std::string       STRING_NULL {"NULL"};    /// Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
+inline constexpr std::string       SsdfadsfTRING_NULL {"NULL"};    // Value is unset/not-set, similar to how a SQL DB shows an unset field as NULL, which is different than zero length or some magic number.  Here we turn it into a magic number and hope for the best.
 
 /** There are two semantic EOFs:
  *  1) eof_Key_char_singular is a "We probably don't handle eof well."); // TODO: more eof handling needed
@@ -46,17 +46,17 @@ inline constexpr std::string       STRING_NULL {"NULL"};    /// Value is unset/n
  *  But I'm unclear about the exact distinction between these two especially with regard to COOKED versus RAW on a tty.
  *  TODO: refactor these two out since I don't think we need a separate EOFs, since in tty raw mode we recognize ^D as a hot_key.
  */
-enum class File_status { /// After reading a char, did we get something good, should we expect more?
-  initial_state,         /// initial state, should not remain this way after any tty read() or get().
-  good,                  /// we read and all is good() on cin.  TODO: implement this throughout lib_tty.
-  timed_out,             /// we read, but didn't get a value, could represent case where the user is hand typing in the CSI hot_key.
-  //eof_Key_char_singular, /// got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
-  //eof_library,           /// get application library EOF.  TODO: not used, determine if different than hot_key CTRL-D, which is a nav_field_completion
-  eof_file_descriptor,   /// get library or OS EOF.
-  fail,                  /// we read, but we got format/extraction error.
-  bad                   /// we read, but we got serious unrecoverable error.
-  //other_user_kb_char_data_HACK,      /// probably means got a good kb_char value.  TODO was associated with "good", but need to separate the concepts and fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
-  //unexpected_user_kb_char_data_HACK  /// got bad data from hardware error, or user error, ie. something we don't expect or support. TODO: fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
+enum class File_status { // After reading a char, did we get something good, should we expect more?
+  initial_state,         // initial state, should not remain this way after any tty read() or get().
+  good,                  // we read and all is good() on cin.  TODO: implement this throughout lib_tty.
+  timed_out,             // we read, but didn't get a value, could represent case where the user is hand typing in the CSI hot_key.
+  //eof_Key_char_singular, // got a character that can be interpreted as eof, ie. ^D in Unix, ^Z in DOS/Win?
+  //eof_library,           // get application library EOF.  TODO: not used, determine if different than hot_key CTRL-D, which is a nav_field_completion
+  eof_file_descriptor,   // get library or OS EOF.
+  fail,                  // we read, but we got format/extraction error.
+  bad                   // we read, but we got serious unrecoverable error.
+  //other_user_kb_char_data_HACK,      // probably means got a good kb_char value.  TODO was associated with "good", but need to separate the concepts and fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
+  //unexpected_user_kb_char_data_HACK  // got bad data from hardware error, or user error, ie. something we don't expect or support. TODO: fix kb_char error return value, get this error code out of here. Also related to Lt_errno type.
 };
 
 /** The "Categories" of user level intent expressed by use of HotKeys
@@ -373,7 +373,7 @@ get_kb_keystroke_raw();
 Kb_keys_result
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool const   is_require_field_completion,
-                       bool const   is_echo_skc_to_tty,           /// skc == Key_char_singular
+                       bool const   is_echo_skc_to_tty,           // skc == Key_char_singular
                        bool const   is_allow_control_chars );
 
 /*****************************************************************************/
