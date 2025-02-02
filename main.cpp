@@ -12,7 +12,7 @@
 #include <variant>
 #include <deque>
 #include <any>
-#include <gsl/gsl>
+//#include <gsl/gsl>
 //#include <bits/stdc++.h>
 //#include <bits/stdc++>  // TODO??: why is .h needed?
 /// define if asserts are NOT to be checked.
@@ -154,14 +154,14 @@ public: Get_row_fo( Lib_tty::Kb_keys_result const & kb_keys_result ): kb_keys_re
 /** Detail helper api function to get variable from parameter. pre( nth must be valid ) */
 Lib_tty::Kb_key_variant
 Get_row_kb_key_vrnt( Lib_tty::Kb_keys_result kb_keys_result, size_t nth ) {
-        Expects( kb_keys_result.kb_key_a_stati_rows.size() != 0 && "Error Message" );
+        //Expects( kb_keys_result.kb_key_a_stati_rows.size() != 0 && "Error Message" );
         //static auto nth_{nth};
         //static auto itr_ { kb_keys_result.kb_key_a_stati_rows.begin() };
         auto itr2 { kb_keys_result.kb_key_a_stati_rows.begin() };
         std::advance( itr2, nth );
         Lib_tty::Kb_key_variant varnt;
         varnt = itr2->kb_key_variant;
-        Ensures( kb_keys_result.kb_key_a_stati_rows.size() != 0 );
+        //Ensures( kb_keys_result.kb_key_a_stati_rows.size() != 0 );
         return varnt;
 };
 Lib_tty::Kb_key_variant
