@@ -1192,6 +1192,11 @@ bool is_ignore_kcs( Key_char_singular const skc,
 }
 }
 
+enum struct Field_completion_key {
+    dont_require,
+    do_require
+};
+
 Kb_keys_result
 get_kb_keystrokes_raw( size_t const length_in_keystrokes,
                        bool   const is_require_field_completion_key,

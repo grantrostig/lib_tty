@@ -44,10 +44,10 @@ HEADERS += \
     lib_tty_internal.hpp
 
 # Default rules for deployment.
-unix {
-    target.path = $$[QT_INSTALL_PLUGINS]/generic
-}
-!isEmpty(target.path): INSTALLS += target
+#unix {
+    #target.path = $$[QT_INSTALL_PLUGINS]/generic
+#}
+#!isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
     LICENSE.txt \
